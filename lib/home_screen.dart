@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'categories_screen.dart';
+import 'messages_screen.dart';
+import 'cart_screen.dart';
+import 'seller_profile_page.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -196,7 +199,36 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _bottomIndex,
-      onDestinationSelected: (i) => setState(() => _bottomIndex = i),
+      onDestinationSelected: (i) {
+        setState(() => _bottomIndex = i);
+
+        Widget page;
+        switch (i) {
+          case 0:
+            page = const HomeScreen();
+            break;
+          case 1:
+            page = const CategoriesScreen();
+            break;
+          case 2:
+            page = const MessagesScreen();
+            break;
+          case 3:
+            page = const CartScreen();
+            break;
+          case 4:
+          default:
+            page = const SellerProfilePage();
+            break;
+        }
+
+        if (i != 0) { // لو مش الرئيسية
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => page),
+          );
+        }
+      },
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.home_outlined),
@@ -226,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+
 }
 
 // ======= Models & small widgets =======
