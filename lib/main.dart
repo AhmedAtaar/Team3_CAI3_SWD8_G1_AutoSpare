@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'seller_profile_page.dart';
-import 'categories_screen.dart';
-import 'messages_screen.dart';
-import 'cart_screen.dart';
+import 'view/screens/home_screen.dart';
+
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
