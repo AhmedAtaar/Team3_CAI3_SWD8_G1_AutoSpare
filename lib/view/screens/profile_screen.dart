@@ -45,7 +45,8 @@ class _SellerProfilePageState extends State<SellerProfilePage> {
             break;
         }
 
-        if (i != 4) { // لو مش في البروفايل
+        if (i != 4) {
+          // لو مش في البروفايل
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => page),
@@ -98,21 +99,29 @@ class _SellerProfilePageState extends State<SellerProfilePage> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    child: Icon(Icons.person,
-                        size: 50, color: theme.colorScheme.primary),
+                    child: Icon(
+                      Icons.person,
+                      size: 50,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(sellerName,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold)),
+                        Text(
+                          sellerName,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         Text("\$${totalSales.toStringAsFixed(0)} مبيعات"),
-                        Text("\$${totalProfit.toStringAsFixed(0)} أرباح",
-                            style: const TextStyle(color: Colors.green)),
+                        Text(
+                          "\$${totalProfit.toStringAsFixed(0)} أرباح",
+                          style: const TextStyle(color: Colors.green),
+                        ),
                       ],
                     ),
                   ),

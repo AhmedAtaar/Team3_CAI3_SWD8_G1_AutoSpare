@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'categories_screen.dart';
-import 'messages_screen.dart';
-import 'cart_screen.dart';
-import 'seller_profile_page.dart';
+import '../../view/screens/home_screen.dart';
+import '../../view/screens/categories_screen.dart';
+import '../../view/screens/messages_screen.dart';
+import '../../view/screens/cart_screen.dart';
+import '../../view/screens/profile_screen.dart';
 
 class AppNavigationScaffold extends StatelessWidget {
   final int currentIndex;
@@ -56,11 +56,31 @@ class AppNavigationScaffold extends StatelessWidget {
           selectedIndex: currentIndex,
           onDestinationSelected: (i) => _navigate(context, i),
           destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
-            NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view), label: 'التصنيفات'),
-            NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'الرسائل'),
-            NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), selectedIcon: Icon(Icons.shopping_cart), label: 'السلة'),
-            NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'حسابي'),
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'الرئيسية',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.grid_view_outlined),
+              selectedIcon: Icon(Icons.grid_view),
+              label: 'التصنيفات',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.chat_bubble_outline),
+              selectedIcon: Icon(Icons.chat_bubble),
+              label: 'الرسائل',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.shopping_cart_outlined),
+              selectedIcon: Icon(Icons.shopping_cart),
+              label: 'السلة',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'حسابي',
+            ),
           ],
         ),
       ),

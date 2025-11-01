@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_scaffold.dart';
+import '../../controller/routing/routing.dart';
 
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({super.key});
