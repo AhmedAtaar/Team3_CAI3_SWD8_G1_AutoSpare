@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../controller/routing/routing.dart';
+import '../../controller/navigation/navigation.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});

@@ -1,5 +1,5 @@
+import 'package:auto_spare/view/screens/login_screen.dart';
 import 'package:flutter/material.dart';
-import 'view/screens/home_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
         colorSchemeSeed: Colors.green,
         brightness: Brightness.light,
       ),
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }
