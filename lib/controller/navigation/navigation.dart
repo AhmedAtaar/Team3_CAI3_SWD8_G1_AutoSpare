@@ -1,12 +1,12 @@
+import 'package:auto_spare/view/screens/tow_screen.dart';
 import 'package:flutter/material.dart';
 import '../../view/screens/home_screen.dart';
 import '../../view/screens/categories_screen.dart';
-import '../../view/screens/messages_screen.dart';
 import '../../view/screens/cart_screen.dart';
 import '../../view/screens/profile_screen.dart';
 
 class AppNavigationScaffold extends StatelessWidget {
-  final int currentIndex;
+  final int currentIndex; // 0:الرئيسية 1:التصنيفات 2:اللوجستية 3:السلة 4:حسابي
   final String title;
   final Widget body;
 
@@ -18,6 +18,8 @@ class AppNavigationScaffold extends StatelessWidget {
   });
 
   void _navigate(BuildContext context, int i) {
+    if (i == currentIndex) return;
+
     Widget page;
     switch (i) {
       case 0:
@@ -27,7 +29,7 @@ class AppNavigationScaffold extends StatelessWidget {
         page = const CategoriesScreen();
         break;
       case 2:
-        page = const MessagesScreen();
+        page = const TowScreen();
         break;
       case 3:
         page = const CartScreen();
@@ -37,12 +39,11 @@ class AppNavigationScaffold extends StatelessWidget {
         page = const SellerProfilePage();
         break;
     }
-    if (i != currentIndex) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => page),
-      );
-    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
   }
 
   @override
@@ -67,9 +68,9 @@ class AppNavigationScaffold extends StatelessWidget {
               label: 'التصنيفات',
             ),
             NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble),
-              label: 'الرسائل',
+              icon: Icon(Icons.local_shipping_outlined),
+              selectedIcon: Icon(Icons.local_shipping),
+              label: 'الخدمات اللوجستية',
             ),
             NavigationDestination(
               icon: Icon(Icons.shopping_cart_outlined),

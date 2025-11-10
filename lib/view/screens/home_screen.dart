@@ -3,9 +3,9 @@ import 'package:auto_spare/view/widgets/home_screen_widgets/customer_type.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
 import 'package:flutter/material.dart';
 import 'categories_screen.dart';
-import 'messages_screen.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
+import 'tow_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,23 +17,28 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   int _bottomIndex = 0;
-  String _role = 'buyer'; // buyer | seller
+  String _role = 'buyer';
 
   final List<Product> allProducts = List.generate(
     12,
-    (i) => Product(
+        (i) => Product(
       title: 'قطعة رقم ${i + 1}',
       price: (25 + i * 3.5).toStringAsFixed(2),
-      imageUrl: null, // ضع URL/Asset لاحقاً
+      imageUrl: null,
       badge: i.isEven ? 'عرض' : null,
     ),
   );
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   List<Product> _filtered() {
     final q = _searchCtrl.text.trim().toLowerCase();
     return allProducts.where((p) {
       final okText = q.isEmpty || p.title.toLowerCase().contains(q);
-      // يمكنك لاحقاً فصل بيانات الـ buyer/seller
       return okText;
     }).toList();
   }
@@ -44,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final products = _filtered();
 
     return Directionality(
-      textDirection: TextDirection.rtl, // لملصقات الـ BottomNav بالعربي
+      textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: _buildAppBar(theme),
@@ -62,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   childAspectRatio: .8,
                 ),
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => ProductCard(item: products[index]),
+                      (context, index) => ProductCard(item: products[index]),
                   childCount: products.length,
                 ),
               ),
@@ -223,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
             page = const CategoriesScreen();
             break;
           case 2:
-            page = const MessagesScreen();
+            page = const TowScreen(); // الخدمات اللوجستية
             break;
           case 3:
             page = const CartScreen();
@@ -235,7 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         if (i != 0) {
-          // لو مش الرئيسية
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => page),
@@ -254,9 +258,9 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'التصنيفات',
         ),
         NavigationDestination(
-          icon: Icon(Icons.chat_bubble_outline),
-          selectedIcon: Icon(Icons.chat_bubble),
-          label: 'الرسائل',
+          icon: Icon(Icons.local_shipping_outlined),
+          selectedIcon: Icon(Icons.local_shipping),
+          label: 'الخدمات اللوجستية',
         ),
         NavigationDestination(
           icon: Icon(Icons.shopping_cart_outlined),
@@ -272,8 +276,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-// ======= Models & small widgets =======
 
 class _QuickAction {
   final IconData icon;
