@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Product> allProducts = List.generate(
     12,
-        (i) => Product(
+    (i) => Product(
       title: 'قطعة رقم ${i + 1}',
       price: (25 + i * 3.5).toStringAsFixed(2),
       imageUrl: null,
@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   childAspectRatio: .8,
                 ),
                 delegate: SliverChildBuilderDelegate(
-                      (context, index) => ProductCard(item: products[index]),
+                  (context, index) => ProductCard(item: products[index]),
                   childCount: products.length,
                 ),
               ),
@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
             page = const CategoriesScreen();
             break;
           case 2:
-            page = const TowScreen(); // الخدمات اللوجستية
+            page = const TowScreen();
             break;
           case 3:
             page = const CartScreen();
@@ -260,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
         NavigationDestination(
           icon: Icon(Icons.local_shipping_outlined),
           selectedIcon: Icon(Icons.local_shipping),
-          label: 'الخدمات اللوجستية',
+          label: 'الونش',
         ),
         NavigationDestination(
           icon: Icon(Icons.shopping_cart_outlined),

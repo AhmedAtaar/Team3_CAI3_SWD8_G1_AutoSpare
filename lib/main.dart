@@ -1,6 +1,4 @@
 import 'package:auto_spare/view/screens/home_screen.dart';
-import 'package:auto_spare/view/screens/login_screen.dart';
-import 'package:auto_spare/view/screens/tow_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(const MyApp());

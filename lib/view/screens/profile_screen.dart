@@ -1,7 +1,7 @@
+import 'package:auto_spare/view/screens/tow_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'categories_screen.dart';
-import 'messages_screen.dart';
 import 'cart_screen.dart';
 
 class SellerProfilePage extends StatefulWidget {
@@ -18,7 +18,6 @@ class _SellerProfilePageState extends State<SellerProfilePage> {
   final Map<int, bool> selected = {};
   int _bottomIndex = 4; // هنا الصفحة الحالية (حسابي)
 
-  // ✅ نفس كود الـ BottomNavigation
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _bottomIndex,
@@ -34,7 +33,7 @@ class _SellerProfilePageState extends State<SellerProfilePage> {
             page = const CategoriesScreen();
             break;
           case 2:
-            page = const MessagesScreen();
+            page = const TowScreen();
             break;
           case 3:
             page = const CartScreen();
@@ -65,9 +64,9 @@ class _SellerProfilePageState extends State<SellerProfilePage> {
           label: 'التصنيفات',
         ),
         NavigationDestination(
-          icon: Icon(Icons.chat_bubble_outline),
-          selectedIcon: Icon(Icons.chat_bubble),
-          label: 'الرسائل',
+          icon: Icon(Icons.local_shipping_outlined),
+          selectedIcon: Icon(Icons.local_shipping),
+          label: 'الونش',
         ),
         NavigationDestination(
           icon: Icon(Icons.shopping_cart_outlined),
@@ -173,7 +172,6 @@ class _SellerProfilePageState extends State<SellerProfilePage> {
             ],
           ),
         ),
-        // ✅ هنا استدعاء البار اللي فوق
         bottomNavigationBar: _buildBottomBar(),
       ),
     );

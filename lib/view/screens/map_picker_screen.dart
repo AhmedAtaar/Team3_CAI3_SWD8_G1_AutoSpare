@@ -7,13 +7,21 @@ class MapPickResult {
   final String address;
   final double lat;
   final double lng;
-  const MapPickResult({required this.address, required this.lat, required this.lng});
+  const MapPickResult({
+    required this.address,
+    required this.lat,
+    required this.lng,
+  });
 }
 
 class MapPickerScreen extends StatefulWidget {
   final double initLat;
   final double initLng;
-  const MapPickerScreen({super.key, required this.initLat, required this.initLng});
+  const MapPickerScreen({
+    super.key,
+    required this.initLat,
+    required this.initLng,
+  });
 
   @override
   State<MapPickerScreen> createState() => _MapPickerScreenState();
@@ -33,7 +41,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
 
   Future<void> _reverse() async {
     try {
-      final list = await placemarkFromCoordinates(_pin.latitude, _pin.longitude);
+      final list = await placemarkFromCoordinates(
+        _pin.latitude,
+        _pin.longitude,
+      );
       if (list.isNotEmpty) {
         final p = list.first;
         setState(() {
@@ -42,11 +53,11 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             p.subLocality,
             p.locality,
             p.administrativeArea,
-            p.country
+            p.country,
           ].where((e) => (e ?? '').trim().isNotEmpty).join('، ');
         });
       }
-    } catch (_) {/* سيبها بسيطة */}
+    } catch (_) {}
   }
 
   void _confirm() {
@@ -62,7 +73,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('اختيار مكان الوصول'), centerTitle: true),
+        appBar: AppBar(
+          title: const Text('اختيار مكان الوصول'),
+          centerTitle: true,
+        ),
         body: Stack(
           children: [
             FlutterMap(
@@ -80,14 +94,20 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.auto_spare',
                 ),
-                MarkerLayer(markers: [
-                  Marker(
-                    point: _pin,
-                    width: 40,
-                    height: 40,
-                    child: const Icon(Icons.location_on, size: 40, color: Colors.red),
-                  ),
-                ]),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _pin,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        Icons.location_on,
+                        size: 40,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
             Positioned(
@@ -99,9 +119,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    _addr.isEmpty
-                        ? 'جارِ تحديد العنوان…'
-                        : _addr,
+                    _addr.isEmpty ? 'جارِ تحديد العنوان…' : _addr,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),

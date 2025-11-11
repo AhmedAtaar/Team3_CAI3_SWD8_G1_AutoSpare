@@ -6,7 +6,7 @@ import '../../view/screens/cart_screen.dart';
 import '../../view/screens/profile_screen.dart';
 
 class AppNavigationScaffold extends StatelessWidget {
-  final int currentIndex; // 0:الرئيسية 1:التصنيفات 2:اللوجستية 3:السلة 4:حسابي
+  final int currentIndex;
   final String title;
   final Widget body;
 
@@ -40,10 +40,7 @@ class AppNavigationScaffold extends StatelessWidget {
         break;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    );
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
   }
 
   @override
@@ -70,7 +67,7 @@ class AppNavigationScaffold extends StatelessWidget {
             NavigationDestination(
               icon: Icon(Icons.local_shipping_outlined),
               selectedIcon: Icon(Icons.local_shipping),
-              label: 'الخدمات اللوجستية',
+              label: 'الونش',
             ),
             NavigationDestination(
               icon: Icon(Icons.shopping_cart_outlined),
