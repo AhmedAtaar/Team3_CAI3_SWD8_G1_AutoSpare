@@ -4,6 +4,7 @@ import 'package:auto_spare/view/widgets/login_screen_widgets/custom_buttons.dart
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_form_field.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_toggle_switch.dart';
 import 'package:flutter/material.dart';
+import 'profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,30 +16,71 @@ class LoginScreen extends StatefulWidget {
 class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _isArabicSelected = false;
 
+  final Map<String, Map<String, String>> _users = const {
+    'Ahmed': {'password': '1234', 'auth': 'Admin'},
+    'Ziad': {'password': '1234', 'auth': 'Seller'},
+    'Freddy': {'password': '1234', 'auth': 'Buyer'},
+  };
+
   @override
   void dispose() {
-    _emailController.dispose();
+    _userController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  UserRole _roleFromAuth(String auth) {
+    switch (auth) {
+      case 'Admin':
+        return UserRole.admin;
+      case 'Seller':
+        return UserRole.seller;
+      case 'Buyer':
+      default:
+        return UserRole.buyer;
+    }
+  }
+
   void _handleSignIn() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please correct the errors above.')),
       );
+      return;
     }
+
+    final user = _userController.text.trim();
+    final pass = _passwordController.text.trim();
+
+    if (!_users.containsKey(user)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not found')),
+      );
+      return;
+    }
+
+    final rec = _users[user]!;
+    if (rec['password'] != pass) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Wrong password')),
+      );
+      return;
+    }
+
+    final role = _roleFromAuth(rec['auth']!);
+
+    UserSession.initFromProfile(name: user, role: role);
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
   }
 
   @override
@@ -56,7 +98,6 @@ class LoginScreenState extends State<LoginScreen> {
                   Positioned(
                     top: 40,
                     right: 20,
-
                     child: CustomToggleSwitch(
                       isArabicSelected: _isArabicSelected,
                       onChanged: (bool newValue) {
@@ -70,10 +111,7 @@ class LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'assets/images/logo_light_theme.png',
-                          height: 60,
-                        ),
+                        Image.asset('assets/images/logo_light_theme.png', height: 60),
                         const SizedBox(height: 5),
                         const Text(
                           'Welcome Back',
@@ -104,14 +142,14 @@ class LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CustomFormField(
-                      controller: _emailController,
-                      labelText: 'Email',
-                      hintText: 'Enter your email',
+                      controller: _userController,
+                      labelText: 'Username',
+                      hintText: 'Ahmed / Ziad / Freddy',
                       icon: Icons.person_outline,
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.text,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return 'Please enter your username';
                         }
                         return null;
                       },
@@ -137,11 +175,8 @@ class LoginScreenState extends State<LoginScreen> {
                               : Icons.visibility_outlined,
                           color: Colors.grey,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -150,11 +185,8 @@ class LoginScreenState extends State<LoginScreen> {
                       children: [
                         Checkbox(
                           value: _rememberMe,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              _rememberMe = value ?? false;
-                            });
-                          },
+                          onChanged: (bool? value) =>
+                              setState(() => _rememberMe = value ?? false),
                           activeColor: AppColors.primaryGreen,
                         ),
                         const Text('Remember me'),
@@ -162,10 +194,7 @@ class LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 25),
 
-                    CustomElevatedButton(
-                      text: 'Sign In',
-                      onPressed: _handleSignIn,
-                    ),
+                    CustomElevatedButton(text: 'Sign In', onPressed: _handleSignIn),
                     const SizedBox(height: 20),
 
                     const OrDivider(),
@@ -174,20 +203,20 @@ class LoginScreenState extends State<LoginScreen> {
                     CustomOutlinedButton(
                       text: 'Continue with Google',
                       onPressed: () {},
-                      leadingIcon: Image.asset(
-                        'assets/images/google_logo.png',
-                        height: 24,
-                      ),
+                      leadingIcon:
+                      Image.asset('assets/images/google_logo.png', height: 24),
                     ),
                     const SizedBox(height: 15),
 
                     CustomOutlinedButton(
                       text: 'Continue as Guest',
                       onPressed: () {
+                        UserSession.initFromProfile(
+                          name: 'Guest',
+                          role: UserRole.buyer,
+                        );
                         Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => const HomeScreen(),
-                          ),
+                          MaterialPageRoute(builder: (context) => const HomeScreen()),
                         );
                       },
                     ),
