@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "191735267327",
+    "project_id": "auto-spare-api",
+    "storage_bucket": "auto-spare-api.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191735267327:android:37553eb3790d7cbdb6b1ca",
+        "android_client_info": {
+          "package_name": "com.example.auto_spare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCud1_wSpG-YE88NXAhvfStPxUIsMfSbj4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
