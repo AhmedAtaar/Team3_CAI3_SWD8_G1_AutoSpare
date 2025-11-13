@@ -20,7 +20,7 @@ class AppNavigationScaffold extends StatelessWidget {
   void _navigate(BuildContext context, int i) {
     if (i == currentIndex) return;
 
-    Widget page;
+    late final Widget page;
     switch (i) {
       case 0:
         page = const HomeScreen();
@@ -36,11 +36,15 @@ class AppNavigationScaffold extends StatelessWidget {
         break;
       case 4:
       default:
-        page = const SellerProfilePage();
+
+        page = const ProfileScreen();
         break;
     }
 
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => page),
+    );
   }
 
   @override

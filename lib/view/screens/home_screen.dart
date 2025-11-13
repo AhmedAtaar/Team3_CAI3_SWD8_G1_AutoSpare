@@ -1,11 +1,13 @@
 import 'package:auto_spare/model/product.dart';
-import 'package:auto_spare/view/widgets/home_screen_widgets/customer_type.dart';
+import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
 import 'package:flutter/material.dart';
+
 import 'categories_screen.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
 import 'tow_screen.dart';
+import 'product_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,17 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   int _bottomIndex = 0;
-  String _role = 'buyer';
-
-  final List<Product> allProducts = List.generate(
-    12,
-    (i) => Product(
-      title: 'قطعة رقم ${i + 1}',
-      price: (25 + i * 3.5).toStringAsFixed(2),
-      imageUrl: null,
-      badge: i.isEven ? 'عرض' : null,
-    ),
-  );
+  String _uiRole = 'buyer';
 
   @override
   void dispose() {
@@ -35,18 +27,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  List<Product> _filtered() {
+  List<CatalogProduct> _filteredApproved() {
+    final approved = Catalog().all();
     final q = _searchCtrl.text.trim().toLowerCase();
-    return allProducts.where((p) {
-      final okText = q.isEmpty || p.title.toLowerCase().contains(q);
-      return okText;
+
+    return approved.where((c) {
+      final text =
+      '${c.title} ${kBrandName[c.brand]} ${c.model} ${c.years.join(' ')} ${c.seller}'
+          .toLowerCase();
+      return q.isEmpty || text.contains(q);
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final products = _filtered();
+    final items = _filteredApproved();
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -67,8 +63,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   childAspectRatio: .8,
                 ),
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => ProductCard(item: products[index]),
-                  childCount: products.length,
+                      (context, index) {
+                    final c = items[index];
+                    final cardData = Product(
+                      title:
+                      '${c.title} • ${kBrandName[c.brand]} ${c.model} • ${c.years.join(', ')}',
+                      price: c.price.toStringAsFixed(2),
+                      imageUrl: c.imageUrl,
+                      badge: null,
+                    );
+
+                    return ProductCard(
+                      item: cardData,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductDetailsScreen(p: c),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  childCount: items.length,
                 ),
               ),
             ),
@@ -88,12 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 0,
       titleSpacing: 0,
       title: Padding(
-        padding: const EdgeInsetsDirectional.only(
-          start: 12,
-          end: 12,
-          top: 4,
-          bottom: 8,
-        ),
+        padding:
+        const EdgeInsetsDirectional.only(start: 12, end: 12, top: 4, bottom: 8),
         child: Row(
           children: [
             Container(
@@ -145,24 +158,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildRoleTabs(ThemeData theme) {
-    final isBuyer = _role == 'buyer';
+    final isBuyer = _uiRole == 'buyer';
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
       child: Row(
         children: [
           Expanded(
-            child: SegmentButton(
+            child: _SegmentButton(
               label: 'مشتري (Buyer)',
               selected: isBuyer,
-              onTap: () => setState(() => _role = 'buyer'),
+              onTap: () => setState(() => _uiRole = 'buyer'),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: SegmentButton(
+            child: _SegmentButton(
               label: 'بائع (Seller)',
               selected: !isBuyer,
-              onTap: () => setState(() => _role = 'seller'),
+              onTap: () => setState(() => _uiRole = 'seller'),
             ),
           ),
         ],
@@ -171,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActions(ThemeData theme) {
-    final items = const [
+    const items = [
       _QuickAction(icon: Icons.category, label: 'التصنيفات'),
       _QuickAction(icon: Icons.assignment, label: 'طلب عرض سعر'),
       _QuickAction(icon: Icons.local_shipping, label: 'الخدمات اللوجستية'),
@@ -184,27 +197,38 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         scrollDirection: Axis.horizontal,
-        itemBuilder: (_, i) => Container(
-          width: 150,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant.withOpacity(.35),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor),
-          ),
-          child: Row(
-            children: [
-              Icon(items[i].icon),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  items[i].label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge,
+        itemBuilder: (_, i) => InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            if (i == 0) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+              );
+            }
+          },
+          child: Container(
+            width: 150,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(.35),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor),
+            ),
+            child: Row(
+              children: [
+                Icon(items[i].icon),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    items[i].label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         separatorBuilder: (_, __) => const SizedBox(width: 10),
@@ -213,13 +237,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _bottomIndex,
       onDestinationSelected: (i) {
+        if (_bottomIndex == i) return;
         setState(() => _bottomIndex = i);
 
-        Widget page;
+        late final Widget page;
         switch (i) {
           case 0:
             page = const HomeScreen();
@@ -235,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
             break;
           case 4:
           default:
-            page = const SellerProfilePage();
+            page = const ProfileScreen();
             break;
         }
 
@@ -281,4 +307,41 @@ class _QuickAction {
   final IconData icon;
   final String label;
   const _QuickAction({required this.icon, required this.label});
+}
+
+class _SegmentButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _SegmentButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        height: 42,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color:
+          selected ? cs.primary.withOpacity(.12) : cs.surfaceVariant.withOpacity(.35),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outlineVariant),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? cs.primary : cs.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 }

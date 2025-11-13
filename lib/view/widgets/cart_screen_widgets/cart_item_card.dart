@@ -1,6 +1,6 @@
+import 'package:auto_spare/services/cart_service.dart';
 import 'package:flutter/material.dart';
 import '../../themes/app_colors.dart';
-import '../../screens/cart_screen.dart';
 
 class CartItemCard extends StatelessWidget {
   final CartItem item;
@@ -8,10 +8,10 @@ class CartItemCard extends StatelessWidget {
   final VoidCallback onRemove;
 
   const CartItemCard({
+    super.key,
     required this.item,
     required this.onQuantityChanged,
     required this.onRemove,
-    super.key,
   });
 
   @override
@@ -33,7 +33,6 @@ class CartItemCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // MARK: Image Placeholder
                 Container(
                   width: 80,
                   height: 80,
@@ -41,42 +40,43 @@ class CartItemCard extends StatelessWidget {
                     color: theme.colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
-                    child: Icon(
-                      //TODO: Replace icon with real image
-                      Icons.image,
-                      size: 40,
-                      color: AppColors.primaryGreen,
+                  clipBehavior: Clip.antiAlias,
+                  child: (item.imageUrl == null || item.imageUrl!.isEmpty)
+                      ? Center(
+                    child: Icon(Icons.image, size: 40, color: AppColors.primaryGreen),
+                  )
+                      : Image.network(
+                    item.imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(
+                      child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.outline),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                // MARK: Details & Price
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: AppColors.darkText,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         item.details,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '\$${item.price.toStringAsFixed(2)}',
+                        '${item.price.toStringAsFixed(2)} جنيه',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.primaryGreen,
@@ -85,7 +85,6 @@ class CartItemCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // MARK: Delete
                 IconButton(
                   onPressed: onRemove,
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -94,15 +93,11 @@ class CartItemCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            // MARK: Controlling quantity
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 2,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.lightText,
                     borderRadius: BorderRadius.circular(10),
@@ -118,16 +113,11 @@ class CartItemCard extends StatelessWidget {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Text(
-                          item.quantity.toString(),
-                          style: theme.textTheme.titleMedium,
-                        ),
+                        child: Text(item.quantity.toString(), style: theme.textTheme.titleMedium),
                       ),
                       _buildQuantityButton(
                         icon: Icons.remove,
-                        onTap: item.quantity > 1
-                            ? () => onQuantityChanged(false)
-                            : null,
+                        onTap: item.quantity > 1 ? () => onQuantityChanged(false) : null,
                         theme: theme,
                         isDecrement: true,
                       ),
@@ -151,7 +141,7 @@ class CartItemCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.all(4),
         child: Icon(
           icon,

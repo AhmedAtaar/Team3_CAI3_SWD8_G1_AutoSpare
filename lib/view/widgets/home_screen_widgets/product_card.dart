@@ -3,12 +3,31 @@ import 'package:flutter/material.dart';
 
 class ProductCard extends StatelessWidget {
   final Product item;
-  const ProductCard({required this.item});
+  final VoidCallback? onTap;
+
+  const ProductCard({super.key, required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = theme.colorScheme.outlineVariant;
+
+    Widget image() {
+      if (item.imageUrl == null || item.imageUrl!.isEmpty) {
+        return const Center(child: Icon(Icons.image_outlined, size: 40));
+      }
+      return ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+        child: Image.network(
+          item.imageUrl!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) =>
+          const Center(child: Icon(Icons.broken_image_outlined, size: 40)),
+        ),
+      );
+    }
 
     return Material(
       color: theme.colorScheme.surface,
@@ -16,7 +35,7 @@ class ProductCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {},
+        onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
@@ -36,14 +55,13 @@ class ProductCard extends StatelessWidget {
                       ),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(
-                            .35,
-                          ),
+                          color: theme.colorScheme.surfaceVariant
+                              .withOpacity(.35),
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(18),
                           ),
                         ),
-                        child: const Center(child: Icon(Icons.image, size: 40)),
+                        child: image(),
                       ),
                     ),
                     if (item.badge != null)
@@ -77,6 +95,7 @@ class ProductCard extends StatelessWidget {
                   item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  textDirection: TextDirection.rtl,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -87,7 +106,7 @@ class ProductCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      '\$${item.price}',
+                      '${item.price} جنيه',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
