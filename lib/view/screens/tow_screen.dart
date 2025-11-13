@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../controller/navigation/navigation.dart';
-import 'tow_companies_screen.dart' show TowCompany, TowCompaniesScreen, kTowCompanies;
+
+// ✅ استيراد موديل الشركات والدليل المركزي
+import 'package:auto_spare/services/tow_directory.dart' show TowCompany, TowDirectory;
+
+// ✅ استيراد شاشة اختيار الشركة فقط (من غير الـ show)
+import 'tow_companies_screen.dart';
 import 'map_picker_screen.dart';
 
 class TowScreen extends StatefulWidget {
@@ -101,14 +106,17 @@ class _TowScreenState extends State<TowScreen> {
     if (_pos == null) return;
 
     final userLat = _pos!.latitude, userLng = _pos!.longitude;
-    final sorted = [...kTowCompanies]..sort((a, b) {
+    final list = List<TowCompany>.from(TowDirectory().all);        // ✅ بديل kTowCompanies
+    if (list.isEmpty) return;
+
+    list.sort((a, b) {
       final da = Geolocator.distanceBetween(userLat, userLng, a.lat, a.lng);
       final db = Geolocator.distanceBetween(userLat, userLng, b.lat, b.lng);
       return da.compareTo(db);
     });
-    final nearest = sorted.first;
-    final km = Geolocator.distanceBetween(userLat, userLng, nearest.lat, nearest.lng) / 1000.0;
 
+    final nearest = list.first;
+    final km = Geolocator.distanceBetween(userLat, userLng, nearest.lat, nearest.lng) / 1000.0;
     _applySelectedCompany(nearest, km);
   }
 
@@ -166,15 +174,13 @@ class _TowScreenState extends State<TowScreen> {
     }
   }
 
-  // حساب التكاليف بناءً على الشركة المختارة
+  // حساب التكاليف
   void _recalcCosts() {
-    final baseCost = _selectedCompany?.baseCost ?? 0.0;
-    final pricePerKm = _selectedCompany?.pricePerKm ?? 0.0;
+    final baseCost    = _selectedCompany?.baseCost   ?? 0.0;
+    final pricePerKm  = _selectedCompany?.pricePerKm ?? 0.0;
 
-    // كم منّي للشركة
     final kmToCompany = _companyDistKm ?? 0.0;
 
-    // كم منّي لمكان الوصول
     double kmToDest = 0.0;
     if (_pos != null && _destLat != null && _destLng != null) {
       kmToDest = Geolocator.distanceBetween(
@@ -183,10 +189,10 @@ class _TowScreenState extends State<TowScreen> {
     }
 
     final kmTotal = kmToCompany + kmToDest;
-    final kmCost = kmTotal * pricePerKm;
-    final total = baseCost + kmCost;
+    final kmCost  = kmTotal * pricePerKm;
+    final total   = baseCost + kmCost;
 
-    _kmSumCtrl.text = '${kmTotal.toStringAsFixed(1)} كم';
+    _kmSumCtrl .text = '${kmTotal.toStringAsFixed(1)} كم';
     _kmCostCtrl.text = '${kmCost.toStringAsFixed(0)} جنيه';
     _totalCostCtrl.text = '${total.toStringAsFixed(0)} جنيه';
   }
@@ -418,7 +424,7 @@ class _TowScreenState extends State<TowScreen> {
                     hintText: 'مثال: هوندا سيفيك',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'यह الحقل مطلوب' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -462,7 +468,9 @@ class _TowScreenState extends State<TowScreen> {
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'هذا الحقل مطلوب';
-                    if (v.replaceAll(RegExp(r'[\s\\-\\+]'), '').length < 9) return 'رجاءً أدخل رقمًا صحيحًا';
+                    if (v.replaceAll(RegExp(r'[\\s\\-\\+]'), '').length < 9) {
+                      return 'رجاءً أدخل رقمًا صحيحًا';
+                    }
                     return null;
                   },
                 ),

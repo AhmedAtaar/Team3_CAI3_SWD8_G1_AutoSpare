@@ -1,12 +1,16 @@
+// lib/view/screens/login_screen.dart
+import 'package:auto_spare/model/app_user.dart';          // ✅ صحّحنا المسار
 import 'package:auto_spare/services/user_store.dart';
+import 'package:auto_spare/services/user_session.dart';   // ✅ الجلسة/الأدوار الموحّدة
 import 'package:auto_spare/view/screens/home_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_buttons.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_form_field.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_toggle_switch.dart';
 import 'package:flutter/material.dart';
-import 'profile_screen.dart';
 import 'sign_up_screen.dart';
+
+// ❌ لا تعرّف enum UserRole هنا. مستورد من user_session.dart
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,10 +35,13 @@ class LoginScreenState extends State<LoginScreen> {
 
   UserRole _mapRole(AppUserRole r) {
     switch (r) {
-      case AppUserRole.admin:  return UserRole.admin;
-      case AppUserRole.seller: return UserRole.seller;
+      case AppUserRole.admin:
+        return UserRole.admin;
+      case AppUserRole.seller:
+        return UserRole.seller;
       case AppUserRole.buyer:
-      default:                 return UserRole.buyer;
+      default:
+        return UserRole.buyer;
     }
   }
 
@@ -58,7 +65,6 @@ class LoginScreenState extends State<LoginScreen> {
     }
 
     UserSession.initFromProfile(name: u.name, role: _mapRole(u.role));
-
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
@@ -96,13 +102,18 @@ class LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset('assets/images/logo_light_theme.png', height: 60),
+                        // Image.asset('assets/images/logo_light_theme.png', height: 60),
                         const SizedBox(height: 5),
-                        const Text('Welcome Back',
-                            style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Welcome Back',
+                          style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 5),
-                        const Text('Sign in to access your auto parts marketplace',
-                            textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, fontSize: 14)),
+                        const Text(
+                          'Sign in to access your auto parts marketplace',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
                       ],
                     ),
                   ),
@@ -123,7 +134,7 @@ class LoginScreenState extends State<LoginScreen> {
                       labelText: 'Email or Name',
                       hintText: 'ahmed@admin.com أو Ahmed',
                       icon: Icons.person_outline,
-                      keyboardType: TextInputType.emailAddress,
+                      keyboardType: TextInputType.emailAddress,   // ✅
                       validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
                     ),
                     const SizedBox(height: 20),
@@ -169,7 +180,7 @@ class LoginScreenState extends State<LoginScreen> {
                     const OrDivider(),
                     const SizedBox(height: 20),
                     CustomOutlinedButton(text: 'Continue with Google', onPressed: () {}),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 15), // ✅ كان فيها typo
                     CustomOutlinedButton(text: 'Continue as Guest', onPressed: _continueAsGuest),
                   ],
                 ),

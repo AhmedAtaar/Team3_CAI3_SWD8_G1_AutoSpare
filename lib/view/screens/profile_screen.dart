@@ -1,5 +1,8 @@
+// lib/view/screens/profile_screen.dart
 import 'package:auto_spare/model/catalog.dart';
+import 'package:auto_spare/model/app_user.dart';           // AppUserRole
 import 'package:auto_spare/services/user_store.dart';
+import 'package:auto_spare/services/user_session.dart';    // ✅ الجلسة/الأدوار الموحّدة
 import 'package:auto_spare/view/screens/tow_screen.dart';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
@@ -8,47 +11,7 @@ import 'cart_screen.dart';
 import 'login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-enum UserRole { buyer, seller, admin }
-
-class UserSession {
-  static bool loggedIn = false;
-  static String? username;
-  static UserRole? authRole;
-
-  static bool get isAdmin => authRole == UserRole.admin;
-  static bool get canSell => authRole == UserRole.seller;
-
-  static UserRole currentRole = UserRole.buyer;
-
-  static void initFromProfile({required String name, required UserRole role}) {
-    username = name;
-    authRole = role;
-    loggedIn = true;
-    currentRole = canSell ? UserRole.seller : UserRole.buyer;
-  }
-
-  static bool get isSellerNow => !isAdmin && currentRole == UserRole.seller;
-  static bool get isBuyerNow => !isAdmin && currentRole == UserRole.buyer;
-
-  static bool get canSwitchToSeller => canSell && isBuyerNow;
-  static bool get canSwitchToBuyer => isSellerNow;
-
-  static void switchToBuyer() {
-    if (!isAdmin && isSellerNow) currentRole = UserRole.buyer;
-  }
-
-  static void switchToSeller() {
-    if (!isAdmin && canSwitchToSeller) currentRole = UserRole.seller;
-  }
-
-  static void signOut() {
-    loggedIn = false;
-    username = null;
-    authRole = null;
-    currentRole = UserRole.buyer;
-  }
-}
-
+// ---------- نماذج المراجعة ----------
 enum ProductStatus { pending, approved, rejected }
 
 class ModerationProduct {
@@ -167,7 +130,10 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
     final u = UserStore().currentUser;
     if (u != null && !UserSession.loggedIn) {
-      UserSession.initFromProfile(name: u.name, role: _mapRole(u.role));
+      UserSession.initFromProfile(
+        name: u.name,
+        role: _mapRole(u.role),
+      );
     }
   }
 
@@ -213,11 +179,13 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('إلغاء')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('إلغاء'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('رفض')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('رفض'),
+          ),
         ],
       ),
     );
@@ -256,9 +224,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             if (title != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 16)),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             Flexible(
               child: AspectRatio(
@@ -288,7 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   icon: const Icon(Icons.open_in_new),
                   label: const Text('فتح في المتصفح'),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(height: 6),
               ],
             ),
           ],
@@ -334,7 +306,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _bottomIndex,
@@ -360,25 +331,30 @@ class _ProfileScreenState extends State<ProfileScreen>
       },
       destinations: const [
         NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'الرئيسية'),
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home),
+          label: 'الرئيسية',
+        ),
         NavigationDestination(
-            icon: Icon(Icons.grid_view_outlined),
-            selectedIcon: Icon(Icons.grid_view),
-            label: 'التصنيفات'),
+          icon: Icon(Icons.grid_view_outlined),
+          selectedIcon: Icon(Icons.grid_view),
+          label: 'التصنيفات',
+        ),
         NavigationDestination(
-            icon: Icon(Icons.local_shipping_outlined),
-            selectedIcon: Icon(Icons.local_shipping),
-            label: 'الونش'),
+          icon: Icon(Icons.local_shipping_outlined),
+          selectedIcon: Icon(Icons.local_shipping),
+          label: 'الونش',
+        ),
         NavigationDestination(
-            icon: Icon(Icons.shopping_cart_outlined),
-            selectedIcon: Icon(Icons.shopping_cart),
-            label: 'السلة'),
+          icon: Icon(Icons.shopping_cart_outlined),
+          selectedIcon: Icon(Icons.shopping_cart),
+          label: 'السلة',
+        ),
         NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'حسابي'),
+          icon: Icon(Icons.person_outline),
+          selectedIcon: Icon(Icons.person),
+          label: 'حسابي',
+        ),
       ],
     );
   }
@@ -410,15 +386,14 @@ class _ProfileScreenState extends State<ProfileScreen>
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border:
-        Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: const [
             Icon(Icons.account_circle_outlined),
-            SizedBox(width: 8)
+            SizedBox(width: 8),
           ]),
           Text('مرحبا $name'),
           const SizedBox(height: 8),
@@ -427,18 +402,23 @@ class _ProfileScreenState extends State<ProfileScreen>
             runSpacing: 8,
             children: [
               Chip(
-                label: Text(isAdmin
-                    ? 'لوحة إدارة'
-                    : 'الوضع الحالي: ${isSellerNow ? 'بائع' : 'مشتري'}'),
-                avatar: Icon(isAdmin
-                    ? Icons.admin_panel_settings_outlined
-                    : (isSellerNow
-                    ? Icons.storefront
-                    : Icons.shopping_bag_outlined)),
+                label: Text(
+                  isAdmin
+                      ? 'لوحة إدارة'
+                      : 'الوضع الحالي: ${isSellerNow ? 'بائع' : 'مشتري'}',
+                ),
+                avatar: Icon(
+                  isAdmin
+                      ? Icons.admin_panel_settings_outlined
+                      : (isSellerNow
+                      ? Icons.storefront
+                      : Icons.shopping_bag_outlined),
+                ),
               ),
               Chip(
-                  label: Text('دور الحساب: $accountRole'),
-                  avatar: const Icon(Icons.verified_user_outlined)),
+                label: Text('دور الحساب: $accountRole'),
+                avatar: const Icon(Icons.verified_user_outlined),
+              ),
             ],
           ),
           if (!isAdmin) ...[
@@ -451,9 +431,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                     UserSession.switchToBuyer();
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                            Text('تم التبديل إلى وضع مشتري')));
+                      const SnackBar(
+                        content: Text('تم التبديل إلى وضع مشتري'),
+                      ),
+                    );
                   }
                       : null,
                   icon: const Icon(Icons.swap_horiz),
@@ -466,9 +447,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                     UserSession.switchToSeller();
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                            Text('تم الرجوع إلى وضع بائع')));
+                      const SnackBar(
+                        content: Text('تم الرجوع إلى وضع بائع'),
+                      ),
+                    );
                   }
                       : null,
                   icon: const Icon(Icons.storefront),
@@ -490,9 +472,10 @@ class _ProfileScreenState extends State<ProfileScreen>
     final cs = Theme.of(context).colorScheme;
     final pendingProducts = store.pending();
     final pendingSellers = UserStore().pendingSellers();
+    final pendingTow = UserStore().pendingTowCompanies();
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(
         children: [
           TabBar(
@@ -500,12 +483,14 @@ class _ProfileScreenState extends State<ProfileScreen>
             tabs: const [
               Tab(text: 'مراجعة المنتجات'),
               Tab(text: 'اعتماد البائعين'),
+              Tab(text: 'اعتماد شركات الونش'),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: TabBarView(
               children: [
+                // ===== المنتجات =====
                 Column(
                   children: [
                     Container(
@@ -519,23 +504,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('لوحة مراجعة المنتجات',
-                              textDirection: TextDirection.rtl),
+                          const Text('لوحة مراجعة المنتجات', textDirection: TextDirection.rtl),
                           const SizedBox(height: 6),
-                          Text('في الانتظار: ${pendingProducts.length}',
-                              textDirection: TextDirection.rtl),
+                          Text('في الانتظار: ${pendingProducts.length}', textDirection: TextDirection.rtl),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     Expanded(
                       child: pendingProducts.isEmpty
-                          ? const Center(
-                          child: Text('لا توجد عناصر قيد المراجعة'))
+                          ? const Center(child: Text('لا توجد عناصر قيد المراجعة'))
                           : ListView.separated(
                         itemCount: pendingProducts.length,
-                        separatorBuilder: (_, __) =>
-                        const SizedBox(height: 8),
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (_, i) {
                           final it = pendingProducts[i];
                           return Card(
@@ -544,27 +525,22 @@ class _ProfileScreenState extends State<ProfileScreen>
                               child: Column(
                                 children: [
                                   Row(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       _thumb(it.imageUrl),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(it.title,
-                                                textDirection:
-                                                TextDirection.rtl),
+                                            Text(it.title, textDirection: TextDirection.rtl),
                                             const SizedBox(height: 4),
                                             Text(
                                               'رقم: ${it.id} • البائع: ${it.seller}\n'
                                                   'البراند: ${kBrandName[it.brand]} • الموديل: ${it.model}\n'
                                                   'السنوات: ${it.years.join(', ')} • المخزون: ${it.stock}\n'
                                                   '${it.description}',
-                                              textDirection:
-                                              TextDirection.rtl,
+                                              textDirection: TextDirection.rtl,
                                               softWrap: true,
                                             ),
                                           ],
@@ -577,20 +553,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     children: [
                                       Expanded(
                                         child: OutlinedButton.icon(
-                                          onPressed: () =>
-                                              _rejectItem(it.id),
-                                          icon: const Icon(Icons.block,
-                                              color: Colors.red),
-                                          label: const Text('رفض',
-                                              style: TextStyle(
-                                                  color: Colors.red)),
+                                          onPressed: () => _rejectItem(it.id),
+                                          icon: const Icon(Icons.block, color: Colors.red),
+                                          label: const Text('رفض', style: TextStyle(color: Colors.red)),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: FilledButton.icon(
-                                          onPressed: () =>
-                                              _approveItem(it.id),
+                                          onPressed: () => _approveItem(it.id),
                                           icon: const Icon(Icons.check),
                                           label: const Text('موافقة'),
                                         ),
@@ -606,6 +577,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ],
                 ),
+
+                // ===== البائعون =====
                 Column(
                   children: [
                     Container(
@@ -619,100 +592,168 @@ class _ProfileScreenState extends State<ProfileScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('طلبات تسجيل كبائع (Pending)',
-                              textDirection: TextDirection.rtl),
+                          const Text('طلبات تسجيل كبائع (Pending)', textDirection: TextDirection.rtl),
                           const SizedBox(height: 6),
-                          Text('في الانتظار: ${pendingSellers.length}',
-                              textDirection: TextDirection.rtl),
+                          Text('في الانتظار: ${pendingSellers.length}', textDirection: TextDirection.rtl),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
                     Expanded(
                       child: pendingSellers.isEmpty
-                          ? const Center(
-                          child:
-                          Text('لا توجد طلبات بائعين قيد المراجعة'))
+                          ? const Center(child: Text('لا توجد طلبات بائعين قيد المراجعة'))
                           : ListView.separated(
                         itemCount: pendingSellers.length,
-                        separatorBuilder: (_, __) =>
-                        const SizedBox(height: 8),
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (_, i) {
                           final s = pendingSellers[i];
                           return Card(
                             child: Padding(
                               padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                  const CircleAvatar(child: Icon(Icons.storefront)),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('${s.name} • ${s.storeName ?? '—'}',
+                                            textDirection: TextDirection.rtl,
+                                            style: const TextStyle(fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 4),
+                                        Text('Email: ${s.email}\nPhone: ${s.phone}', textDirection: TextDirection.rtl),
+                                        _DocLink(label: 'CR',  url: s.commercialRegUrl, icon: Icons.picture_as_pdf_outlined),
+                                        _DocLink(label: 'Tax', url: s.taxCardUrl,        icon: Icons.picture_as_pdf_outlined),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const CircleAvatar(
-                                          child:
-                                          Icon(Icons.storefront)),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${s.name} • ${s.storeName ?? '—'}',
-                                              textDirection:
-                                              TextDirection.rtl,
-                                              style: const TextStyle(
-                                                  fontWeight:
-                                                  FontWeight.w600),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                                'Email: ${s.email}\nPhone: ${s.phone}',
-                                                textDirection:
-                                                TextDirection.rtl),
-                                            _DocLink(
-                                              label: 'CR',
-                                              url: s.commercialRegUrl,
-                                              icon: Icons.picture_as_pdf_outlined,
-                                            ),
-                                            _DocLink(
-                                              label: 'Tax',
-                                              url: s.taxCardUrl,
-                                              icon: Icons
-                                                  .picture_as_pdf_outlined,
-                                            ),
-                                          ],
-                                        ),
+                                      IconButton(
+                                        tooltip: 'رفض',
+                                        onPressed: () { UserStore().rejectSeller(s.email); setState(() {}); },
+                                        icon: const Icon(Icons.block, color: Colors.red),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            tooltip: 'رفض',
-                                            onPressed: () {
-                                              UserStore()
-                                                  .rejectSeller(s.email);
-                                              setState(() {});
-                                            },
-                                            icon: const Icon(Icons.block,
-                                                color: Colors.red),
-                                          ),
-                                          IconButton(
-                                            tooltip: 'موافقة',
-                                            onPressed: () {
-                                              UserStore()
-                                                  .approveSeller(
-                                                  s.email);
-                                              setState(() {});
-                                            },
-                                            icon: const Icon(
-                                                Icons.check_circle,
-                                                color: Colors.green),
-                                          ),
-                                        ],
+                                      IconButton(
+                                        tooltip: 'موافقة',
+                                        onPressed: () { UserStore().approveSeller(s.email); setState(() {}); },
+                                        icon: const Icon(Icons.check_circle, color: Colors.green),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ===== شركات الونش =====
+                Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: cs.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: cs.outlineVariant),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('طلبات شركات الونش (Pending)', textDirection: TextDirection.rtl),
+                          const SizedBox(height: 6), // ✅ كان فيها حروف غريبة
+                          Text('في الانتظار: ${pendingTow.length}', textDirection: TextDirection.rtl),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: pendingTow.isEmpty
+                          ? const Center(child: Text('لا توجد طلبات قيد المراجعة'))
+                          : ListView.separated(
+                        itemCount: pendingTow.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final a = pendingTow[i];
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const CircleAvatar(child: Icon(Icons.local_shipping_outlined)),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('${a.companyName} • ${a.area}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: 4),
+                                        Text('صاحب الحساب: ${a.contactName}\nEmail: ${a.contactEmail}\nPhone: ${a.contactPhone}',
+                                            textDirection: TextDirection.rtl),
+                                        const SizedBox(height: 6),
+                                        Text('سعر الخدمة: ${a.baseCost.toStringAsFixed(0)}ج • سعر الكيلو: ${a.pricePerKm.toStringAsFixed(0)}ج'),
+                                        Text('(${a.lat.toStringAsFixed(6)}, ${a.lng.toStringAsFixed(6)})'),
+                                        if (a.rejectReason != null && a.status == 'rejected')
+                                          Text('مرفوض: ${a.rejectReason}', style: const TextStyle(color: Colors.red)),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'رفض',
+                                        onPressed: () async {
+                                          final ctrl = TextEditingController();
+                                          final ok = await showDialog<bool>(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: const Text('سبب الرفض'),
+                                              content: TextField(
+                                                controller: ctrl,
+                                                maxLines: 3,
+                                                decoration: const InputDecoration(
+                                                  border: OutlineInputBorder(),
+                                                  hintText: 'سبب الرفض (اختياري)',
+                                                ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context, false), // ✅ onPressed
+                                                  child: const Text('إلغاء'),
+                                                ),
+                                                FilledButton(
+                                                  onPressed: () => Navigator.pop(context, true),
+                                                  child: const Text('رفض'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (ok == true) {
+                                            UserStore().rejectTow(
+                                              a.id,
+                                              ctrl.text.trim().isEmpty ? 'غير محدد' : ctrl.text.trim(),
+                                            );
+                                            setState(() {});
+                                          }
+                                        },
+                                        icon: const Icon(Icons.block, color: Colors.red),
+                                      ),
+                                      IconButton(
+                                        tooltip: 'موافقة',
+                                        onPressed: () { UserStore().approveTow(a.id); setState(() {}); },
+                                        icon: const Icon(Icons.check_circle, color: Colors.green),
                                       ),
                                     ],
                                   ),
@@ -755,8 +796,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     Widget listOf(List<ModerationProduct> list) {
       if (list.isEmpty) {
         return const Center(
-            child: Padding(
-                padding: EdgeInsets.all(24.0), child: Text('لا توجد عناصر')));
+          child: Padding(padding: EdgeInsets.all(24.0), child: Text('لا توجد عناصر')),
+        );
       }
       return ListView.separated(
         itemCount: list.length,
@@ -766,8 +807,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           return Card(
             child: ListTile(
               leading: _thumb(p.imageUrl),
-              title: Text('${p.title} • ${kBrandName[p.brand]} ${p.model}',
-                  textDirection: TextDirection.rtl),
+              title: Text(
+                '${p.title} • ${kBrandName[p.brand]} ${p.model}',
+                textDirection: TextDirection.rtl,
+              ),
               subtitle: Text(
                 'رقم: ${p.id}\nسنوات: ${p.years.join(', ')} • مخزون: ${p.stock}\n${p.description}',
                 textDirection: TextDirection.rtl,
@@ -800,26 +843,23 @@ class _ProfileScreenState extends State<ProfileScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-                radius: 40,
-                child: Icon(Icons.person,
-                    size: 50, color: theme.colorScheme.primary)),
-            const SizedBox(width: 16),
-            Expanded(
+              radius: 40,
+              child: Icon(Icons.person, size: 50, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(height: 0, width: 16),
+            const Expanded(
               child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name,
-                        style: theme.textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                        textDirection: TextDirection.rtl),
-                    const SizedBox(height: 8),
-                    const Text('لوحة البائع', textDirection: TextDirection.rtl),
-                  ]),
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // يمكن تخصيص الاسم أو عرض بيانات إضافية هنا
+                ],
+              ),
             ),
             FilledButton.icon(
-                onPressed: _openNewProductSheet,
-                icon: const Icon(Icons.add),
-                label: const Text('إضافة منتج')),
+              onPressed: _openNewProductSheet,
+              icon: const Icon(Icons.add),
+              label: const Text('إضافة منتج'),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -830,23 +870,25 @@ class _ProfileScreenState extends State<ProfileScreen>
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
               child: Column(
                 children: [
                   const TabBar(tabs: [
                     Tab(text: 'قيد المراجعة'),
                     Tab(text: 'المقبولة'),
-                    Tab(text: 'المرفوضة')
+                    Tab(text: 'المرفوضة'),
                   ]),
                   const SizedBox(height: 8),
                   Expanded(
-                      child: TabBarView(children: [
+                    child: TabBarView(
+                      children: [
                         listOf(pending),
                         listOf(approved),
-                        _RejectedList(list: rejected)
-                      ])),
+                        _RejectedList(list: rejected),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -889,24 +931,27 @@ class _ProfileScreenState extends State<ProfileScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('إضافة منتج جديد',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w700)),
+                        const Text(
+                          'إضافة منتج جديد',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: titleCtrl,
                           decoration: const InputDecoration(
-                              labelText: 'اسم المنتج (مثال: فانوس أمامي)',
-                              border: OutlineInputBorder()),
-                          validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                            labelText: 'اسم المنتج (مثال: فانوس أمامي)',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
                         ),
                         const SizedBox(height: 10),
                         TextFormField(
                           controller: priceCtrl,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
-                              labelText: 'السعر', border: OutlineInputBorder()),
+                            labelText: 'السعر',
+                            border: OutlineInputBorder(),
+                          ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) return 'مطلوب';
                             final d = double.tryParse(v);
@@ -919,20 +964,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                           controller: descCtrl,
                           maxLines: 3,
                           decoration: const InputDecoration(
-                              labelText:
-                              'الوصف (مثال: يصلح لأعوام 2023-2025 نفس الشكل)',
-                              border: OutlineInputBorder()),
-                          validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                            labelText: 'الوصف (مثال: يصلح لأعوام 2023-2025 نفس الشكل)',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
                         ),
                         const SizedBox(height: 10),
                         DropdownButtonFormField<CarBrand>(
                           value: brand,
                           decoration: const InputDecoration(
-                              labelText: 'البراند', border: OutlineInputBorder()),
+                            labelText: 'البراند',
+                            border: OutlineInputBorder(),
+                          ),
                           items: CarBrand.values
-                              .map((b) => DropdownMenuItem(
-                              value: b, child: Text(kBrandName[b]!)))
+                              .map((b) => DropdownMenuItem(value: b, child: Text(kBrandName[b]!)))
                               .toList(),
                           onChanged: (b) {
                             if (b == null) return;
@@ -946,33 +991,34 @@ class _ProfileScreenState extends State<ProfileScreen>
                         DropdownButtonFormField<String>(
                           value: model,
                           decoration: const InputDecoration(
-                              labelText: 'الموديل', border: OutlineInputBorder()),
+                            labelText: 'الموديل',
+                            border: OutlineInputBorder(),
+                          ),
                           items: kModelsByBrand[brand]!
-                              .map((m) =>
-                              DropdownMenuItem(value: m, child: Text(m)))
+                              .map((m) => DropdownMenuItem<String>(value: m, child: Text(m)))
                               .toList(),
-                          onChanged: (m) =>
-                              setSheet(() => model = m ?? model),
+                          onChanged: (m) => setSheet(() => model = m ?? model),
                         ),
                         const SizedBox(height: 10),
-                        const Text('السنوات المناسبة',
-                            textDirection: TextDirection.rtl),
+                        const Text('السنوات المناسبة', textDirection: TextDirection.rtl),
                         const SizedBox(height: 6),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children: kYears
-                              .map((y) => FilterChip(
-                            label: Text('$y'),
-                            selected: selectedYears.contains(y),
-                            onSelected: (sel) => setSheet(() {
-                              if (sel) {
-                                selectedYears.add(y);
-                              } else {
-                                selectedYears.remove(y);
-                              }
-                            }),
-                          ))
+                              .map(
+                                (y) => FilterChip(
+                              label: Text('$y'),
+                              selected: selectedYears.contains(y),
+                              onSelected: (sel) => setSheet(() {
+                                if (sel) {
+                                  selectedYears.add(y);
+                                } else {
+                                  selectedYears.remove(y);
+                                }
+                              }),
+                            ),
+                          )
                               .toList(),
                         ),
                         const SizedBox(height: 10),
@@ -980,8 +1026,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           controller: stockCtrl,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
-                              labelText: 'المخزون المتاح',
-                              border: OutlineInputBorder()),
+                            labelText: 'المخزون المتاح',
+                            border: OutlineInputBorder(),
+                          ),
                           validator: (v) {
                             final n = int.tryParse(v ?? '');
                             if (n == null || n < 0) return 'قيمة غير صالحة';
@@ -1003,15 +1050,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                             if (!formKey.currentState!.validate()) return;
                             if (selectedYears.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'اختر سنة واحدة على الأقل')));
+                                const SnackBar(content: Text('اختر سنة واحدة على الأقل')),
+                              );
                               return;
                             }
-                            final sellerName =
-                                UserSession.username ?? 'Seller';
-                            final id =
-                                'P-${DateTime.now().millisecondsSinceEpoch}';
+                            final sellerName = UserSession.username ?? 'Seller';
+                            final id = 'P-${DateTime.now().millisecondsSinceEpoch}';
                             MockStore().submit(
                               ModerationProduct(
                                 id: id,
@@ -1019,9 +1063,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 description: descCtrl.text.trim(),
                                 seller: sellerName,
                                 price: double.parse(priceCtrl.text.trim()),
-                                imageUrl: imageCtrl.text.trim().isEmpty
-                                    ? null
-                                    : imageCtrl.text.trim(),
+                                imageUrl: imageCtrl.text.trim().isEmpty ? null : imageCtrl.text.trim(),
                                 createdAt: DateTime.now(),
                                 brand: brand,
                                 model: model,
@@ -1032,8 +1074,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                             );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('تم إرسال المنتج للمراجعة')));
+                              const SnackBar(content: Text('تم إرسال المنتج للمراجعة')),
+                            );
                             setState(() {});
                           },
                           icon: const Icon(Icons.upload_file),
@@ -1058,29 +1100,30 @@ class _ProfileScreenState extends State<ProfileScreen>
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
+
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: cs.outlineVariant),
           ),
-          child: const Text('مرحباً! أنت في وضع المشتري',
-              textDirection: TextDirection.rtl),
+          child: const Text('مرحباً! أنت في وضع المشتري', textDirection: TextDirection.rtl),
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: ListView(children: const [
-            ListTile(
-              leading: Icon(Icons.receipt_long_outlined),
-              title: Text('طلب #10023', textDirection: TextDirection.rtl),
-              subtitle:
-              Text('قيد المعالجة', textDirection: TextDirection.rtl),
-            ),
-            ListTile(
-              leading: Icon(Icons.receipt_long_outlined),
-              title: Text('طلب #10022', textDirection: TextDirection.rtl),
-              subtitle: Text('مكتمل', textDirection: TextDirection.rtl),
-            ),
-          ]),
+          child: ListView(
+            children: const [
+              ListTile(
+                leading: Icon(Icons.receipt_long_outlined),
+                title: Text('طلب #10023', textDirection: TextDirection.rtl),
+                subtitle: Text('قيد المعالجة', textDirection: TextDirection.rtl),
+              ),
+              ListTile(
+                leading: Icon(Icons.receipt_long_outlined),
+                title: Text('طلب #10022', textDirection: TextDirection.rtl),
+                subtitle: Text('مكتمل', textDirection: TextDirection.rtl),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -1111,14 +1154,16 @@ class _ProfileScreenState extends State<ProfileScreen>
           actions: [
             if (UserSession.loggedIn)
               IconButton(
-                  tooltip: 'تسجيل الخروج',
-                  icon: const Icon(Icons.logout),
-                  onPressed: _logout)
+                tooltip: 'تسجيل الخروج',
+                icon: const Icon(Icons.logout),
+                onPressed: _logout,
+              )
             else
               IconButton(
-                  tooltip: 'تسجيل الدخول',
-                  icon: const Icon(Icons.login),
-                  onPressed: _login),
+                tooltip: 'تسجيل الدخول',
+                icon: const Icon(Icons.login),
+                onPressed: _login,
+              ),
           ],
         ),
         body: Padding(
@@ -1130,9 +1175,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               Expanded(
                 child: isAdmin
                     ? _adminModeration(context)
-                    : (isSeller
-                    ? _sellerSection(context)
-                    : _buyerSection(context)),
+                    : (isSeller ? _sellerSection(context) : _buyerSection(context)),
               ),
             ],
           ),
@@ -1157,17 +1200,14 @@ class _RejectedList extends StatelessWidget {
         final p = list[i];
         return Card(
           child: ListTile(
-            leading:
-            const CircleAvatar(child: Icon(Icons.report_gmailerrorred_outlined)),
-            title: Text('${p.title} • ${kBrandName[p.brand]} ${p.model}',
-                textDirection: TextDirection.rtl),
+            leading: const CircleAvatar(child: Icon(Icons.report_gmailerrorred_outlined)),
+            title: Text('${p.title} • ${kBrandName[p.brand]} ${p.model}', textDirection: TextDirection.rtl),
             subtitle: Text(
               'رقم: ${p.id}\nسنوات: ${p.years.join(', ')} • مخزون: ${p.stock}\n${p.rejectReason ?? '—'}',
               textDirection: TextDirection.rtl,
             ),
             isThreeLine: true,
-            trailing: const Text('مرفوض',
-                style: TextStyle(color: Colors.red)),
+            trailing: const Text('مرفوض', style: TextStyle(color: Colors.red)),
           ),
         );
       },

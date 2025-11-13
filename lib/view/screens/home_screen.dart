@@ -19,7 +19,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   int _bottomIndex = 0;
-  String _uiRole = 'buyer';
 
   @override
   void dispose() {
@@ -49,47 +48,39 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: _buildAppBar(theme),
-        body: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildRoleTabs(theme)),
-            SliverToBoxAdapter(child: _buildQuickActions(theme)),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: .8,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                    final c = items[index];
-                    final cardData = Product(
-                      title:
-                      '${c.title} • ${kBrandName[c.brand]} ${c.model} • ${c.years.join(', ')}',
-                      price: c.price.toStringAsFixed(2),
-                      imageUrl: c.imageUrl,
-                      badge: null,
-                    );
-
-                    return ProductCard(
-                      item: cardData,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailsScreen(p: c),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                  childCount: items.length,
-                ),
-              ),
+        body: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+          child: GridView.builder(
+            itemCount: items.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: .8,
             ),
-          ],
+            itemBuilder: (context, index) {
+              final c = items[index];
+              final cardData = Product(
+                title:
+                '${c.title} • ${kBrandName[c.brand]} ${c.model} • ${c.years.join(', ')}',
+                price: c.price.toStringAsFixed(2),
+                imageUrl: c.imageUrl,
+                badge: null,
+              );
+
+              return ProductCard(
+                item: cardData,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProductDetailsScreen(p: c),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
         bottomNavigationBar: _buildBottomBar(),
       ),
@@ -157,87 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRoleTabs(ThemeData theme) {
-    final isBuyer = _uiRole == 'buyer';
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _SegmentButton(
-              label: 'مشتري (Buyer)',
-              selected: isBuyer,
-              onTap: () => setState(() => _uiRole = 'buyer'),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _SegmentButton(
-              label: 'بائع (Seller)',
-              selected: !isBuyer,
-              onTap: () => setState(() => _uiRole = 'seller'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(ThemeData theme) {
-    const items = [
-      _QuickAction(icon: Icons.category, label: 'التصنيفات'),
-      _QuickAction(icon: Icons.assignment, label: 'طلب عرض سعر'),
-      _QuickAction(icon: Icons.local_shipping, label: 'الخدمات اللوجستية'),
-      _QuickAction(icon: Icons.stars_rounded, label: 'أفضل الصفقات'),
-    ];
-    final borderColor = theme.colorScheme.outlineVariant;
-
-    return SizedBox(
-      height: 84,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (_, i) => InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            if (i == 0) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CategoriesScreen()),
-              );
-            }
-          },
-          child: Container(
-            width: 150,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(.35),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: borderColor),
-            ),
-            child: Row(
-              children: [
-                Icon(items[i].icon),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    items[i].label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelLarge,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemCount: items.length,
-      ),
-    );
-  }
-
-
   Widget _buildBottomBar() {
     return NavigationBar(
       selectedIndex: _bottomIndex,
@@ -299,49 +209,6 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'حسابي',
         ),
       ],
-    );
-  }
-}
-
-class _QuickAction {
-  final IconData icon;
-  final String label;
-  const _QuickAction({required this.icon, required this.label});
-}
-
-class _SegmentButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SegmentButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        height: 42,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color:
-          selected ? cs.primary.withOpacity(.12) : cs.surfaceVariant.withOpacity(.35),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cs.outlineVariant),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? cs.primary : cs.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }

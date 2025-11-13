@@ -1,69 +1,44 @@
+// lib/services/user_store.dart
+import 'package:flutter/foundation.dart';
+import 'package:auto_spare/model/app_user.dart';
+import 'package:auto_spare/services/tow_directory.dart';
 
-import 'package:flutter/foundation.dart'; // لـ ChangeNotifier
+class TowApplicant {
+  final String id; // TA-...
+  final String companyName;
+  final String area;
+  final double lat;
+  final double lng;
+  final double baseCost;
+  final double pricePerKm;
 
+  final String contactName;
+  final String contactEmail;
+  final String contactPhone;
 
-enum AppUserRole { buyer, seller, admin }
+  final DateTime createdAt;
+  String status; // pending | approved | rejected
+  String? rejectReason;
 
-
-enum SellerStatus { approved, pending, rejected }
-
-class AppUser {
-  final String id;
-  final String email;
-  final String password;
-  final String name;
-  final String address;
-  final String phone;
-  final AppUserRole role;
-
-  final String? storeName;
-  final String? commercialRegUrl;
-  final String? taxCardUrl;
-  final SellerStatus? sellerStatus;
-
-  const AppUser({
+  TowApplicant({
     required this.id,
-    required this.email,
-    required this.password,
-    required this.name,
-    required this.address,
-    required this.phone,
-    required this.role,
-    this.storeName,
-    this.commercialRegUrl,
-    this.taxCardUrl,
-    this.sellerStatus,
+    required this.companyName,
+    required this.area,
+    required this.lat,
+    required this.lng,
+    required this.baseCost,
+    required this.pricePerKm,
+    required this.contactName,
+    required this.contactEmail,
+    required this.contactPhone,
+    required this.createdAt,
+    this.status = 'pending',
+    this.rejectReason,
   });
-
-  AppUser copyWith({
-    String? name,
-    String? address,
-    String? phone,
-    String? storeName,
-    String? commercialRegUrl,
-    String? taxCardUrl,
-    SellerStatus? sellerStatus,
-  }) {
-    return AppUser(
-      id: id,
-      email: email,
-      password: password,
-      name: name ?? this.name,
-      address: address ?? this.address,
-      phone: phone ?? this.phone,
-      role: role,
-      storeName: storeName ?? this.storeName,
-      commercialRegUrl: commercialRegUrl ?? this.commercialRegUrl,
-      taxCardUrl: taxCardUrl ?? this.taxCardUrl,
-      sellerStatus: sellerStatus ?? this.sellerStatus,
-    );
-  }
 }
 
 class UserStore extends ChangeNotifier {
-
   UserStore._internal() {
-
     final admin = AppUser(
       id: 'U-1',
       email: 'ahmed@admin.com',
@@ -81,6 +56,8 @@ class UserStore extends ChangeNotifier {
   final Map<String, AppUser> _users = {};
   AppUser? _current;
 
+  final List<TowApplicant> _pendingTow = [];
+
   AppUser? get currentUser => _current;
   bool get isLoggedIn => _current != null;
   bool get isAdmin => _current?.role == AppUserRole.admin;
@@ -90,33 +67,25 @@ class UserStore extends ChangeNotifier {
 
   bool emailExists(String email) => _users.containsKey(email.toLowerCase());
 
+  // -------- Auth --------
   AppUser? authenticate(String emailOrName, String password) {
     final key = emailOrName.trim().toLowerCase();
-
     AppUser? u = _users[key];
-
     if (u == null) {
       for (final e in _users.values) {
-        if (e.name.toLowerCase() == key) {
-          u = e;
-          break;
-        }
+        if (e.name.toLowerCase() == key) { u = e; break; }
       }
     }
-
     if (u == null) return null;
     if (u.password != password) return null;
-
     _current = u;
     notifyListeners();
     return u;
   }
 
-  void signOut() {
-    _current = null;
-    notifyListeners();
-  }
+  void signOut() { _current = null; notifyListeners(); }
 
+  // -------- Sign Up --------
   AppUser signUpBuyer({
     required String email,
     required String password,
@@ -125,10 +94,7 @@ class UserStore extends ChangeNotifier {
     required String phone,
   }) {
     final key = email.trim().toLowerCase();
-    if (_users.containsKey(key)) {
-      throw StateError('exists');
-    }
-
+    if (_users.containsKey(key)) { throw StateError('exists'); }
     final u = AppUser(
       id: 'U-${DateTime.now().millisecondsSinceEpoch}',
       email: key,
@@ -154,10 +120,7 @@ class UserStore extends ChangeNotifier {
     String? taxCardUrl,
   }) {
     final key = email.trim().toLowerCase();
-    if (_users.containsKey(key)) {
-      throw StateError('exists');
-    }
-
+    if (_users.containsKey(key)) { throw StateError('exists'); }
     final u = AppUser(
       id: 'U-${DateTime.now().millisecondsSinceEpoch}',
       email: key,
@@ -177,19 +140,82 @@ class UserStore extends ChangeNotifier {
   }
 
   List<AppUser> pendingSellers() {
-    return _users.values
-        .where((u) =>
-    u.role == AppUserRole.seller &&
-        u.sellerStatus == SellerStatus.pending)
-        .toList();
+    final r = _users.values.where((u) =>
+    u.role == AppUserRole.seller && u.sellerStatus == SellerStatus.pending
+    ).toList();
+    r.sort((a,b)=> a.name.compareTo(b.name));
+    return r;
   }
 
+  // -------- Tow sign-up --------
+  TowApplicant signUpTow({
+    required String companyName,
+    required String area,
+    required double lat,
+    required double lng,
+    required double baseCost,
+    required double pricePerKm,
+    required String contactName,
+    required String contactEmail,
+    required String contactPhone,
+  }) {
+    final a = TowApplicant(
+      id: 'TA-${DateTime.now().millisecondsSinceEpoch}',
+      companyName: companyName,
+      area: area,
+      lat: lat,
+      lng: lng,
+      baseCost: baseCost,
+      pricePerKm: pricePerKm,
+      contactName: contactName,
+      contactEmail: contactEmail,
+      contactPhone: contactPhone,
+      createdAt: DateTime.now(),
+    );
+    _pendingTow.add(a);
+    notifyListeners();
+    return a;
+  }
+
+  List<TowApplicant> pendingTowCompanies() =>
+      _pendingTow.where((x) => x.status == 'pending').toList()
+        ..sort((a,b)=> b.createdAt.compareTo(a.createdAt));
+
+  void approveTow(String applicantId) {
+    final idx = _pendingTow.indexWhere((x) => x.id == applicantId);
+    if (idx == -1) return;
+    final a = _pendingTow[idx];
+    _pendingTow[idx].status = 'approved';
+    _pendingTow[idx].rejectReason = null;
+
+    TowDirectory().addApproved(
+      TowCompany(
+        id: a.id,
+        name: a.companyName,
+        area: a.area,
+        lat: a.lat,
+        lng: a.lng,
+        baseCost: a.baseCost,
+        pricePerKm: a.pricePerKm,
+      ),
+    );
+    notifyListeners();
+  }
+
+  void rejectTow(String applicantId, String reason) {
+    final idx = _pendingTow.indexWhere((x) => x.id == applicantId);
+    if (idx == -1) return;
+    _pendingTow[idx].status = 'rejected';
+    _pendingTow[idx].rejectReason = reason;
+    notifyListeners();
+  }
+
+  // -------- Admin seller actions --------
   void approveSeller(String email) {
     final key = email.toLowerCase();
     final u = _users[key];
     if (u == null || u.role != AppUserRole.seller) return;
     _users[key] = u.copyWith(sellerStatus: SellerStatus.approved);
-    if (_current?.email == key) _current = _users[key];
     notifyListeners();
   }
 
@@ -198,7 +224,6 @@ class UserStore extends ChangeNotifier {
     final u = _users[key];
     if (u == null || u.role != AppUserRole.seller) return;
     _users[key] = u.copyWith(sellerStatus: SellerStatus.rejected);
-    if (_current?.email == key) _current = _users[key];
     notifyListeners();
   }
 

@@ -1,34 +1,7 @@
+// lib/view/screens/tow_companies_screen.dart
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-
-/// موديل الشركة (زودنا السعر الأساسي وسعر الكيلو)
-class TowCompany {
-  final String name;
-  final String area;
-  final double lat;
-  final double lng;
-  final double baseCost;   // تكلفة زيارة/فتح
-  final double pricePerKm; // سعر الكيلو
-  const TowCompany({
-    required this.name,
-    required this.area,
-    required this.lat,
-    required this.lng,
-    required this.baseCost,
-    required this.pricePerKm,
-  });
-}
-
-/// بيانات حوالين القاهرة + الأسعار
-const List<TowCompany> kTowCompanies = [
-  TowCompany(name: 'شركة الفضل للأوناش', area: 'المعادي',        lat: 29.9600, lng: 31.2610, baseCost: 300, pricePerKm: 50),
-  TowCompany(name: 'السفير للأوناش',     area: 'المهندسين',      lat: 30.0480, lng: 31.2030, baseCost: 270, pricePerKm: 44),
-  TowCompany(name: 'هليوبليس سيرفز لخدمات الاوناش', area: 'مصر الجديدة', lat: 30.0870, lng: 31.3440, baseCost: 400, pricePerKm: 38),
-  TowCompany(name: 'اريزونا لأعطال السيارات وسحب السيارات', area: 'التحرير', lat: 30.0444, lng: 31.2357, baseCost: 300, pricePerKm: 50),
-  TowCompany(name: 'النسر – لخدمات الأعطال', area: 'القاهرة الجديدة',  lat: 30.0074, lng: 31.4913, baseCost: 300, pricePerKm: 45),
-  TowCompany(name: 'الأمل لخدمات الأوناش', area: 'القاهرة الجديدة',    lat: 30.0230, lng: 31.4350, baseCost: 300, pricePerKm: 70),
-  TowCompany(name: 'الحرية للأعطال وسحب السيارات', area: '٦ أكتوبر',  lat: 29.9389, lng: 30.9138, baseCost: 250, pricePerKm: 55),
-];
+import 'package:auto_spare/services/tow_directory.dart';
 
 double _distanceKm({
   required double fromLat,
@@ -52,8 +25,9 @@ class TowCompaniesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final list = TowDirectory().all; // ✅ بدل kTowCompanies
 
-    final sorted = [...kTowCompanies]..sort((a, b) {
+    final sorted = [...list]..sort((a, b) {
       final da = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: a.lat, toLng: a.lng);
       final db = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: b.lat, toLng: b.lng);
       return da.compareTo(db);
@@ -83,7 +57,7 @@ class TowCompaniesScreen extends StatelessWidget {
                       '(${c.lat.toStringAsFixed(5)}, ${c.lng.toStringAsFixed(5)})',
                 ),
                 trailing: const Icon(Icons.chevron_left),
-                onTap: () => Navigator.pop(context, c), // رجّع الشركة المختارة
+                onTap: () => Navigator.pop(context, c),
               ),
             );
           },

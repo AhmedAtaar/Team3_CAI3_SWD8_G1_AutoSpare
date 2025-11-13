@@ -1,6 +1,8 @@
+// lib/view/screens/sign_up_screen.dart
 import 'package:auto_spare/services/user_store.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'tow_location_picker.dart';   // ✅ شاشة اختيار اللوكيشن (ملف جديد بالأسفل)
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -17,26 +19,48 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _address = TextEditingController();
   final _phone = TextEditingController();
 
+  // بائع
   final _store = TextEditingController();
   final _crUrl = TextEditingController();
   final _taxUrl = TextEditingController();
 
+  // ونش
+  final _company = TextEditingController();
+  final _area = TextEditingController();
+  final _baseCost = TextEditingController();
+  final _pricePerKm = TextEditingController();
+  final _latCtrl = TextEditingController();
+  final _lngCtrl = TextEditingController();
+
   bool _isSeller = false;
+  bool _isTow = false;
+
   bool _obscure1 = true;
   bool _obscure2 = true;
 
   @override
   void dispose() {
-    _email.dispose();
-    _password.dispose();
-    _confirm.dispose();
-    _name.dispose();
-    _address.dispose();
-    _phone.dispose();
-    _store.dispose();
-    _crUrl.dispose();
-    _taxUrl.dispose();
+    _email.dispose(); _password.dispose(); _confirm.dispose();
+    _name.dispose(); _address.dispose(); _phone.dispose();
+    _store.dispose(); _crUrl.dispose(); _taxUrl.dispose();
+    _company.dispose(); _area.dispose(); _baseCost.dispose(); _pricePerKm.dispose(); _latCtrl.dispose(); _lngCtrl.dispose();
     super.dispose();
+  }
+
+  void _pickRoleBuyer() => setState(() { _isSeller = false; _isTow = false; });
+  void _pickRoleSeller() => setState(() { _isSeller = true;  _isTow = false; });
+  void _pickRoleTow()    => setState(() { _isSeller = false; _isTow = true;  });
+
+  Future<void> _openLocationPicker() async {
+    final result = await Navigator.push<TowPickedLocation>(
+      context,
+      MaterialPageRoute(builder: (_) => const TowLocationPickerScreen()),
+    );
+    if (result != null) {
+      _latCtrl.text = result.lat.toStringAsFixed(6);
+      _lngCtrl.text = result.lng.toStringAsFixed(6);
+      setState(() {});
+    }
   }
 
   void _submit() {
@@ -47,7 +71,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     try {
-      if (_isSeller) {
+      if (_isTow) {
+        final lat = double.tryParse(_latCtrl.text.trim());
+        final lng = double.tryParse(_lngCtrl.text.trim());
+        final base = double.tryParse(_baseCost.text.trim());
+        final km = double.tryParse(_pricePerKm.text.trim());
+        if (lat == null || lng == null || base == null || km == null) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('برجاء إدخال بيانات صحيحة للّوكيشن/الأسعار')));
+          return;
+        }
+        UserStore().signUpTow(
+          companyName: _company.text.trim(),
+          area: _area.text.trim(),
+          lat: lat,
+          lng: lng,
+          baseCost: base,
+          pricePerKm: km,
+          contactName: _name.text.trim(),
+          contactEmail: _email.text.trim(),
+          contactPhone: _phone.text.trim(),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إرسال طلب شركة الونش للمراجعة')));
+      } else if (_isSeller) {
         UserStore().signUpSeller(
           email: _email.text.trim(),
           password: _password.text.trim(),
@@ -94,13 +139,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
             key: _formKey,
             child: Column(
               children: [
+                // اختيار نوع الحساب
                 Row(
                   children: [
                     Expanded(
                       child: ChoiceChip(
                         label: const Text('مشتري'),
-                        selected: !_isSeller,
-                        onSelected: (_) => setState(() => _isSeller = false),
+                        selected: !_isSeller && !_isTow,
+                        onSelected: (_) => _pickRoleBuyer(),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -108,11 +154,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: ChoiceChip(
                         label: const Text('بائع'),
                         selected: _isSeller,
-                        onSelected: (_) => setState(() => _isSeller = true),
+                        onSelected: (_) => _pickRoleSeller(),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: const Text('ونش'),
+                        selected: _isTow,
+                        onSelected: (_) => _pickRoleTow(),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
                 TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: _dec('الإيميل'), validator: (v) => (v==null||v.isEmpty)?'مطلوب':null),
                 const SizedBox(height: 10),
@@ -126,6 +181,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 10),
                 TextFormField(controller: _phone, keyboardType: TextInputType.phone, decoration: _dec('رقم التليفون'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
 
+                // ===== حقول البائع =====
                 if (_isSeller) ...[
                   const SizedBox(height: 16),
                   TextFormField(controller: _store, decoration: _dec('اسم المتجر'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
@@ -137,6 +193,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const Align(
                     alignment: Alignment.centerRight,
                     child: Text('ملحوظة: يمكنك رفع الملفات على Google Drive وإرسال الروابط للمراجعة.'),
+                  ),
+                ],
+
+                // ===== حقول شركة الونش =====
+                if (_isTow) ...[
+                  const SizedBox(height: 16),
+                  TextFormField(controller: _company, decoration: _dec('اسم الشركة'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                  const SizedBox(height: 10),
+                  TextFormField(controller: _area, decoration: _dec('المنطقة/التغطية'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                  const SizedBox(height: 10),
+                  TextFormField(controller: _baseCost, keyboardType: TextInputType.number, decoration: _dec('سعر الخدمة (جنيه)'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا صحيحًا':null),
+                  const SizedBox(height: 10),
+                  TextFormField(controller: _pricePerKm, keyboardType: TextInputType.number, decoration: _dec('سعر الكيلو (جنيه)'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا صحيحًا':null),
+                  const SizedBox(height: 10),
+
+                  Row(
+                    children: [
+                      Expanded(child: TextFormField(controller: _latCtrl, keyboardType: TextInputType.number, decoration: _dec('Latitude'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا':null)),
+                      const SizedBox(width: 8),
+                      Expanded(child: TextFormField(controller: _lngCtrl, keyboardType: TextInputType.number, decoration: _dec('Longitude'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا':null)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: _openLocationPicker,
+                      icon: const Icon(Icons.my_location),
+                      label: const Text('تحديد الموقع (موقعي الآن / إدخال يدوي)'),
+                    ),
                   ),
                 ],
 
