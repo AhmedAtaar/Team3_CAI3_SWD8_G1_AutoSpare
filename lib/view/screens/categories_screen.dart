@@ -1,4 +1,6 @@
 import 'package:auto_spare/controller/navigation/navigation.dart';
+import 'package:auto_spare/model/catalog.dart';
+import 'package:auto_spare/view/screens/brand_products_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/categories_screen_widgets/category_tile_widget.dart';
 import 'package:flutter/material.dart';
@@ -6,60 +8,59 @@ import 'package:flutter/material.dart';
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
 
-  static final List<Map<String, dynamic>> _categories = [
-    {
-      'title': 'BMW',
-      'count': 245,
-      'imageUrl':
-          'https://www.citypng.com/public/uploads/preview/bmw-white-logo-hd-png-701751694708574rsodsw0tk5.png',
-    },
-    {
-      'title': 'Mercedes',
-      'count': 189,
-      'imageUrl':
-          'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/1024px-Mercedes-Logo.svg.png',
-    },
-    {
-      'title': 'Nissan',
-      'count': 89,
-      'imageUrl':
-          'https://wallpapers.com/images/featured/nissan-logo-png-a7lsvs9uwvtc6piq.jpg',
-    },
-    {
-      'title': 'Renault',
-      'count': 78,
-      'imageUrl':
-          'https://www.citypng.com/public/uploads/preview/hd-renault-emblem-logo-png-701751694707695cclpdd6qho.png?v=2025082815',
-    },
-    {
-      'title': 'BYD',
-      'count': 156,
-      'imageUrl':
-          'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/BYD_Auto_Logo.svg/2560px-BYD_Auto_Logo.svg.png',
-    },
-    {
-      'title': 'Peugeot',
-      'count': 110,
-      'imageUrl': 'https://logowik.com/content/uploads/images/196_peugeot1.jpg',
-    },
-  ];
+  // شعارات الماركات
+  static const Map<CarBrand, String> _brandLogos = {
+    CarBrand.bmw:
+    'https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg',
+    CarBrand.mercedes:
+    'https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg',
+    CarBrand.nissan:
+    'https://upload.wikimedia.org/wikipedia/commons/6/6e/Nissan_2020_logo.svg',
+    CarBrand.toyota:
+    'https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg',
+    CarBrand.hyundai:
+    'https://upload.wikimedia.org/wikipedia/commons/4/45/Hyundai_logo.svg',
+    CarBrand.kia:
+    'https://upload.wikimedia.org/wikipedia/commons/7/7c/Kia-logo.png',
+  };
+
+  List<_BrandCat> _buildCategories() {
+    final items = Catalog().all();
+    final Map<CarBrand, int> counts = {for (final b in CarBrand.values) b: 0};
+    for (final p in items) {
+      counts[p.brand] = (counts[p.brand] ?? 0) + 1;
+    }
+
+    final list = CarBrand.values
+        .map((b) => _BrandCat(
+      brand: b,
+      title: kBrandName[b] ?? b.name,
+      count: counts[b] ?? 0,
+      imageUrl: _brandLogos[b] ?? '',
+    ))
+        .toList();
+
+    list.sort((a, b) => b.count.compareTo(a.count));
+    return list;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cats = _buildCategories();
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AppNavigationScaffold(
         title: "التصنيفات",
-
         currentIndex: 1,
         body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //MARK: Search Bar
+              // Search (واجهة فقط حالياً)
               Row(
                 children: [
                   Expanded(
@@ -67,14 +68,10 @@ class CategoriesScreen extends StatelessWidget {
                       textAlign: TextAlign.right,
                       decoration: InputDecoration(
                         hintText: 'ابحث عن قطع، علامات تجارية، موديلات...',
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: AppColors.primaryGreen,
-                        ),
+                        prefixIcon: const Icon(Icons.search,
+                            color: AppColors.primaryGreen),
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 0,
-                          horizontal: 16,
-                        ),
+                            vertical: 0, horizontal: 16),
                         filled: true,
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(
@@ -100,14 +97,12 @@ class CategoriesScreen extends StatelessWidget {
 
               Text(
                 'تصفح القطع حسب الماركة',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                style:
+                theme.textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
               ),
 
               const SizedBox(height: 24),
 
-              //MARK: GridView Builder
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -117,15 +112,24 @@ class CategoriesScreen extends StatelessWidget {
                   mainAxisSpacing: 16.0,
                   childAspectRatio: 1.2,
                 ),
-                itemCount: _categories.length,
+                itemCount: cats.length,
                 itemBuilder: (context, index) {
-                  final category = _categories[index];
-
+                  final c = cats[index];
                   return CategoryTile(
-                    imageUrl: (category['imageUrl'] as String?) ?? '',
-                    title: (category['title'] as String?) ?? 'Unknown Brand',
-                    itemCount: (category['count'] as int?) ?? 0,
-                    onTap: () {},
+                    imageUrl: c.imageUrl,
+                    title: c.title,
+                    itemCount: c.count,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BrandProductsScreen(
+                            brand: c.brand,
+                            logoUrl: c.imageUrl, // ⬅️ نبعت الشعار
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -135,4 +139,17 @@ class CategoriesScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _BrandCat {
+  final CarBrand brand;
+  final String title;
+  final int count;
+  final String imageUrl;
+  _BrandCat({
+    required this.brand,
+    required this.title,
+    required this.count,
+    required this.imageUrl,
+  });
 }

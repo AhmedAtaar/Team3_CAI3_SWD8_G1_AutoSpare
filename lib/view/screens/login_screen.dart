@@ -1,16 +1,17 @@
 // lib/view/screens/login_screen.dart
-import 'package:auto_spare/model/app_user.dart';          // ✅ صحّحنا المسار
+
+import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/user_store.dart';
-import 'package:auto_spare/services/user_session.dart';   // ✅ الجلسة/الأدوار الموحّدة
+import 'package:auto_spare/services/users_repository.dart';
+import 'package:auto_spare/services/user_session.dart';
 import 'package:auto_spare/view/screens/home_screen.dart';
+import 'package:auto_spare/view/screens/profile_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_buttons.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_form_field.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_toggle_switch.dart';
 import 'package:flutter/material.dart';
 import 'sign_up_screen.dart';
-
-// ❌ لا تعرّف enum UserRole هنا. مستورد من user_session.dart
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,11 +34,13 @@ class LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// تحويل نوع AppUserRole لنوع UserRole (اللي بيستخدمه الـ UI)
   UserRole _mapRole(AppUserRole r) {
     switch (r) {
       case AppUserRole.admin:
         return UserRole.admin;
       case AppUserRole.seller:
+      case AppUserRole.winch: // الونش بيتعامل كسيلر في الـ UI
         return UserRole.seller;
       case AppUserRole.buyer:
       default:
@@ -45,6 +48,17 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ----------------------------------------------------------
+  // ⭐ دالة تسجيل الدخول بالموبايل + الباسورد
+  // ----------------------------------------------------------
+  AppUser? _loginByPhone(String phone, String pass) {
+    // استخدام الريبو الرسمي (فيه الـ index على رقم الموبايل + الباسورد)
+    return usersRepo.findByPhoneAndPassword(phone, pass);
+  }
+
+  // ----------------------------------------------------------
+  // 🔥 عملية الـ Login
+  // ----------------------------------------------------------
   void _handleSignIn() {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -53,10 +67,12 @@ class LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final user = _userController.text.trim();
+    final phone = _userController.text.trim();
     final pass = _passwordController.text.trim();
 
-    final u = UserStore().authenticate(user, pass);
+    // استخدام الدالة الجديدة
+    final u = _loginByPhone(phone, pass);
+
     if (u == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid credentials')),
@@ -64,26 +80,65 @@ class LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    UserSession.initFromProfile(name: u.name, role: _mapRole(u.role));
+    // منع دخول الونش قبل موافقة الأدمن
+    if (u.role == AppUserRole.winch && !u.approved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'حساب الونش في انتظار موافقة الإدارة، برجاء المحاولة لاحقًا.',
+            textAlign: TextAlign.right,
+          ),
+        ),
+      );
+      return;
+    }
+
+    // حفظ المستخدم الحالي في UserStore علشان باقي الشاشات (Profile / Tow panel...)
+    UserStore().currentUser = u;
+
+    // حفظ الجلسة
+    UserSession.initFromProfile(
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      role: _mapRole(u.role),
+      canSell: u.canSell,
+      canTow: u.canTow,
+      towCompanyId: u.towCompanyId,
+    );
+
+    // تحديد الشاشة المطلوبة
+    Widget dest;
+    if (u.role == AppUserRole.admin) {
+      dest = const ProfileScreen();
+    } else {
+      dest = const HomeScreen();
+    }
+
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(builder: (context) => dest),
     );
   }
 
   void _continueAsGuest() {
-    UserSession.initFromProfile(name: 'Guest', role: UserRole.buyer);
+    UserSession.initFromProfile(
+      name: 'Guest',
+      role: UserRole.buyer,
+    );
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
   }
 
+  // ----------------------------------------------------------
+  // 🔥 واجهة المستخدم
+  // ----------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header
             Container(
               height: MediaQuery.of(context).size.height * 0.25,
               width: double.infinity,
@@ -95,24 +150,31 @@ class LoginScreenState extends State<LoginScreen> {
                     right: 20,
                     child: CustomToggleSwitch(
                       isArabicSelected: _isArabicSelected,
-                      onChanged: (bool v) => setState(() => _isArabicSelected = v),
+                      onChanged: (bool v) =>
+                          setState(() => _isArabicSelected = v),
                     ),
                   ),
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Image.asset('assets/images/logo_light_theme.png', height: 60),
-                        const SizedBox(height: 5),
-                        const Text(
+                      children: const [
+                        SizedBox(height: 5),
+                        Text(
                           'Welcome Back',
-                          style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        const SizedBox(height: 5),
-                        const Text(
+                        SizedBox(height: 5),
+                        Text(
                           'Sign in to access your auto parts marketplace',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -131,11 +193,12 @@ class LoginScreenState extends State<LoginScreen> {
                   children: [
                     CustomFormField(
                       controller: _userController,
-                      labelText: 'Email or Name',
-                      hintText: 'ahmed@admin.com أو Ahmed',
-                      icon: Icons.person_outline,
-                      keyboardType: TextInputType.emailAddress,   // ✅
-                      validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                      labelText: 'رقم الموبايل',
+                      hintText: 'مثال: 0100xxxxxxx',
+                      icon: Icons.phone,
+                      keyboardType: TextInputType.phone,
+                      validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Required' : null,
                     ),
                     const SizedBox(height: 20),
                     CustomFormField(
@@ -144,13 +207,18 @@ class LoginScreenState extends State<LoginScreen> {
                       hintText: 'Enter your password',
                       icon: Icons.lock_outline,
                       obscureText: _obscurePassword,
-                      validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                      validator: (v) =>
+                      (v == null || v.isEmpty) ? 'Required' : null,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
                           color: Colors.grey,
                         ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -158,20 +226,26 @@ class LoginScreenState extends State<LoginScreen> {
                       children: [
                         Checkbox(
                           value: _rememberMe,
-                          onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                          onChanged: (v) =>
+                              setState(() => _rememberMe = v ?? false),
                           activeColor: AppColors.primaryGreen,
                         ),
                         const Text('Remember me'),
                       ],
                     ),
                     const SizedBox(height: 25),
-                    CustomElevatedButton(text: 'Sign In', onPressed: _handleSignIn),
+                    CustomElevatedButton(
+                      text: 'Sign In',
+                      onPressed: _handleSignIn,
+                    ),
                     const SizedBox(height: 16),
                     Center(
                       child: TextButton(
                         onPressed: () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const SignUpScreen(),
+                          ),
                         ),
                         child: const Text("Create a new account"),
                       ),
@@ -179,9 +253,17 @@ class LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 10),
                     const OrDivider(),
                     const SizedBox(height: 20),
-                    CustomOutlinedButton(text: 'Continue with Google', onPressed: () {}),
-                    const SizedBox(height: 15), // ✅ كان فيها typo
-                    CustomOutlinedButton(text: 'Continue as Guest', onPressed: _continueAsGuest),
+                    CustomOutlinedButton(
+                      text: 'Continue with Google',
+                      onPressed: () {
+                        // TODO: ربط لاحقًا مع Firebase Google Sign-In
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    CustomOutlinedButton(
+                      text: 'Continue as Guest',
+                      onPressed: _continueAsGuest,
+                    ),
                   ],
                 ),
               ),

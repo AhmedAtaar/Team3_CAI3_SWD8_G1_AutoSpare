@@ -1,4 +1,5 @@
 import 'package:auto_spare/model/catalog.dart';
+import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/cart_service.dart';
 import 'package:auto_spare/services/user_store.dart';
 import 'package:auto_spare/view/screens/home_screen.dart';
@@ -10,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../controller/navigation/navigation.dart';
 import '../themes/app_colors.dart';
 import 'map_picker_screen.dart';
+import 'package:auto_spare/services/orders.dart'; // << سنجلتون
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -43,7 +45,6 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _onCartChanged() => setState(() {});
-
   @override
   void dispose() {
     _cart.removeListener(_onCartChanged);
@@ -56,6 +57,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   double get _subtotal => _cart.subtotal * 1.05;
+  double get _shipping => 15.0;
+  double get _grandTotal => _subtotal + _shipping;
 
   Future<void> _useCurrentLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -104,11 +107,9 @@ class _CartScreenState extends State<CartScreen> {
 
   void _removeItem(String itemId) => _cart.remove(itemId);
 
-  void _handleProceedToOrder() {
+  Future<void> _handleProceedToOrder() async {
     if (_cart.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('السلة فارغة')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('السلة فارغة')));
       return;
     }
 
@@ -137,14 +138,38 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
+    final buyer = UserStore().currentUser;
+    final buyerId = buyer?.id ?? 'guest';
+
+    final orderItems = _cart.items.map((ci) {
+      final p = Catalog().findById(ci.id);
+      final sellerId = (p?.seller ?? 'seller');
+      return OrderItem(
+        productId: ci.id,
+        sellerId: sellerId,
+        titleSnap: ci.name,
+        price: ci.price,
+        qty: ci.quantity,
+      );
+    }).toList();
+
+    final (orderId, code) = await ordersRepo.createOrder(
+      buyerId: buyerId,
+      items: orderItems,
+      itemsTotal: _subtotal,
+      shipping: _shipping,
+      lat: _delLat,
+      lng: _delLng,
+    );
 
     _cart.clear();
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('تم تنفيذ الطلب بنجاح', textDirection: TextDirection.rtl),
+        content: Text('تم إنشاء الطلب ($code) • #$orderId', textDirection: TextDirection.rtl),
         backgroundColor: AppColors.primaryGreen,
-        duration: const Duration(milliseconds: 1200),
+        duration: const Duration(milliseconds: 1400),
       ),
     );
 
@@ -186,9 +211,10 @@ class _CartScreenState extends State<CartScreen> {
               Row(children: const [Icon(Icons.person_outline), SizedBox(width: 8), Text('بيانات العميل')]),
               const SizedBox(height: 10),
               TextField(
-                  controller: _nameCtrl,
-                  readOnly: true,
-                  decoration: const InputDecoration(labelText: 'الاسم', border: OutlineInputBorder())),
+                controller: _nameCtrl,
+                readOnly: true,
+                decoration: const InputDecoration(labelText: 'الاسم', border: OutlineInputBorder()),
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: _addrCtrl,
@@ -220,8 +246,7 @@ class _CartScreenState extends State<CartScreen> {
               TextField(
                 controller: _altPhoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration:
-                const InputDecoration(labelText: 'رقم آخر للتواصل', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'رقم آخر للتواصل', border: OutlineInputBorder()),
               ),
             ],
           ),
@@ -246,23 +271,27 @@ class _CartScreenState extends State<CartScreen> {
               Row(children: const [Icon(Icons.place_outlined), SizedBox(width: 8), Text('موقع التسليم (اختياري)')]),
               const SizedBox(height: 10),
               TextField(
-                  controller: _deliveryCtrl,
-                  decoration:
-                  const InputDecoration(labelText: 'العنوان أو الإحداثيات', border: OutlineInputBorder())),
+                controller: _deliveryCtrl,
+                decoration: const InputDecoration(labelText: 'العنوان أو الإحداثيات', border: OutlineInputBorder()),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
-                      child: FilledButton.icon(
-                          onPressed: _useCurrentLocation,
-                          icon: const Icon(Icons.my_location),
-                          label: const Text('موقعي الحالي'))),
+                    child: FilledButton.icon(
+                      onPressed: _useCurrentLocation,
+                      icon: const Icon(Icons.my_location),
+                      label: const Text('موقعي الحالي'),
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
-                      child: FilledButton.tonalIcon(
-                          onPressed: _pickOnMap,
-                          icon: const Icon(Icons.map_outlined),
-                          label: const Text('اختيار من الخريطة'))),
+                    child: FilledButton.tonalIcon(
+                      onPressed: _pickOnMap,
+                      icon: const Icon(Icons.map_outlined),
+                      label: const Text('اختيار من الخريطة'),
+                    ),
+                  ),
                 ],
               ),
             ],

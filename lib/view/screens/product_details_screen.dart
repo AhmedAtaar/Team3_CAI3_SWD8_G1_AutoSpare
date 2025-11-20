@@ -1,7 +1,12 @@
+// lib/view/screens/product_details_screen.dart
 import 'package:flutter/material.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/services/cart_service.dart';
 import 'cart_screen.dart';
+
+// ⬅️ إضافات جديدة
+import 'package:auto_spare/services/reviews.dart';
+import 'package:auto_spare/view/widgets/reviews/product_reviews_section.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final CatalogProduct p;
@@ -59,6 +64,19 @@ class ProductDetailsScreen extends StatelessWidget {
       );
     }
 
+    // شارة (المتوسط • العدد)
+    Widget ratingBadge(double avg, int count, {IconData icon = Icons.star}) {
+      if (count == 0) return const SizedBox.shrink();
+      return Chip(
+        avatar: Icon(icon, size: 18),
+        label: Text('${avg.toStringAsFixed(1)} • $count'),
+      );
+    }
+
+    // ملخصات التقييم (Product & Seller)
+    final prodSummary$ = reviewsRepo.watchProductSummary(p.id);
+    final sellerSummary$ = reviewsRepo.watchSellerSummary(p.seller);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -68,14 +86,45 @@ class ProductDetailsScreen extends StatelessWidget {
           children: [
             image(),
             const SizedBox(height: 12),
-            Text(p.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+
+            // العنوان + شارات التقييم
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    p.title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                StreamBuilder<({double avg, int count})>(
+                  stream: prodSummary$,
+                  builder: (_, s) => ratingBadge(s.data?.avg ?? 0, s.data?.count ?? 0),
+                ),
+                const SizedBox(width: 6),
+                StreamBuilder<({double avg, int count})>(
+                  stream: sellerSummary$,
+                  builder: (_, s) => ratingBadge(
+                    s.data?.avg ?? 0,
+                    s.data?.count ?? 0,
+                    icon: Icons.storefront,
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 6),
             Text('الماركة: ${kBrandName[p.brand]}    •    الموديل: ${p.model}'),
             Text('السنوات: ${p.years.join(', ')}'),
             Text('المخزون المتاح: ${p.stock}'),
             const SizedBox(height: 10),
-            Text('السعر: ${p.price.toStringAsFixed(2)} جنيه', style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              'السعر: ${p.price.toStringAsFixed(2)} جنيه',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 16),
+
             Row(
               children: [
                 Expanded(
@@ -95,6 +144,7 @@ class ProductDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
             Card(
               child: ListTile(
@@ -102,6 +152,14 @@ class ProductDetailsScreen extends StatelessWidget {
                 title: Text('البائع: ${p.seller}'),
                 subtitle: const Text('يمكن التواصل بعد الدمج مع Firebase'),
               ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // ===== قسم التقييمات (منتج + بائع)
+            ProductReviewsSection(
+              productId: p.id,
+              sellerId: p.seller,
             ),
           ],
         ),

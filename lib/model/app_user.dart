@@ -1,59 +1,97 @@
 // lib/model/app_user.dart
-enum AppUserRole { buyer, seller, admin }
 
-enum SellerStatus { approved, pending, rejected }
+enum AppUserRole {
+  buyer,
+  seller,
+  admin,
+  winch,
+}
 
 class AppUser {
   final String id;
-  final String email;
-  final String password;
   final String name;
-  final String address;
+  final String email;
   final String phone;
+  final String address;
 
+  final String password;       // مخزّن مؤقتاً (قبل Firebase Auth)
   final AppUserRole role;
 
-  // حقول البائع (اختيارية)
-  final String? storeName;
-  final String? commercialRegUrl;
-  final String? taxCardUrl;
-  final SellerStatus? sellerStatus;
+  final bool approved;         // هل الحساب معتمد من الإدارة؟
+  final bool canSell;          // صلاحية البيع
+  final bool canTow;           // صلاحية ونش
 
-  const AppUser({
+  final int maxWinches;        // عدد عربيات الونش المسموح بها (إن احتجنا)
+
+  final List<String>? docUrls; // روابط مستندات
+  final String? towLicenseUrl; // رابط رخصة الونش
+  final String? towDriverIdUrl; // رابط هوية السائق
+
+  final String? towCompanyId;  // ID الشركة المرتبطة (لو دور winch)
+  final String? storeName;     // اسم متجر البائع
+  final String? commercialRegUrl; // رابط السجل التجاري
+  final String? taxCardUrl;    // رابط البطاقة الضريبية
+
+  AppUser({
     required this.id,
-    required this.email,
-    required this.password,
     required this.name,
-    required this.address,
+    required this.email,
     required this.phone,
+    required this.address,
+    required this.password,
     required this.role,
+    this.approved = false,
+    this.canSell = false,
+    this.canTow = false,
+    this.maxWinches = 0,
+    this.docUrls,
+    this.towLicenseUrl,
+    this.towDriverIdUrl,
+    this.towCompanyId,
     this.storeName,
     this.commercialRegUrl,
     this.taxCardUrl,
-    this.sellerStatus,
   });
 
   AppUser copyWith({
+    String? id,
     String? name,
-    String? address,
+    String? email,
     String? phone,
+    String? address,
+    String? password,
+    AppUserRole? role,
+    bool? approved,
+    bool? canSell,
+    bool? canTow,
+    int? maxWinches,
+    List<String>? docUrls,
+    String? towLicenseUrl,
+    String? towDriverIdUrl,
+    String? towCompanyId,
     String? storeName,
     String? commercialRegUrl,
     String? taxCardUrl,
-    SellerStatus? sellerStatus,
   }) {
     return AppUser(
-      id: id,
-      email: email,
-      password: password,
+      id: id ?? this.id,
       name: name ?? this.name,
-      address: address ?? this.address,
+      email: email ?? this.email,
       phone: phone ?? this.phone,
-      role: role,
+      address: address ?? this.address,
+      password: password ?? this.password,
+      role: role ?? this.role,
+      approved: approved ?? this.approved,
+      canSell: canSell ?? this.canSell,
+      canTow: canTow ?? this.canTow,
+      maxWinches: maxWinches ?? this.maxWinches,
+      docUrls: docUrls ?? this.docUrls,
+      towLicenseUrl: towLicenseUrl ?? this.towLicenseUrl,
+      towDriverIdUrl: towDriverIdUrl ?? this.towDriverIdUrl,
+      towCompanyId: towCompanyId ?? this.towCompanyId,
       storeName: storeName ?? this.storeName,
       commercialRegUrl: commercialRegUrl ?? this.commercialRegUrl,
       taxCardUrl: taxCardUrl ?? this.taxCardUrl,
-      sellerStatus: sellerStatus ?? this.sellerStatus,
     );
   }
 }

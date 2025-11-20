@@ -1,8 +1,9 @@
 // lib/view/screens/sign_up_screen.dart
+
 import 'package:auto_spare/services/user_store.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
-import 'tow_location_picker.dart';   // ✅ شاشة اختيار اللوكيشن (ملف جديد بالأسفل)
+import 'tow_location_picker.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -32,6 +33,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _latCtrl = TextEditingController();
   final _lngCtrl = TextEditingController();
 
+  // مستندات الونش (نفس مسميات البائع)
+  final _towCrUrl = TextEditingController();  // السجل التجاري
+  final _towTaxUrl = TextEditingController(); // البطاقة الضريبية
+
   bool _isSeller = false;
   bool _isTow = false;
 
@@ -40,16 +45,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
-    _email.dispose(); _password.dispose(); _confirm.dispose();
-    _name.dispose(); _address.dispose(); _phone.dispose();
-    _store.dispose(); _crUrl.dispose(); _taxUrl.dispose();
-    _company.dispose(); _area.dispose(); _baseCost.dispose(); _pricePerKm.dispose(); _latCtrl.dispose(); _lngCtrl.dispose();
+    _email.dispose();
+    _password.dispose();
+    _confirm.dispose();
+    _name.dispose();
+    _address.dispose();
+    _phone.dispose();
+
+    _store.dispose();
+    _crUrl.dispose();
+    _taxUrl.dispose();
+
+    _company.dispose();
+    _area.dispose();
+    _baseCost.dispose();
+    _pricePerKm.dispose();
+    _latCtrl.dispose();
+    _lngCtrl.dispose();
+
+    _towCrUrl.dispose();
+    _towTaxUrl.dispose();
+
     super.dispose();
   }
 
-  void _pickRoleBuyer() => setState(() { _isSeller = false; _isTow = false; });
-  void _pickRoleSeller() => setState(() { _isSeller = true;  _isTow = false; });
-  void _pickRoleTow()    => setState(() { _isSeller = false; _isTow = true;  });
+  void _pickRoleBuyer() => setState(() {
+    _isSeller = false;
+    _isTow = false;
+  });
+
+  void _pickRoleSeller() => setState(() {
+    _isSeller = true;
+    _isTow = false;
+  });
+
+  void _pickRoleTow() => setState(() {
+    _isSeller = false;
+    _isTow = true;
+  });
 
   Future<void> _openLocationPicker() async {
     final result = await Navigator.push<TowPickedLocation>(
@@ -63,23 +96,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  void _submit() {
+  InputDecoration _dec(String label, {Widget? suffix}) => InputDecoration(
+    labelText: label,
+    border: const OutlineInputBorder(),
+    suffixIcon: suffix,
+  );
+
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (_password.text.trim() != _confirm.text.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
       return;
     }
 
+    final email = _email.text.trim();
+    final phone = _phone.text.trim();
+    final pass = _password.text.trim();
+    final name = _name.text.trim();
+    final addr = _address.text.trim();
+
     try {
+      // ========== حساب شركة ونش ==========
       if (_isTow) {
         final lat = double.tryParse(_latCtrl.text.trim());
         final lng = double.tryParse(_lngCtrl.text.trim());
         final base = double.tryParse(_baseCost.text.trim());
         final km = double.tryParse(_pricePerKm.text.trim());
         if (lat == null || lng == null || base == null || km == null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('برجاء إدخال بيانات صحيحة للّوكيشن/الأسعار')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('برجاء إدخال بيانات صحيحة للّوكيشن/الأسعار'),
+            ),
+          );
           return;
         }
+
         UserStore().signUpTow(
           companyName: _company.text.trim(),
           area: _area.text.trim(),
@@ -87,45 +141,77 @@ class _SignUpScreenState extends State<SignUpScreen> {
           lng: lng,
           baseCost: base,
           pricePerKm: km,
-          contactName: _name.text.trim(),
-          contactEmail: _email.text.trim(),
-          contactPhone: _phone.text.trim(),
+          contactName: name.isEmpty ? _company.text.trim() : name,
+          contactEmail: email,
+          contactPhone: phone,
+          password: pass,
+          commercialRegUrl: _towCrUrl.text.trim().isEmpty
+              ? null
+              : _towCrUrl.text.trim(),
+          taxCardUrl: _towTaxUrl.text.trim().isEmpty
+              ? null
+              : _towTaxUrl.text.trim(),
         );
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إرسال طلب شركة الونش للمراجعة')));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إرسال طلب شركة الونش للمراجعة'),
+          ),
+        );
+
+        // ========== حساب بائع ==========
       } else if (_isSeller) {
         UserStore().signUpSeller(
-          email: _email.text.trim(),
-          password: _password.text.trim(),
-          name: _name.text.trim(),
-          address: _address.text.trim(),
-          phone: _phone.text.trim(),
+          email: email,
+          password: pass,
+          name: name,
+          address: addr,
+          phone: phone,
           storeName: _store.text.trim(),
-          commercialRegUrl: _crUrl.text.trim().isEmpty ? null : _crUrl.text.trim(),
-          taxCardUrl: _taxUrl.text.trim().isEmpty ? null : _taxUrl.text.trim(),
+          commercialRegUrl:
+          _crUrl.text.trim().isEmpty ? null : _crUrl.text.trim(),
+          taxCardUrl:
+          _taxUrl.text.trim().isEmpty ? null : _taxUrl.text.trim(),
         );
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إنشاء حساب بائع (بانتظار اعتماد الأدمن)')));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إرسال طلب تسجيل كبائع للمراجعة'),
+          ),
+        );
+
+        // ========== حساب مشتري ==========
       } else {
         UserStore().signUpBuyer(
-          email: _email.text.trim(),
-          password: _password.text.trim(),
-          name: _name.text.trim(),
-          address: _address.text.trim(),
-          phone: _phone.text.trim(),
+          email: email,
+          password: pass,
+          name: name,
+          address: addr,
+          phone: phone,
         );
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إنشاء حساب مشتري')));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم إنشاء حساب مشتري'),
+          ),
+        );
       }
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     } on StateError catch (e) {
       if (e.message == 'exists') {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الحساب موجود بالفعل')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('الحساب موجود بالفعل')),
+        );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: ${e.message}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ: ${e.message}')),
+        );
       }
     }
   }
-
-  InputDecoration _dec(String label, {Widget? suffix}) =>
-      InputDecoration(labelText: label, border: const OutlineInputBorder(), suffixIcon: suffix);
 
   @override
   Widget build(BuildContext context) {
@@ -169,50 +255,160 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
 
                 const SizedBox(height: 12),
-                TextFormField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: _dec('الإيميل'), validator: (v) => (v==null||v.isEmpty)?'مطلوب':null),
+                TextFormField(
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: _dec('الإيميل'),
+                  validator: (v) =>
+                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                ),
                 const SizedBox(height: 10),
-                TextFormField(controller: _password, obscureText: _obscure1, decoration: _dec('كلمة المرور', suffix: IconButton(icon: Icon(_obscure1?Icons.visibility_off:Icons.visibility), onPressed: ()=>setState(()=>_obscure1=!_obscure1))), validator: (v)=> (v==null||v.length<4)?'على الأقل 4 حروف':null),
+                TextFormField(
+                  controller: _password,
+                  obscureText: _obscure1,
+                  decoration: _dec(
+                    'كلمة المرور',
+                    suffix: IconButton(
+                      icon: Icon(
+                        _obscure1 ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscure1 = !_obscure1),
+                    ),
+                  ),
+                  validator: (v) => (v == null || v.length < 4)
+                      ? 'على الأقل 4 حروف'
+                      : null,
+                ),
                 const SizedBox(height: 10),
-                TextFormField(controller: _confirm, obscureText: _obscure2, decoration: _dec('تأكيد كلمة المرور', suffix: IconButton(icon: Icon(_obscure2?Icons.visibility_off:Icons.visibility), onPressed: ()=>setState(()=>_obscure2=!_obscure2))), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                TextFormField(
+                  controller: _confirm,
+                  obscureText: _obscure2,
+                  decoration: _dec(
+                    'تأكيد كلمة المرور',
+                    suffix: IconButton(
+                      icon: Icon(
+                        _obscure2 ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscure2 = !_obscure2),
+                    ),
+                  ),
+                  validator: (v) =>
+                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                ),
                 const SizedBox(height: 10),
-                TextFormField(controller: _name, decoration: _dec('الاسم'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                TextFormField(
+                  controller: _name,
+                  decoration: _dec('الاسم'),
+                  validator: (v) =>
+                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                ),
                 const SizedBox(height: 10),
-                TextFormField(controller: _address, decoration: _dec('العنوان'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                TextFormField(
+                  controller: _address,
+                  decoration: _dec('العنوان'),
+                  validator: (v) =>
+                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                ),
                 const SizedBox(height: 10),
-                TextFormField(controller: _phone, keyboardType: TextInputType.phone, decoration: _dec('رقم التليفون'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                TextFormField(
+                  controller: _phone,
+                  keyboardType: TextInputType.phone,
+                  decoration: _dec('رقم التليفون'),
+                  validator: (v) =>
+                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                ),
 
-                // ===== حقول البائع =====
+                // حقول البائع
                 if (_isSeller) ...[
                   const SizedBox(height: 16),
-                  TextFormField(controller: _store, decoration: _dec('اسم المتجر'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                  TextFormField(
+                    controller: _store,
+                    decoration: _dec('اسم المتجر'),
+                    validator: (v) =>
+                    (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  ),
                   const SizedBox(height: 10),
-                  TextFormField(controller: _crUrl, decoration: _dec('رابط صورة السجل التجاري (Drive/Link)')),
+                  TextFormField(
+                    controller: _crUrl,
+                    decoration: _dec('رابط صورة السجل التجاري (Drive/Link)'),
+                  ),
                   const SizedBox(height: 10),
-                  TextFormField(controller: _taxUrl, decoration: _dec('رابط صورة البطاقة الضريبية (Drive/Link)')),
+                  TextFormField(
+                    controller: _taxUrl,
+                    decoration: _dec(
+                        'رابط صورة البطاقة الضريبية (Drive/Link)'),
+                  ),
                   const SizedBox(height: 6),
                   const Align(
                     alignment: Alignment.centerRight,
-                    child: Text('ملحوظة: يمكنك رفع الملفات على Google Drive وإرسال الروابط للمراجعة.'),
+                    child: Text(
+                      'ملحوظة: يمكنك رفع الملفات على Google Drive وإرسال الروابط للمراجعة.',
+                    ),
                   ),
                 ],
 
-                // ===== حقول شركة الونش =====
+                // حقول الونش
                 if (_isTow) ...[
                   const SizedBox(height: 16),
-                  TextFormField(controller: _company, decoration: _dec('اسم الشركة'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                  TextFormField(
+                    controller: _company,
+                    decoration: _dec('اسم الشركة'),
+                    validator: (v) =>
+                    (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  ),
                   const SizedBox(height: 10),
-                  TextFormField(controller: _area, decoration: _dec('المنطقة/التغطية'), validator: (v)=> (v==null||v.isEmpty)?'مطلوب':null),
+                  TextFormField(
+                    controller: _area,
+                    decoration: _dec('المنطقة/التغطية'),
+                    validator: (v) =>
+                    (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  ),
                   const SizedBox(height: 10),
-                  TextFormField(controller: _baseCost, keyboardType: TextInputType.number, decoration: _dec('سعر الخدمة (جنيه)'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا صحيحًا':null),
+                  TextFormField(
+                    controller: _baseCost,
+                    keyboardType: TextInputType.number,
+                    decoration: _dec('سعر الخدمة (جنيه)'),
+                    validator: (v) => (double.tryParse(v ?? '') == null)
+                        ? 'أدخل رقمًا صحيحًا'
+                        : null,
+                  ),
                   const SizedBox(height: 10),
-                  TextFormField(controller: _pricePerKm, keyboardType: TextInputType.number, decoration: _dec('سعر الكيلو (جنيه)'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا صحيحًا':null),
+                  TextFormField(
+                    controller: _pricePerKm,
+                    keyboardType: TextInputType.number,
+                    decoration: _dec('سعر الكيلو (جنيه)'),
+                    validator: (v) => (double.tryParse(v ?? '') == null)
+                        ? 'أدخل رقمًا صحيحًا'
+                        : null,
+                  ),
                   const SizedBox(height: 10),
-
                   Row(
                     children: [
-                      Expanded(child: TextFormField(controller: _latCtrl, keyboardType: TextInputType.number, decoration: _dec('Latitude'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا':null)),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _latCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: _dec('Latitude'),
+                          validator: (v) =>
+                          (double.tryParse(v ?? '') == null)
+                              ? 'أدخل رقمًا'
+                              : null,
+                        ),
+                      ),
                       const SizedBox(width: 8),
-                      Expanded(child: TextFormField(controller: _lngCtrl, keyboardType: TextInputType.number, decoration: _dec('Longitude'), validator: (v)=> (double.tryParse(v??'')==null)?'أدخل رقمًا':null)),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lngCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: _dec('Longitude'),
+                          validator: (v) =>
+                          (double.tryParse(v ?? '') == null)
+                              ? 'أدخل رقمًا'
+                              : null,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -221,7 +417,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _openLocationPicker,
                       icon: const Icon(Icons.my_location),
-                      label: const Text('تحديد الموقع (موقعي الآن / إدخال يدوي)'),
+                      label: const Text(
+                        'تحديد الموقع (موقعي الآن / إدخال يدوي)',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _towCrUrl,
+                    decoration: _dec(
+                      'رابط صورة السجل التجاري (Drive/Link)',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _towTaxUrl,
+                    decoration: _dec(
+                      'رابط صورة البطاقة الضريبية (Drive/Link)',
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'ملحوظة: يمكنك رفع الملفات على Google Drive وإرسال الروابط للمراجعة.',
                     ),
                   ),
                 ],

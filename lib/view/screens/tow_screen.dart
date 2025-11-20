@@ -88,10 +88,11 @@ class _TowScreenState extends State<TowScreen> {
 
       setState(() {
         _pos = p;
-        _addressCtrl.text = '(${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)})';
+        _addressCtrl.text =
+        '(${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)})';
       });
 
-      _pickNearestAsSelected(); // اختار الأقرب كبداية
+      _pickNearestAsSelected(); // ⭐ اختار أقرب شركة Online كبداية
       _recalcCosts();
     } catch (e) {
       if (!mounted) return;
@@ -101,22 +102,25 @@ class _TowScreenState extends State<TowScreen> {
     }
   }
 
-  // اختار أقرب شركة وافتح أسعارها
+  /// ⭐ اختيار أقرب شركة "أونلاين" فقط على حسب موقعي
   void _pickNearestAsSelected() {
     if (_pos == null) return;
 
-    final userLat = _pos!.latitude, userLng = _pos!.longitude;
-    final list = List<TowCompany>.from(TowDirectory().all);        // ✅ بديل kTowCompanies
-    if (list.isEmpty) return;
+    final userLat = _pos!.latitude;
+    final userLng = _pos!.longitude;
 
-    list.sort((a, b) {
-      final da = Geolocator.distanceBetween(userLat, userLng, a.lat, a.lng);
-      final db = Geolocator.distanceBetween(userLat, userLng, b.lat, b.lng);
-      return da.compareTo(db);
-    });
+    // ✅ نستخدم TowDirectory().nearestOnline بدل all
+    final nearest = TowDirectory().nearestOnline(userLat, userLng);
+    if (nearest == null) return;
 
-    final nearest = list.first;
-    final km = Geolocator.distanceBetween(userLat, userLng, nearest.lat, nearest.lng) / 1000.0;
+    final km = Geolocator.distanceBetween(
+      userLat,
+      userLng,
+      nearest.lat,
+      nearest.lng,
+    ) /
+        1000.0;
+
     _applySelectedCompany(nearest, km);
   }
 
@@ -144,7 +148,11 @@ class _TowScreenState extends State<TowScreen> {
     );
     if (picked != null) {
       final km = Geolocator.distanceBetween(
-          _pos!.latitude, _pos!.longitude, picked.lat, picked.lng) /
+        _pos!.latitude,
+        _pos!.longitude,
+        picked.lat,
+        picked.lng,
+      ) /
           1000.0;
       _applySelectedCompany(picked, km);
     }
@@ -176,23 +184,27 @@ class _TowScreenState extends State<TowScreen> {
 
   // حساب التكاليف
   void _recalcCosts() {
-    final baseCost    = _selectedCompany?.baseCost   ?? 0.0;
-    final pricePerKm  = _selectedCompany?.pricePerKm ?? 0.0;
+    final baseCost = _selectedCompany?.baseCost ?? 0.0;
+    final pricePerKm = _selectedCompany?.pricePerKm ?? 0.0;
 
     final kmToCompany = _companyDistKm ?? 0.0;
 
     double kmToDest = 0.0;
     if (_pos != null && _destLat != null && _destLng != null) {
       kmToDest = Geolocator.distanceBetween(
-          _pos!.latitude, _pos!.longitude, _destLat!, _destLng!) /
+        _pos!.latitude,
+        _pos!.longitude,
+        _destLat!,
+        _destLng!,
+      ) /
           1000.0;
     }
 
     final kmTotal = kmToCompany + kmToDest;
-    final kmCost  = kmTotal * pricePerKm;
-    final total   = baseCost + kmCost;
+    final kmCost = kmTotal * pricePerKm;
+    final total = baseCost + kmCost;
 
-    _kmSumCtrl .text = '${kmTotal.toStringAsFixed(1)} كم';
+    _kmSumCtrl.text = '${kmTotal.toStringAsFixed(1)} كم';
     _kmCostCtrl.text = '${kmCost.toStringAsFixed(0)} جنيه';
     _totalCostCtrl.text = '${total.toStringAsFixed(0)} جنيه';
   }
@@ -225,7 +237,10 @@ class _TowScreenState extends State<TowScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إلغاء'),
+          ),
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
@@ -255,9 +270,16 @@ class _TowScreenState extends State<TowScreen> {
                 // موقعي
                 Row(
                   children: [
-                    Icon(Icons.location_on_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.location_on_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
-                    Text('موقعك', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'موقعك',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -290,7 +312,9 @@ class _TowScreenState extends State<TowScreen> {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceVariant.withOpacity(.35),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: theme.colorScheme.outlineVariant),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Row(
                       children: [
@@ -318,9 +342,16 @@ class _TowScreenState extends State<TowScreen> {
                 // مكان الوصول
                 Row(
                   children: [
-                    Icon(Icons.flag_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.flag_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
-                    Text('مكان الوصول', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'مكان الوصول',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -334,7 +365,8 @@ class _TowScreenState extends State<TowScreen> {
                           hintText: 'اكتب العنوان أو اختاره من الخريطة',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                        validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
                         onChanged: (_) => _recalcCosts(),
                       ),
                     ),
@@ -355,9 +387,16 @@ class _TowScreenState extends State<TowScreen> {
                 // تكاليف الخدمة
                 Row(
                   children: [
-                    Icon(Icons.request_quote_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.request_quote_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
-                    Text('تكاليف الخدمة', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'تكاليف الخدمة',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -411,9 +450,16 @@ class _TowScreenState extends State<TowScreen> {
                 // معلومات المركبة
                 Row(
                   children: [
-                    Icon(Icons.directions_car_filled_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.directions_car_filled_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
-                    Text('معلومات المركبة', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'معلومات المركبة',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -424,7 +470,8 @@ class _TowScreenState extends State<TowScreen> {
                     hintText: 'مثال: هوندا سيفيك',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'यह الحقل مطلوب' : null,
+                  validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -435,7 +482,8 @@ class _TowScreenState extends State<TowScreen> {
                     hintText: 'مثال: ABC-1234',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
+                  validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -452,9 +500,16 @@ class _TowScreenState extends State<TowScreen> {
                 // تواصل
                 Row(
                   children: [
-                    Icon(Icons.call_outlined, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.call_outlined,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
-                    Text('معلومات التواصل', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text(
+                      'معلومات التواصل',
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -467,8 +522,10 @@ class _TowScreenState extends State<TowScreen> {
                     border: OutlineInputBorder(),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'هذا الحقل مطلوب';
-                    if (v.replaceAll(RegExp(r'[\\s\\-\\+]'), '').length < 9) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'هذا الحقل مطلوب';
+                    }
+                    if (v.replaceAll(RegExp(r'[\s\-\+]'), '').length < 9) {
                       return 'رجاءً أدخل رقمًا صحيحًا';
                     }
                     return null;
@@ -481,7 +538,9 @@ class _TowScreenState extends State<TowScreen> {
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(.25)),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(.25),
+                    ),
                   ),
                   child: const Row(
                     children: [
@@ -491,7 +550,10 @@ class _TowScreenState extends State<TowScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('الوقت المتوقع للوصول', style: TextStyle(fontWeight: FontWeight.w700)),
+                            Text(
+                              'الوقت المتوقع للوصول',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
                             SizedBox(height: 2),
                             Text('15–25 دقيقة بعد التأكيد'),
                           ],

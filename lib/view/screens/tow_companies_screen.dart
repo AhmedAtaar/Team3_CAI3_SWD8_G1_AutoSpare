@@ -24,44 +24,64 @@ class TowCompaniesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final list = TowDirectory().all; // ✅ بدل kTowCompanies
-
-    final sorted = [...list]..sort((a, b) {
-      final da = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: a.lat, toLng: a.lng);
-      final db = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: b.lat, toLng: b.lng);
-      return da.compareTo(db);
-    });
+    final dir = TowDirectory();
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('شركات السحب القريبة'), centerTitle: true),
-        body: ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: sorted.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (_, i) {
-            final c = sorted[i];
-            final d = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: c.lat, toLng: c.lng);
-            return Card(
-              child: ListTile(
-                leading: const Icon(Icons.local_shipping_outlined),
-                title: Text(
-                  '${c.name} • ${c.area}',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'المسافة التقريبية: ${d.toStringAsFixed(1)} كم\n'
-                      'سعر الخدمة: ${c.baseCost.toStringAsFixed(0)} جنيه • سعر الكيلو: ${c.pricePerKm.toStringAsFixed(0)} جنيه\n'
-                      '(${c.lat.toStringAsFixed(5)}, ${c.lng.toStringAsFixed(5)})',
-                ),
-                trailing: const Icon(Icons.chevron_left),
-                onTap: () => Navigator.pop(context, c),
-              ),
-            );
-          },
-        ),
+      child: AnimatedBuilder(
+        animation: dir,
+        builder: (_, __) {
+          // ✅ الشركات المتاحة فقط
+          final list = dir.onlineOnly;
+
+          // الأقرب فالأبعد
+          final sorted = [...list]..sort((a, b) {
+            final da = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: a.lat, toLng: a.lng);
+            final db = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: b.lat, toLng: b.lng);
+            return da.compareTo(db);
+          });
+
+          return Scaffold(
+            appBar: AppBar(title: const Text('شركات السحب القريبة'), centerTitle: true),
+            body: sorted.isEmpty
+                ? const Center(child: Text('لا توجد شركات متاحة حالياً'))
+                : ListView.separated(
+              padding: const EdgeInsets.all(12),
+              itemCount: sorted.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final c = sorted[i];
+                final d = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: c.lat, toLng: c.lng);
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.local_shipping_outlined),
+                    title: Row(
+                      children: [
+                        Expanded(child: Text('${c.name} • ${c.area}')),
+                        // ✅ شارة الحالة
+                        Chip(
+                          avatar: Icon(
+                            c.isOnline ? Icons.circle : Icons.circle_outlined,
+                            size: 16,
+                            color: c.isOnline ? Colors.green : Colors.grey,
+                          ),
+                          label: Text(c.isOnline ? 'متاح' : 'غير متاح'),
+                        ),
+                      ],
+                    ),
+                    subtitle: Text(
+                      'المسافة التقريبية: ${d.toStringAsFixed(1)} كم\n'
+                          'سعر الخدمة: ${c.baseCost.toStringAsFixed(0)} جنيه • سعر الكيلو: ${c.pricePerKm.toStringAsFixed(0)} جنيه\n'
+                          '(${c.lat.toStringAsFixed(5)}, ${c.lng.toStringAsFixed(5)})',
+                    ),
+                    trailing: const Icon(Icons.chevron_left),
+                    onTap: () => Navigator.pop(context, c),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
