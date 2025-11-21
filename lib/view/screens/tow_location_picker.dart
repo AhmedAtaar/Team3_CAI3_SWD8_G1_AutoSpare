@@ -1,4 +1,4 @@
-// lib/view/screens/tow_location_picker.dart
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -59,7 +59,7 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
   }
 
   Future<void> _openMap() async {
-    final initial = _currentLatLng() ?? const ll.LatLng(30.044420, 31.235712); // Cairo fallback
+    final initial = _currentLatLng() ?? const ll.LatLng(30.044420, 31.235712);
     final picked = await Navigator.push<ll.LatLng>(
       context,
       MaterialPageRoute(builder: (_) => _TowMapPickerFlutterMap(initial: initial)),
@@ -152,7 +152,7 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
   }
 }
 
-/// شاشة الخريطة باستخدام flutter_map + OpenStreetMap
+
 class _TowMapPickerFlutterMap extends StatefulWidget {
   final ll.LatLng initial;
   const _TowMapPickerFlutterMap({required this.initial});

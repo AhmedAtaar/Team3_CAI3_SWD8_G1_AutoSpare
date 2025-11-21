@@ -1,4 +1,4 @@
-// lib/view/screens/tow_companies_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:auto_spare/services/tow_directory.dart';
@@ -31,10 +31,10 @@ class TowCompaniesScreen extends StatelessWidget {
       child: AnimatedBuilder(
         animation: dir,
         builder: (_, __) {
-          // ✅ الشركات المتاحة فقط
+
           final list = dir.onlineOnly;
 
-          // الأقرب فالأبعد
+
           final sorted = [...list]..sort((a, b) {
             final da = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: a.lat, toLng: a.lng);
             final db = _distanceKm(fromLat: userLat, fromLng: userLng, toLat: b.lat, toLng: b.lng);

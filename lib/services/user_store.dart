@@ -2,8 +2,8 @@
 
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
-import 'package:auto_spare/services/user_password_store.dart';
 import 'package:auto_spare/services/tow_directory.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 enum SellerStatus { pending, approved, rejected }
 
@@ -19,10 +19,9 @@ class TowCompanyRequest {
   final String contactEmail;
   final String contactPhone;
 
-  // ✅ نفس فكرة البائع:
-  // رابط السجل التجاري + رابط البطاقة الضريبية
-  final String? commercialRegUrl; // السجل التجاري
-  final String? taxCardUrl;       // البطاقة الضريبية
+
+  final String? commercialRegUrl;
+  final String? taxCardUrl;
 
   SellerStatus status;
   String? rejectReason;
@@ -57,15 +56,22 @@ class UserStore {
   final List<TowCompanyRequest> _tows = [];
   AppUser? currentUser;
 
-  // ================== مشتري ==================
-  void signUpBuyer({
+
+  Future<void> signUpBuyer({
     required String email,
     required String password,
     required String name,
     required String address,
     required String phone,
-  }) {
-    final id = 'B-${DateTime.now().millisecondsSinceEpoch}';
+  }) async {
+
+    final auth = FirebaseAuth.instance;
+    final cred = await auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final id = cred.user!.uid;
+
 
     final user = AppUser(
       id: id,
@@ -73,16 +79,15 @@ class UserStore {
       email: email,
       phone: phone,
       address: address,
-      password: password,
+      password: '',
       role: AppUserRole.buyer,
     );
 
-    usersRepo.addUser(user);
-    UserPasswordStore.setPassword(id, password);
+    await usersRepo.addUser(user);
   }
 
-  // ================== بائع (تحت المراجعة) ==================
-  void signUpSeller({
+
+  Future<void> signUpSeller({
     required String email,
     required String password,
     required String name,
@@ -91,8 +96,13 @@ class UserStore {
     required String storeName,
     String? commercialRegUrl,
     String? taxCardUrl,
-  }) {
-    final id = 'S-${DateTime.now().millisecondsSinceEpoch}';
+  }) async {
+    final auth = FirebaseAuth.instance;
+    final cred = await auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final id = cred.user!.uid;
 
     final user = AppUser(
       id: id,
@@ -100,7 +110,7 @@ class UserStore {
       email: email,
       phone: phone,
       address: address,
-      password: password,
+      password: '',
       role: AppUserRole.seller,
       approved: false,
       canSell: false,
@@ -109,11 +119,10 @@ class UserStore {
       taxCardUrl: taxCardUrl,
     );
 
-    usersRepo.addUser(user);
-    UserPasswordStore.setPassword(id, password);
+    await usersRepo.addUser(user);
   }
 
-  // ================== طلب شركة ونش ==================
+
   void signUpTow({
     required String companyName,
     required String area,
@@ -158,29 +167,38 @@ class UserStore {
     _tows[i].rejectReason = reason;
   }
 
-  void approveTow(String reqId) {
+  Future<void> approveTow(String reqId) async {
     final idx = _tows.indexWhere((t) => t.id == reqId);
     if (idx == -1) return;
 
     final req = _tows[idx];
     req.status = SellerStatus.approved;
 
-    final userId = "W-${DateTime.now().millisecondsSinceEpoch}";
+    // إنشاء حساب Firebase Auth لسائق الونش
+    final auth = FirebaseAuth.instance;
+    final email = req.contactEmail;
+    final password = req.tempPassword ?? "1234";
+
+    final cred = await auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final userId = cred.user!.uid;
+
     final user = AppUser(
       id: userId,
       name: req.contactName,
       email: req.contactEmail,
       phone: req.contactPhone,
       address: req.area,
-      password: req.tempPassword ?? "1234",
+      password: '',
       role: AppUserRole.winch,
       approved: true,
       canTow: true,
       towCompanyId: req.id,
     );
 
-    usersRepo.addUser(user);
-    UserPasswordStore.setPassword(userId, user.password);
+    await usersRepo.addUser(user);
     req.userId = userId;
 
     TowDirectory().addApproved(
@@ -199,7 +217,8 @@ class UserStore {
 
   List<TowCompanyRequest> get tows => List.unmodifiable(_tows);
 
-  void signOutCurrentUser() {
+  Future<void> signOutCurrentUser() async {
     currentUser = null;
+    await FirebaseAuth.instance.signOut();
   }
 }

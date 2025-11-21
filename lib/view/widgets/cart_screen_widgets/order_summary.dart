@@ -79,14 +79,14 @@ class OrderSummary extends StatelessWidget {
             isTotal: true,
           ),
           const SizedBox(height: 24),
-          // MARK:Order button
+
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
               onPressed:
                   itemCount >
-                      0 //TODO: Ask for location
+                      0
                   ? onProceedToOrder
                   : null,
               icon: const Icon(

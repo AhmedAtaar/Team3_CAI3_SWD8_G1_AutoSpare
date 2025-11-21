@@ -19,25 +19,25 @@ class TowScreen extends StatefulWidget {
 class _TowScreenState extends State<TowScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // إدخالات
-  final _addressCtrl = TextEditingController(); // موقعي
-  final _destCtrl = TextEditingController();    // مكان الوصول
+
+  final _addressCtrl = TextEditingController();
+  final _destCtrl = TextEditingController();
   final _vehicleCtrl = TextEditingController();
   final _plateCtrl = TextEditingController();
   final _problemCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
 
-  // تكاليف (عرض فقط)
+
   final _baseCostCtrl = TextEditingController(text: '0 جنيه');
   final _kmSumCtrl = TextEditingController(text: '0.0 كم');
   final _pricePerKmCtrl = TextEditingController(text: '0 جنيه/كم');
   final _kmCostCtrl = TextEditingController(text: '0 جنيه');
   final _totalCostCtrl = TextEditingController(text: '0 جنيه');
 
-  // حالة
+
   Position? _pos;
-  TowCompany? _selectedCompany; // الشركة المعتمدة للحساب
-  double? _companyDistKm;       // المسافة من موقعي للشركة
+  TowCompany? _selectedCompany;
+  double? _companyDistKm;
   double? _destLat;
   double? _destLng;
 
@@ -63,7 +63,7 @@ class _TowScreenState extends State<TowScreen> {
     super.dispose();
   }
 
-  // GPS
+
   Future<void> _initLocation() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -92,7 +92,7 @@ class _TowScreenState extends State<TowScreen> {
         '(${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)})';
       });
 
-      _pickNearestAsSelected(); // ⭐ اختار أقرب شركة Online كبداية
+      _pickNearestAsSelected();
       _recalcCosts();
     } catch (e) {
       if (!mounted) return;
@@ -102,14 +102,14 @@ class _TowScreenState extends State<TowScreen> {
     }
   }
 
-  /// ⭐ اختيار أقرب شركة "أونلاين" فقط على حسب موقعي
+
   void _pickNearestAsSelected() {
     if (_pos == null) return;
 
     final userLat = _pos!.latitude;
     final userLng = _pos!.longitude;
 
-    // ✅ نستخدم TowDirectory().nearestOnline بدل all
+
     final nearest = TowDirectory().nearestOnline(userLat, userLng);
     if (nearest == null) return;
 
@@ -124,7 +124,7 @@ class _TowScreenState extends State<TowScreen> {
     _applySelectedCompany(nearest, km);
   }
 
-  // لما أختار شركة من الليست
+
   void _applySelectedCompany(TowCompany company, double distKm) {
     setState(() {
       _selectedCompany = company;
@@ -158,7 +158,7 @@ class _TowScreenState extends State<TowScreen> {
     }
   }
 
-  // مكان الوصول من الخريطة
+
   Future<void> _pickDestinationOnMap() async {
     final baseLat = _pos?.latitude ?? 30.0444;
     final baseLng = _pos?.longitude ?? 31.2357;
@@ -182,7 +182,7 @@ class _TowScreenState extends State<TowScreen> {
     }
   }
 
-  // حساب التكاليف
+
   void _recalcCosts() {
     final baseCost = _selectedCompany?.baseCost ?? 0.0;
     final pricePerKm = _selectedCompany?.pricePerKm ?? 0.0;
@@ -267,7 +267,7 @@ class _TowScreenState extends State<TowScreen> {
             ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
               children: [
-                // موقعي
+
                 Row(
                   children: [
                     Icon(
@@ -305,7 +305,7 @@ class _TowScreenState extends State<TowScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // الشركة المختارة + المسافة
+
                 if (_selectedCompany != null)
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -339,7 +339,7 @@ class _TowScreenState extends State<TowScreen> {
 
                 const SizedBox(height: 20),
 
-                // مكان الوصول
+
                 Row(
                   children: [
                     Icon(
@@ -384,7 +384,7 @@ class _TowScreenState extends State<TowScreen> {
 
                 const SizedBox(height: 20),
 
-                // تكاليف الخدمة
+
                 Row(
                   children: [
                     Icon(
@@ -447,7 +447,7 @@ class _TowScreenState extends State<TowScreen> {
 
                 const SizedBox(height: 20),
 
-                // معلومات المركبة
+
                 Row(
                   children: [
                     Icon(
@@ -497,7 +497,7 @@ class _TowScreenState extends State<TowScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // تواصل
+
                 Row(
                   children: [
                     Icon(

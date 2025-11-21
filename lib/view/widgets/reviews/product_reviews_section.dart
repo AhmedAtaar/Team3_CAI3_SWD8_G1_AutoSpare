@@ -1,4 +1,4 @@
-// lib/view/widgets/reviews/product_reviews_section.dart
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:auto_spare/services/reviews.dart';
@@ -19,11 +19,11 @@ class ProductReviewsSection extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('yyyy/MM/dd – HH:mm');
 
-    // ملخصات (متوسط + عدد)
+
     final prodSummary$ = reviewsRepo.watchProductSummary(productId);
     final sellerSummary$ = reviewsRepo.watchSellerSummary(sellerId);
 
-    // القوائم
+
     final prodList$ = reviewsRepo.watchProductReviews(productId);
     final sellerList$ = reviewsRepo.watchSellerReviews(sellerId);
 
@@ -87,7 +87,7 @@ class ProductReviewsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ===== هيدر التقييمات (المنتج + البائع)
+
             Row(
               children: [
                 const Icon(Icons.rate_review_outlined),
@@ -111,7 +111,7 @@ class ProductReviewsSection extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // ===== مراجعات المنتج
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -166,7 +166,7 @@ class ProductReviewsSection extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // ===== مراجعات البائع
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

@@ -1,6 +1,7 @@
 // lib/view/screens/sign_up_screen.dart
 
 import 'package:auto_spare/services/user_store.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'tow_location_picker.dart';
@@ -33,9 +34,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _latCtrl = TextEditingController();
   final _lngCtrl = TextEditingController();
 
-  // مستندات الونش (نفس مسميات البائع)
-  final _towCrUrl = TextEditingController();  // السجل التجاري
-  final _towTaxUrl = TextEditingController(); // البطاقة الضريبية
+
+  final _towCrUrl = TextEditingController();
+  final _towTaxUrl = TextEditingController();
 
   bool _isSeller = false;
   bool _isTow = false;
@@ -119,7 +120,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final addr = _address.text.trim();
 
     try {
-      // ========== حساب شركة ونش ==========
+
       if (_isTow) {
         final lat = double.tryParse(_latCtrl.text.trim());
         final lng = double.tryParse(_lngCtrl.text.trim());
@@ -145,12 +146,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           contactEmail: email,
           contactPhone: phone,
           password: pass,
-          commercialRegUrl: _towCrUrl.text.trim().isEmpty
-              ? null
-              : _towCrUrl.text.trim(),
-          taxCardUrl: _towTaxUrl.text.trim().isEmpty
-              ? null
-              : _towTaxUrl.text.trim(),
+          commercialRegUrl:
+          _towCrUrl.text.trim().isEmpty ? null : _towCrUrl.text.trim(),
+          taxCardUrl:
+          _towTaxUrl.text.trim().isEmpty ? null : _towTaxUrl.text.trim(),
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,9 +158,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         );
 
-        // ========== حساب بائع ==========
+
       } else if (_isSeller) {
-        UserStore().signUpSeller(
+        await UserStore().signUpSeller(
           email: email,
           password: pass,
           name: name,
@@ -180,9 +179,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         );
 
-        // ========== حساب مشتري ==========
+
       } else {
-        UserStore().signUpBuyer(
+        await UserStore().signUpBuyer(
           email: email,
           password: pass,
           name: name,
@@ -200,6 +199,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
+    } on FirebaseAuthException catch (e) {
+      String msg = 'حدث خطأ أثناء إنشاء الحساب';
+      if (e.code == 'email-already-in-use') {
+        msg = 'الحساب موجود بالفعل لهذا الإيميل';
+      } else if (e.code == 'weak-password') {
+        msg = 'كلمة المرور ضعيفة، برجاء اختيار كلمة أقوى';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
     } on StateError catch (e) {
       if (e.message == 'exists') {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -210,6 +219,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           SnackBar(content: Text('خطأ: ${e.message}')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ غير متوقع: $e')),
+      );
     }
   }
 
@@ -320,7 +333,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   (v == null || v.isEmpty) ? 'مطلوب' : null,
                 ),
 
-                // حقول البائع
+
                 if (_isSeller) ...[
                   const SizedBox(height: 16),
                   TextFormField(
@@ -332,7 +345,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _crUrl,
-                    decoration: _dec('رابط صورة السجل التجاري (Drive/Link)'),
+                    decoration:
+                    _dec('رابط صورة السجل التجاري (Drive/Link)'),
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -349,7 +363,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
 
-                // حقول الونش
+
                 if (_isTow) ...[
                   const SizedBox(height: 16),
                   TextFormField(
@@ -370,7 +384,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _baseCost,
                     keyboardType: TextInputType.number,
                     decoration: _dec('سعر الخدمة (جنيه)'),
-                    validator: (v) => (double.tryParse(v ?? '') == null)
+                    validator: (v) =>
+                    (double.tryParse(v ?? '') == null)
                         ? 'أدخل رقمًا صحيحًا'
                         : null,
                   ),
@@ -379,7 +394,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _pricePerKm,
                     keyboardType: TextInputType.number,
                     decoration: _dec('سعر الكيلو (جنيه)'),
-                    validator: (v) => (double.tryParse(v ?? '') == null)
+                    validator: (v) =>
+                    (double.tryParse(v ?? '') == null)
                         ? 'أدخل رقمًا صحيحًا'
                         : null,
                   ),

@@ -6,7 +6,7 @@ import 'package:auto_spare/controller/navigation/navigation.dart';
 
 class BrandProductsScreen extends StatefulWidget {
   final CarBrand brand;
-  final String? logoUrl; // ⬅️ شعار الماركة (اختياري)
+  final String? logoUrl;
 
   const BrandProductsScreen({
     super.key,
@@ -25,10 +25,10 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
   _SortBy _sortBy = _SortBy.newest;
 
   List<CatalogProduct> _filtered() {
-    // 1) منتجات الماركة
+
     var list = Catalog().all().where((p) => p.brand == widget.brand).toList();
 
-    // 2) بحث نصي
+
     if (_query.trim().isNotEmpty) {
       final q = _query.trim().toLowerCase();
       list = list.where((p) {
@@ -39,7 +39,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
       }).toList();
     }
 
-    // 3) ترتيب
+
     list.sort((a, b) {
       switch (_sortBy) {
         case _SortBy.priceLow:
@@ -63,7 +63,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
     final brandName = kBrandName[widget.brand] ?? widget.brand.name;
     final products = _filtered();
 
-    // ========= الهيدر (اسم + شعار) =========
+
     Widget header() => Row(
       children: [
         Expanded(
@@ -96,7 +96,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
       ],
     );
 
-    // ========= شريط البحث + الترتيب =========
+
     Widget searchAndSort() => Row(
       children: [
         Expanded(
@@ -136,7 +136,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
       ],
     );
 
-    // ========= شبكة المنتجات =========
+
     Widget grid() {
       if (products.isEmpty) {
         return const Center(child: Text('لا توجد منتجات لهذه الماركة حالياً'));
@@ -157,9 +157,9 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AppNavigationScaffold(
-        // ⬅️ يظهر الـ AppBar + Bottom Navigation
+
         title: 'منتجات $brandName',
-        currentIndex: 1, // داخل التبويب "التصنيفات"
+        currentIndex: 1,
         body: Column(
           children: [
             Padding(

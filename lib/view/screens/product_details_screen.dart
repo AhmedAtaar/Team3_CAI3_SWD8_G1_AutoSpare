@@ -4,7 +4,7 @@ import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/services/cart_service.dart';
 import 'cart_screen.dart';
 
-// ⬅️ إضافات جديدة
+
 import 'package:auto_spare/services/reviews.dart';
 import 'package:auto_spare/view/widgets/reviews/product_reviews_section.dart';
 
@@ -64,7 +64,7 @@ class ProductDetailsScreen extends StatelessWidget {
       );
     }
 
-    // شارة (المتوسط • العدد)
+
     Widget ratingBadge(double avg, int count, {IconData icon = Icons.star}) {
       if (count == 0) return const SizedBox.shrink();
       return Chip(
@@ -73,7 +73,7 @@ class ProductDetailsScreen extends StatelessWidget {
       );
     }
 
-    // ملخصات التقييم (Product & Seller)
+
     final prodSummary$ = reviewsRepo.watchProductSummary(p.id);
     final sellerSummary$ = reviewsRepo.watchSellerSummary(p.seller);
 
@@ -87,7 +87,7 @@ class ProductDetailsScreen extends StatelessWidget {
             image(),
             const SizedBox(height: 12),
 
-            // العنوان + شارات التقييم
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -150,13 +150,12 @@ class ProductDetailsScreen extends StatelessWidget {
               child: ListTile(
                 leading: const Icon(Icons.sell_outlined),
                 title: Text('البائع: ${p.seller}'),
-                subtitle: const Text('يمكن التواصل بعد الدمج مع Firebase'),
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // ===== قسم التقييمات (منتج + بائع)
+
             ProductReviewsSection(
               productId: p.id,
               sellerId: p.seller,

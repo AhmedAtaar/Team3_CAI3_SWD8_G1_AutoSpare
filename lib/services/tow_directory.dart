@@ -1,6 +1,5 @@
 // lib/services/tow_directory.dart
 import 'package:flutter/foundation.dart';
-// ✅ علشان نستخدم distanceBetween
 import 'package:geolocator/geolocator.dart';
 
 class TowCompany {
@@ -12,7 +11,7 @@ class TowCompany {
   final double baseCost;
   final double pricePerKm;
 
-  /// حالة التواجد (أونلاين/أوفلاين)
+
   final bool isOnline;
 
   const TowCompany({
@@ -129,10 +128,10 @@ class TowDirectory extends ChangeNotifier {
 
   final List<TowCompany> _approved = [];
 
-  /// كل الشركات (سواء أونلاين أو أوفلاين)
+
   List<TowCompany> get all => List.unmodifiable(_approved);
 
-  /// الشركات المتاحة فقط
+
   List<TowCompany> get onlineOnly =>
       _approved.where((c) => c.isOnline).toList(growable: false);
 
@@ -164,9 +163,7 @@ class TowDirectory extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅✅ هنا الإضافة الجديدة:
 
-  /// أقرب شركة "أونلاين" فقط بناءً على إحداثيات المستخدم
   TowCompany? nearestOnline(double userLat, double userLng) {
     final online = _approved.where((c) => c.isOnline).toList();
     if (online.isEmpty) return null;
@@ -190,7 +187,7 @@ class TowDirectory extends ChangeNotifier {
     return online.first;
   }
 
-  /// (اختياري) لو حبيت بعدين تستخدم أقرب شركة حتى لو أوفلاين
+
   TowCompany? nearestAny(double userLat, double userLng) {
     if (_approved.isEmpty) return null;
 

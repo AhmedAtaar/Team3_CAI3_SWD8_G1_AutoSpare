@@ -153,9 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   void _logout() {
-    // مسح المستخدم الحالي من UserStore
     UserStore().currentUser = null;
-    // مسح الجلسة العامة
     UserSession.signOut();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -237,9 +235,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             if (title != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 16)),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             Flexible(
               child: AspectRatio(
@@ -431,9 +433,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                     UserSession.switchToBuyer();
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                            Text('تم التبديل إلى وضع مشتري')));
+                      const SnackBar(
+                        content: Text('تم التبديل إلى وضع مشتري'),
+                      ),
+                    );
                   }
                       : null,
                   icon: const Icon(Icons.swap_horiz),
@@ -446,8 +449,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                     UserSession.switchToSeller();
                     setState(() {});
                     ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('تم الرجوع إلى وضع بائع')));
+                      const SnackBar(
+                        content: Text('تم الرجوع إلى وضع بائع'),
+                      ),
+                    );
                   }
                       : null,
                   icon: const Icon(Icons.storefront),
@@ -466,6 +471,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+
   Widget _adminModeration(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
@@ -473,26 +479,39 @@ class _ProfileScreenState extends State<ProfileScreen>
     final pendingSellers = UserStore().pendingSellers();
     final pendingTow = UserStore().pendingTowCompanies();
 
-    final OrdersRepository repo = OrdersRepoMemory();
-
     return DefaultTabController(
-      length: 4, // ⭐ 4 تبويبات: منتجات + بائعين + ونش + طلبات
+      length: 3,
       child: Column(
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminOrdersScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.receipt_long_outlined),
+              label: const Text('إدارة الطلبات'),
+            ),
+          ),
+          const SizedBox(height: 8),
           TabBar(
             labelColor: cs.primary,
             tabs: const [
-              Tab(text: 'مراجعة المنتجات'),
-              Tab(text: 'اعتماد البائعين'),
-              Tab(text: 'اعتماد شركات الونش'),
-              Tab(text: 'إدارة الطلبات'),
+              Tab(child: FittedBox(child: Text('مراجعة المنتجات'))),
+              Tab(child: FittedBox(child: Text('اعتماد البائعين'))),
+              Tab(child: FittedBox(child: Text('اعتماد شركات الونش'))),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: TabBarView(
               children: [
-                // ===== 1) المنتجات =====
+
                 Column(
                   children: [
                     Container(
@@ -597,7 +616,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ],
                 ),
 
-                // ===== 2) اعتماد البائعين =====
+
                 Column(
                   children: [
                     Container(
@@ -683,8 +702,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                                       IconButton(
                                         tooltip: 'رفض',
                                         onPressed: () {
-                                          UserStore().rejectSeller(
-                                              s.email); // بالإيميل
+                                          UserStore()
+                                              .rejectSeller(s.email);
                                           setState(() {});
                                         },
                                         icon: const Icon(Icons.block,
@@ -693,13 +712,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                                       IconButton(
                                         tooltip: 'موافقة',
                                         onPressed: () {
-                                          UserStore().approveSeller(
-                                              s.email); // بالإيميل
+                                          UserStore()
+                                              .approveSeller(s.email);
                                           setState(() {});
                                         },
                                         icon: const Icon(
-                                            Icons.check_circle,
-                                            color: Colors.green),
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -713,7 +733,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ],
                 ),
 
-                // ===== 3) اعتماد شركات الونش =====
+
                 Column(
                   children: [
                     Container(
@@ -783,10 +803,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         Text(
                                           '(${a.lat.toStringAsFixed(6)}, ${a.lng.toStringAsFixed(6)})',
                                         ),
-
-                                        // ✅ نفس فكرة البائع: CR + Tax
-                                        if ((a.commercialRegUrl?.isNotEmpty ?? false) ||
-                                            (a.taxCardUrl?.isNotEmpty ?? false)) ...[
+                                        if ((a.commercialRegUrl
+                                            ?.isNotEmpty ??
+                                            false) ||
+                                            (a.taxCardUrl
+                                                ?.isNotEmpty ??
+                                                false)) ...[
                                           const SizedBox(height: 8),
                                           const Text(
                                             'المستندات المرفوعة:',
@@ -794,28 +816,35 @@ class _ProfileScreenState extends State<ProfileScreen>
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          if (a.commercialRegUrl?.isNotEmpty ?? false)
+                                          if (a.commercialRegUrl
+                                              ?.isNotEmpty ??
+                                              false)
                                             _DocLink(
                                               label: 'رابط السجل التجاري',
                                               url: a.commercialRegUrl!,
-                                              icon: Icons.picture_as_pdf_outlined,
+                                              icon: Icons
+                                                  .picture_as_pdf_outlined,
                                             ),
-                                          if (a.taxCardUrl?.isNotEmpty ?? false)
+                                          if (a.taxCardUrl
+                                              ?.isNotEmpty ??
+                                              false)
                                             _DocLink(
-                                              label: 'رابط البطاقة الضريبية',
+                                              label:
+                                              'رابط البطاقة الضريبية',
                                               url: a.taxCardUrl!,
-                                              icon: Icons.picture_as_pdf_outlined,
+                                              icon: Icons
+                                                  .picture_as_pdf_outlined,
                                             ),
                                         ],
-
                                         if (a.rejectReason != null &&
-                                            a.status == SellerStatus.rejected)
+                                            a.status ==
+                                                SellerStatus.rejected)
                                           Text(
                                             'مرفوض: ${a.rejectReason}',
                                             style: const TextStyle(
-                                                color: Colors.red),
+                                              color: Colors.red,
+                                            ),
                                           ),
-
                                       ],
                                     ),
                                   ),
@@ -831,39 +860,37 @@ class _ProfileScreenState extends State<ProfileScreen>
                                           final ok =
                                           await showDialog<bool>(
                                             context: context,
-                                            builder: (_) =>
-                                                AlertDialog(
-                                                  title: const Text(
-                                                      'سبب الرفض'),
-                                                  content: TextField(
-                                                    controller: ctrl,
-                                                    maxLines: 3,
-                                                    decoration:
-                                                    const InputDecoration(
-                                                      border:
-                                                      OutlineInputBorder(),
-                                                      hintText:
-                                                      'سبب الرفض (اختياري)',
-                                                    ),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context,
-                                                              false),
-                                                      child:
-                                                      const Text('إلغاء'),
-                                                    ),
-                                                    FilledButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context, true),
-                                                      child:
-                                                      const Text('رفض'),
-                                                    ),
-                                                  ],
+                                            builder: (_) => AlertDialog(
+                                              title: const Text(
+                                                  'سبب الرفض'),
+                                              content: TextField(
+                                                controller: ctrl,
+                                                maxLines: 3,
+                                                decoration:
+                                                const InputDecoration(
+                                                  border:
+                                                  OutlineInputBorder(),
+                                                  hintText:
+                                                  'سبب الرفض (اختياري)',
                                                 ),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, false),
+                                                  child:
+                                                  const Text('إلغاء'),
+                                                ),
+                                                FilledButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(
+                                                          context, true),
+                                                  child:
+                                                  const Text('رفض'),
+                                                ),
+                                              ],
+                                            ),
                                           );
                                           if (ok == true) {
                                             UserStore().rejectTow(
@@ -903,12 +930,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ],
                 ),
-
-                // ===== 4) إدارة الطلبات =====
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: AdminOrdersTab(repo: repo),
-                ),
               ],
             ),
           ),
@@ -916,7 +937,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
   }
-
 
   Widget _thumb(String? url) {
     if (url == null || url.isEmpty) {
@@ -928,6 +948,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: const SizedBox.shrink(),
     );
   }
+
 
   Widget _sellerSection(BuildContext context) {
     final theme = Theme.of(context);
@@ -958,7 +979,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
         const SizedBox(height: 16),
 
-        // تبويبات مراجعة المنتجات
+
         Expanded(
           child: DefaultTabController(
             length: 3,
@@ -992,38 +1013,41 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ),
 
-
         const SizedBox(height: 16),
 
-        // تبويبات إدارة البائع: المخزون + طلبات العملاء
-        Expanded(
-          child: DefaultTabController(
-            length: 2,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: Theme.of(context).colorScheme.outlineVariant),
-              ),
-              child: Column(
-                children: const [
-                  TabBar(tabs: [
-                    Tab(
-                        icon: Icon(Icons.inventory_2_outlined),
-                        text: 'المخزون'),
-                    Tab(
-                        icon: Icon(Icons.receipt_long_outlined),
-                        text: 'طلبات العملاء'),
-                  ]),
-                  SizedBox(height: 8),
-                  Expanded(
-                    child: _SellerOpsTabs(),
-                  ),
-                ],
+
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SellerInventoryScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('إدارة المخزون'),
               ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SellerOrdersScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.receipt_long_outlined),
+                label: const Text('طلبات العملاء'),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1043,12 +1067,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         return Card(
           child: ListTile(
             leading: _thumb(p.imageUrl),
-            title: Text(
-                '${p.title} • ${kBrandName[p.brand]} ${p.model}',
+            title: Text('${p.title} • ${kBrandName[p.brand]} ${p.model}',
                 textDirection: TextDirection.rtl),
             subtitle: Text(
-                'رقم: ${p.id}\nسنوات: ${p.years.join(', ')} • مخزون: ${p.stock}\n${p.description}',
-                textDirection: TextDirection.rtl),
+              'رقم: ${p.id}\nسنوات: ${p.years.join(', ')} • مخزون: ${p.stock}\n${p.description}',
+              textDirection: TextDirection.rtl,
+            ),
             isThreeLine: true,
             trailing: Text(
               p.status == ProductStatus.approved
@@ -1228,9 +1252,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                             if (!formKey.currentState!.validate()) return;
                             if (selectedYears.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text(
-                                          'اختر سنة واحدة على الأقل')));
+                                const SnackBar(
+                                  content:
+                                  Text('اختر سنة واحدة على الأقل'),
+                                ),
+                              );
                               return;
                             }
                             final sellerName =
@@ -1252,16 +1278,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 brand: brand,
                                 model: model,
                                 years: selectedYears.toList()..sort(),
-                                stock:
-                                int.parse(stockCtrl.text.trim()),
+                                stock: int.parse(stockCtrl.text.trim()),
                                 status: ProductStatus.pending,
                               ),
                             );
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content:
-                                    Text('تم إرسال المنتج للمراجعة')));
+                              const SnackBar(
+                                content: Text(
+                                    'تم إرسال المنتج للمراجعة'),
+                              ),
+                            );
                             setState(() {});
                           },
                           icon: const Icon(Icons.upload_file),
@@ -1283,41 +1310,54 @@ class _ProfileScreenState extends State<ProfileScreen>
     final cs = Theme.of(context).colorScheme;
     final uid = UserStore().currentUser?.id ?? 'guest';
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: cs.outlineVariant),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: const Text(
+            'مرحباً! أنت في وضع المشتري',
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            'طلباتي',
+            textDirection: TextDirection.rtl,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              children: [
+                OrdersSection(
+                  mode: OrdersSectionMode.buyer,
+                  userId: uid,
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _goTo(const HomeScreen()),
+                    icon: const Icon(Icons.storefront),
+                    label: const Text('اذهب للتسوق'),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('مرحباً! أنت في وضع المشتري',
-                textDirection: TextDirection.rtl),
           ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text('طلباتي',
-                textDirection: TextDirection.rtl,
-                style: Theme.of(context).textTheme.titleMedium),
-          ),
-          const SizedBox(height: 8),
-          OrdersSection(mode: OrdersSectionMode.buyer, userId: uid),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _goTo(const HomeScreen()),
-              icon: const Icon(Icons.storefront),
-              label: const Text('اذهب للتسوق'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1385,23 +1425,81 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 }
 
-class _SellerOpsTabs extends StatelessWidget {
-  const _SellerOpsTabs();
+
+class AdminOrdersScreen extends StatelessWidget {
+  const AdminOrdersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final OrdersRepository repo = OrdersRepoMemory();
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('إدارة الطلبات'),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: AdminOrdersTab(
+            repo: repo,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+class SellerInventoryScreen extends StatelessWidget {
+  const SellerInventoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final sellerId = UserSession.username ?? 'Seller';
-    return TabBarView(
-      children: [
-        SellerInventoryTab(sellerId: sellerId),
-        SingleChildScrollView(
-          padding: const EdgeInsets.all(8),
-          child: OrdersSection(
-            mode: OrdersSectionMode.seller,
-            userId: sellerId,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('إدارة المخزون'),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SellerInventoryTab(sellerId: sellerId),
+        ),
+      ),
+    );
+  }
+}
+
+
+class SellerOrdersScreen extends StatelessWidget {
+  const SellerOrdersScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final sellerId = UserSession.username ?? 'Seller';
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('طلبات العملاء'),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: OrdersSection(
+              mode: OrdersSectionMode.seller,
+              userId: sellerId,
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -1423,13 +1521,16 @@ class _RejectedList extends StatelessWidget {
         return Card(
           child: ListTile(
             leading: const CircleAvatar(
-                child: Icon(Icons.report_gmailerrorred_outlined)),
+              child: Icon(Icons.report_gmailerrorred_outlined),
+            ),
             title: Text(
-                '${p.title} • ${kBrandName[p.brand]} ${p.model}',
-                textDirection: TextDirection.rtl),
+              '${p.title} • ${kBrandName[p.brand]} ${p.model}',
+              textDirection: TextDirection.rtl,
+            ),
             subtitle: Text(
-                'رقم: ${p.id}\nسنوات: ${p.years.join(', ')} • مخزون: ${p.stock}\n${p.rejectReason ?? '—'}',
-                textDirection: TextDirection.rtl),
+              'رقم: ${p.id}\nسنوات: ${p.years.join(', ')} • مخزون: ${p.stock}\n${p.rejectReason ?? '—'}',
+              textDirection: TextDirection.rtl,
+            ),
             isThreeLine: true,
             trailing:
             const Text('مرفوض', style: TextStyle(color: Colors.red)),
@@ -1439,20 +1540,17 @@ class _RejectedList extends StatelessWidget {
     );
   }
 }
-// ====== توسيع UserStore بدوال اعتماد البائعين ======
-// ====== توسيع UserStore بدوال اعتماد البائعين ======
-// ====== توسيع UserStore بدوال اعتماد البائعين ======
+
+
 extension SellerAdminHelpers on UserStore {
-  /// البائعون الـ Pending
   List<AppUser> pendingSellers() {
     return usersRepo.allUsers
         .where((u) =>
     u.role == AppUserRole.seller &&
-        (u.approved == false)) // أو !u.approved لو non-null
+        (u.approved == false))
         .toList();
   }
 
-  /// موافقة على بائع بالإيميل
   void approveSeller(String email) {
     try {
       final u = usersRepo.allUsers.firstWhere(
@@ -1461,16 +1559,13 @@ extension SellerAdminHelpers on UserStore {
 
       final updated = u.copyWith(
         approved: true,
-        canSell: true, // بعد الموافقة يقدر يبيع
+        canSell: true,
       );
 
       usersRepo.updateUser(updated);
-    } catch (_) {
-      // لو مش لاقي يوزر بالإيميل ده نتجاهل
-    }
+    } catch (_) {}
   }
 
-  /// رفض بائع بالإيميل
   void rejectSeller(String email) {
     try {
       final u = usersRepo.allUsers.firstWhere(
@@ -1483,13 +1578,6 @@ extension SellerAdminHelpers on UserStore {
       );
 
       usersRepo.updateUser(updated);
-    } catch (_) {
-      // نتجاهل لو مش موجود
-    }
+    } catch (_) {}
   }
-
 }
-
-
-
-

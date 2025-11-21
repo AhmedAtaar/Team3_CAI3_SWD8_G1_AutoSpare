@@ -1,4 +1,4 @@
-// lib/view/widgets/admin/admin_winch_tab.dart
+
 
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
@@ -59,13 +59,13 @@ class AdminWinchTab extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text('عدد الأوناش المسموح: ${u.maxWinches}'),
-                      if (u.docUrls.isNotEmpty) ...[
+                      if ((u.docUrls?.isNotEmpty ?? false)) ...[
                         const SizedBox(height: 8),
                         const Text(
                           'المستندات:',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        for (final d in u.docUrls)
+                        for (final d in (u.docUrls ?? const <String>[]))
                           Text(
                             d,
                             style: const TextStyle(
@@ -74,6 +74,7 @@ class AdminWinchTab extends StatelessWidget {
                             ),
                           ),
                       ],
+
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerLeft,

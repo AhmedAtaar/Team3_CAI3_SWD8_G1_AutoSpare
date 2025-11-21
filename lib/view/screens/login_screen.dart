@@ -34,13 +34,13 @@ class LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// تحويل نوع AppUserRole لنوع UserRole (اللي بيستخدمه الـ UI)
+
   UserRole _mapRole(AppUserRole r) {
     switch (r) {
       case AppUserRole.admin:
         return UserRole.admin;
       case AppUserRole.seller:
-      case AppUserRole.winch: // الونش بيتعامل كسيلر في الـ UI
+      case AppUserRole.winch:
         return UserRole.seller;
       case AppUserRole.buyer:
       default:
@@ -48,18 +48,13 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ----------------------------------------------------------
-  // ⭐ دالة تسجيل الدخول بالموبايل + الباسورد
-  // ----------------------------------------------------------
-  AppUser? _loginByPhone(String phone, String pass) {
-    // استخدام الريبو الرسمي (فيه الـ index على رقم الموبايل + الباسورد)
-    return usersRepo.findByPhoneAndPassword(phone, pass);
+
+  Future<AppUser?> _loginByEmail(String email, String pass) {
+    return usersRepo.signInWithEmailAndPassword(email, pass);
   }
 
-  // ----------------------------------------------------------
-  // 🔥 عملية الـ Login
-  // ----------------------------------------------------------
-  void _handleSignIn() {
+
+  Future<void> _handleSignIn() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please correct the errors above.')),
@@ -67,11 +62,10 @@ class LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final phone = _userController.text.trim();
+    final email = _userController.text.trim();
     final pass = _passwordController.text.trim();
 
-    // استخدام الدالة الجديدة
-    final u = _loginByPhone(phone, pass);
+    final u = await _loginByEmail(email, pass);
 
     if (u == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +74,7 @@ class LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // منع دخول الونش قبل موافقة الأدمن
+
     if (u.role == AppUserRole.winch && !u.approved) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -93,10 +87,10 @@ class LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // حفظ المستخدم الحالي في UserStore علشان باقي الشاشات (Profile / Tow panel...)
+
     UserStore().currentUser = u;
 
-    // حفظ الجلسة
+
     UserSession.initFromProfile(
       name: u.name,
       email: u.email,
@@ -107,7 +101,7 @@ class LoginScreenState extends State<LoginScreen> {
       towCompanyId: u.towCompanyId,
     );
 
-    // تحديد الشاشة المطلوبة
+
     Widget dest;
     if (u.role == AppUserRole.admin) {
       dest = const ProfileScreen();
@@ -130,9 +124,7 @@ class LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ----------------------------------------------------------
-  // 🔥 واجهة المستخدم
-  // ----------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,12 +183,13 @@ class LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
                     CustomFormField(
                       controller: _userController,
-                      labelText: 'رقم الموبايل',
-                      hintText: 'مثال: 0100xxxxxxx',
-                      icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
+                      labelText: 'Email',
+                      hintText: 'example@mail.com',
+                      icon: Icons.email,
+                      keyboardType: TextInputType.emailAddress,
                       validator: (v) =>
                       (v == null || v.isEmpty) ? 'Required' : null,
                     ),

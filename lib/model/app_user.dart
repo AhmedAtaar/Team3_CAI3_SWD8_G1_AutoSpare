@@ -14,23 +14,23 @@ class AppUser {
   final String phone;
   final String address;
 
-  final String password;       // مخزّن مؤقتاً (قبل Firebase Auth)
+  final String password;
   final AppUserRole role;
 
-  final bool approved;         // هل الحساب معتمد من الإدارة؟
-  final bool canSell;          // صلاحية البيع
-  final bool canTow;           // صلاحية ونش
+  final bool canSell;
+  final bool approved;
+  final bool canTow;
 
-  final int maxWinches;        // عدد عربيات الونش المسموح بها (إن احتجنا)
+  final int maxWinches;
 
-  final List<String>? docUrls; // روابط مستندات
-  final String? towLicenseUrl; // رابط رخصة الونش
-  final String? towDriverIdUrl; // رابط هوية السائق
+  final List<String>? docUrls;
+  final String? towLicenseUrl;
+  final String? towDriverIdUrl;
 
-  final String? towCompanyId;  // ID الشركة المرتبطة (لو دور winch)
-  final String? storeName;     // اسم متجر البائع
-  final String? commercialRegUrl; // رابط السجل التجاري
-  final String? taxCardUrl;    // رابط البطاقة الضريبية
+  final String? towCompanyId;
+  final String? storeName;
+  final String? commercialRegUrl;
+  final String? taxCardUrl;
 
   AppUser({
     required this.id,

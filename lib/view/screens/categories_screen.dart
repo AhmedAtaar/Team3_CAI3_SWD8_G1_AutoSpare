@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
 
-  // شعارات الماركات
+
   static const Map<CarBrand, String> _brandLogos = {
     CarBrand.bmw:
     'https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg',
@@ -125,7 +125,7 @@ class CategoriesScreen extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (_) => BrandProductsScreen(
                             brand: c.brand,
-                            logoUrl: c.imageUrl, // ⬅️ نبعت الشعار
+                            logoUrl: c.imageUrl,
                           ),
                         ),
                       );

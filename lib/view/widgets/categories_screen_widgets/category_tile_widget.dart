@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../themes/app_colors.dart';
 
 class CategoryTile extends StatelessWidget {
-  final String imageUrl; // CHANGED from IconData icon
+  final String imageUrl;
   final String title;
   final int itemCount;
   final VoidCallback onTap;
 
   const CategoryTile({
-    required this.imageUrl, // CHANGED to require imageUrl
+    required this.imageUrl,
     required this.title,
     required this.itemCount,
     required this.onTap,
@@ -40,12 +40,12 @@ class CategoryTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // UPDATED: Container now displays the Image.network instead of an Icon
+
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                // White background with green border for contrast
+
                 color: Colors.white,
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.primaryGreen, width: 2),
@@ -53,8 +53,8 @@ class CategoryTile extends StatelessWidget {
               child: ClipOval(
                 child: Image.network(
                   imageUrl,
-                  fit: BoxFit.contain, // Ensures the entire logo is visible
-                  // Loading indicator for image fetching
+                  fit: BoxFit.contain,
+
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return Center(
@@ -68,7 +68,7 @@ class CategoryTile extends StatelessWidget {
                       ),
                     );
                   },
-                  // Error fallback if the URL fails to load
+
                   errorBuilder: (context, error, stackTrace) {
                     return Icon(
                       Icons.directions_car,

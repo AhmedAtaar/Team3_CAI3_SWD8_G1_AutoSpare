@@ -66,14 +66,21 @@ class OrdersSection extends StatelessWidget {
       final ok = await showDialog<bool>(
         context: ctx,
         builder: (_) => AlertDialog(
-          title: Text(forProduct ? 'تقييم المنتج' : 'تقييم البائع', textAlign: TextAlign.right),
+          title: Text(
+            forProduct ? 'تقييم المنتج' : 'تقييم البائع',
+            textAlign: TextAlign.right,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (title != null) ...[
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text(title, textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -102,7 +109,10 @@ class OrdersSection extends StatelessWidget {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('إلغاء'),
+            ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: const Text('إرسال'),
@@ -139,11 +149,17 @@ class OrdersSection extends StatelessWidget {
 
         if (ctx.mounted) {
           ScaffoldMessenger.of(ctx).showSnackBar(
-            const SnackBar(content: Text('تم إرسال التقييم', textAlign: TextAlign.right)),
+            const SnackBar(
+              content: Text(
+                'تم إرسال التقييم',
+                textAlign: TextAlign.right,
+              ),
+            ),
           );
         }
       }
     }
+
 
     Widget _reviewBadge(double avg, int count) {
       if (count == 0) return const SizedBox.shrink();
@@ -179,13 +195,20 @@ class OrdersSection extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (_, i) {
                 final o = list[i];
-                final itemsCount = o.items.fold<int>(0, (a, it) => a + it.qty);
+                final itemsCount =
+                o.items.fold<int>(0, (a, it) => a + it.qty);
 
                 Widget timeline(OrderDoc od) {
                   Widget dot(bool on, String label) => Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(on ? Icons.check_circle : Icons.radio_button_unchecked, size: 16, color: on ? Colors.green : cs.outline),
+                      Icon(
+                        on
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        size: 16,
+                        color: on ? Colors.green : cs.outline,
+                      ),
                       const SizedBox(width: 4),
                       Text(label),
                     ],
@@ -207,21 +230,31 @@ class OrdersSection extends StatelessWidget {
                 final buyerId = isBuyer ? o.buyerId : '';
 
                 return Material(
-                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerLowest,
                   borderRadius: BorderRadius.circular(10),
                   child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    tilePadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 2),
                     leading: const Icon(Icons.receipt_long_outlined),
                     title: Wrap(
                       spacing: 8,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Text('('),
-                        Text(o.code, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        Text(
+                          o.code,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700),
+                        ),
                         const Text(')'),
                         Chip(
                           label: Text(orderStatusAr(o.status)),
-                          avatar: const Icon(Icons.flag_outlined, size: 18),
+                          avatar: const Icon(
+                            Icons.flag_outlined,
+                            size: 18,
+                          ),
                         ),
                       ],
                     ),
@@ -231,12 +264,17 @@ class OrdersSection extends StatelessWidget {
                           : 'المشتري: ${o.buyerId} • عناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
                       textAlign: TextAlign.right,
                     ),
-                    trailing: Text(df.format(o.stamps.createdAt), style: const TextStyle(fontSize: 12)),
+                    trailing: Text(
+                      df.format(o.stamps.createdAt),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        padding:
+                        const EdgeInsets.fromLTRB(12, 0, 12, 12),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          crossAxisAlignment:
+                          CrossAxisAlignment.stretch,
                           children: [
                             if (isBuyer) ...[
                               timeline(o),
@@ -245,90 +283,183 @@ class OrdersSection extends StatelessWidget {
                             ListView.separated(
                               itemCount: o.items.length,
                               shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              separatorBuilder: (_, __) => const SizedBox(height: 6),
+                              physics:
+                              const NeverScrollableScrollPhysics(),
+                              separatorBuilder: (_, __) =>
+                              const SizedBox(height: 6),
                               itemBuilder: (_, j) {
                                 final it = o.items[j];
 
-                                final prodSummary = reviewsRepo.watchProductSummary(it.productId);
-                                final sellSummary = reviewsRepo.watchSellerSummary(it.sellerId);
+                                final prodSummary =
+                                reviewsRepo.watchProductSummary(
+                                    it.productId);
+                                final sellSummary =
+                                reviewsRepo.watchSellerSummary(
+                                    it.sellerId);
 
                                 return Column(
                                   children: [
                                     ListTile(
                                       dense: true,
-                                      leading: const CircleAvatar(child: Icon(Icons.inventory_2_outlined)),
-                                      title: Text('${it.titleSnap} × ${it.qty}', textAlign: TextAlign.right),
-                                      subtitle: Text(
-                                        isBuyer ? 'البائع: ${it.sellerId} • السعر: ${it.price.toStringAsFixed(2)}' : 'السعر: ${it.price.toStringAsFixed(2)}',
+                                      leading: const CircleAvatar(
+                                        child: Icon(Icons
+                                            .inventory_2_outlined),
+                                      ),
+                                      title: Text(
+                                        '${it.titleSnap} × ${it.qty}',
                                         textAlign: TextAlign.right,
                                       ),
-                                      trailing: Text((it.price * it.qty).toStringAsFixed(2)),
+                                      subtitle: Text(
+                                        isBuyer
+                                            ? 'البائع: ${it.sellerId} • السعر: ${it.price.toStringAsFixed(2)}'
+                                            : 'السعر: ${it.price.toStringAsFixed(2)}',
+                                        textAlign: TextAlign.right,
+                                      ),
+                                      trailing: Text(
+                                        (it.price * it.qty)
+                                            .toStringAsFixed(2),
+                                      ),
                                     ),
+
+
                                     if (isBuyer)
-                                      StreamBuilder<({double avg, int count})>(
+                                      StreamBuilder<
+                                          ({double avg, int count})>(
                                         stream: prodSummary,
                                         builder: (_, ps) {
-                                          final pAvg = ps.data?.avg ?? 0;
-                                          final pCnt = ps.data?.count ?? 0;
-                                          return Row(
-                                            children: [
-                                              _reviewBadge(pAvg, pCnt),
-                                              const SizedBox(width: 8),
-                                              StreamBuilder<({double avg, int count})>(
-                                                stream: sellSummary,
-                                                builder: (_, ss) {
-                                                  final sAvg = ss.data?.avg ?? 0;
-                                                  final sCnt = ss.data?.count ?? 0;
-                                                  return _reviewBadge(sAvg, sCnt);
-                                                },
-                                              ),
-                                              const Spacer(),
-                                              if (o.status == OrderStatus.delivered) ...[
-                                                FutureBuilder<bool>(
-                                                  future: reviewsRepo.hasProductReview(orderId: o.id, productId: it.productId, buyerId: buyerId),
-                                                  builder: (_, has) {
-                                                    final done = has.data == true;
-                                                    return FilledButton.tonalIcon(
-                                                      onPressed: done
-                                                          ? null
-                                                          : () => _openReviewDialog(
-                                                        ctx: context,
-                                                        forProduct: true,
-                                                        orderId: o.id,
-                                                        buyerId: buyerId,
-                                                        productId: it.productId,
-                                                        sellerId: it.sellerId,
-                                                        title: it.titleSnap,
-                                                      ),
-                                                      icon: const Icon(Icons.star),
-                                                      label: Text(done ? 'تم التقييم' : 'قيّم المنتج'),
-                                                    );
+                                          final pAvg =
+                                              ps.data?.avg ?? 0;
+                                          final pCnt =
+                                              ps.data?.count ?? 0;
+                                          return SingleChildScrollView(
+                                            scrollDirection:
+                                            Axis.horizontal,
+                                            child: Row(
+                                              children: [
+                                                _reviewBadge(
+                                                    pAvg, pCnt),
+                                                const SizedBox(
+                                                    width: 8),
+                                                StreamBuilder<
+                                                    ({
+                                                    double avg,
+                                                    int count
+                                                    })>(
+                                                  stream:
+                                                  sellSummary,
+                                                  builder:
+                                                      (_, ss) {
+                                                    final sAvg = ss
+                                                        .data
+                                                        ?.avg ??
+                                                        0;
+                                                    final sCnt = ss
+                                                        .data
+                                                        ?.count ??
+                                                        0;
+                                                    return _reviewBadge(
+                                                        sAvg,
+                                                        sCnt);
                                                   },
                                                 ),
-                                                const SizedBox(width: 8),
-                                                FutureBuilder<bool>(
-                                                  future: reviewsRepo.hasSellerReview(orderId: o.id, sellerId: it.sellerId, buyerId: buyerId),
-                                                  builder: (_, has) {
-                                                    final done = has.data == true;
-                                                    return OutlinedButton.icon(
-                                                      onPressed: done
-                                                          ? null
-                                                          : () => _openReviewDialog(
-                                                        ctx: context,
-                                                        forProduct: false,
-                                                        orderId: o.id,
-                                                        buyerId: buyerId,
-                                                        sellerId: it.sellerId,
-                                                        title: it.sellerId,
-                                                      ),
-                                                      icon: const Icon(Icons.storefront),
-                                                      label: Text(done ? 'تم تقييم البائع' : 'قيّم البائع'),
-                                                    );
-                                                  },
-                                                ),
+                                                const SizedBox(
+                                                    width: 16),
+                                                if (o.status ==
+                                                    OrderStatus
+                                                        .delivered) ...[
+                                                  FutureBuilder<
+                                                      bool>(
+                                                    future: reviewsRepo
+                                                        .hasProductReview(
+                                                      orderId:
+                                                      o.id,
+                                                      productId:
+                                                      it.productId,
+                                                      buyerId:
+                                                      buyerId,
+                                                    ),
+                                                    builder:
+                                                        (_, has) {
+                                                      final done =
+                                                          has.data ==
+                                                              true;
+                                                      return FilledButton
+                                                          .tonalIcon(
+                                                        onPressed: done
+                                                            ? null
+                                                            : () => _openReviewDialog(
+                                                          ctx:
+                                                          context,
+                                                          forProduct:
+                                                          true,
+                                                          orderId:
+                                                          o.id,
+                                                          buyerId:
+                                                          buyerId,
+                                                          productId:
+                                                          it.productId,
+                                                          sellerId:
+                                                          it.sellerId,
+                                                          title:
+                                                          it.titleSnap,
+                                                        ),
+                                                        icon: const Icon(
+                                                            Icons
+                                                                .star),
+                                                        label: Text(done
+                                                            ? 'تم التقييم'
+                                                            : 'قيّم المنتج'),
+                                                      );
+                                                    },
+                                                  ),
+                                                  const SizedBox(
+                                                      width: 8),
+                                                  FutureBuilder<
+                                                      bool>(
+                                                    future: reviewsRepo
+                                                        .hasSellerReview(
+                                                      orderId:
+                                                      o.id,
+                                                      sellerId:
+                                                      it.sellerId,
+                                                      buyerId:
+                                                      buyerId,
+                                                    ),
+                                                    builder:
+                                                        (_, has) {
+                                                      final done =
+                                                          has.data ==
+                                                              true;
+                                                      return OutlinedButton
+                                                          .icon(
+                                                        onPressed: done
+                                                            ? null
+                                                            : () => _openReviewDialog(
+                                                          ctx:
+                                                          context,
+                                                          forProduct:
+                                                          false,
+                                                          orderId:
+                                                          o.id,
+                                                          buyerId:
+                                                          buyerId,
+                                                          sellerId:
+                                                          it.sellerId,
+                                                          title:
+                                                          it.sellerId,
+                                                        ),
+                                                        icon: const Icon(
+                                                            Icons
+                                                                .storefront),
+                                                        label: Text(done
+                                                            ? 'تم تقييم البائع'
+                                                            : 'قيّم البائع'),
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
                                               ],
-                                            ],
+                                            ),
                                           );
                                         },
                                       ),
@@ -350,6 +481,7 @@ class OrdersSection extends StatelessWidget {
       ),
     );
   }
+
 
   Widget _reviewBadge(double avg, int count) {
     if (count == 0) return const SizedBox.shrink();

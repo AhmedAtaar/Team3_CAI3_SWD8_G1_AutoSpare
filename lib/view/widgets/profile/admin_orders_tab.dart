@@ -5,13 +5,9 @@ import 'package:intl/intl.dart';
 
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders_repository.dart';
-import 'package:auto_spare/services/user_store.dart'; // اختياري لو هتجيب أسماء بشرية
+import 'package:auto_spare/services/user_store.dart';
 
-/// تبويب إدارة الطلبات المتقدم للأدمن
-/// - فلاتر بالحالة + مدى زمني + بحث حر
-/// - فرز
-/// - اختيار جماعي + إجراءات Bulk لتغيير الحالة
-/// - عرض تفاصيل الطلب وعناصره
+
 class AdminOrdersTab extends StatefulWidget {
   final OrdersRepository repo;
   const AdminOrdersTab({super.key, required this.repo});
@@ -23,22 +19,22 @@ class AdminOrdersTab extends StatefulWidget {
 enum _SortKey { createdDesc, createdAsc, totalDesc, totalAsc }
 
 class _AdminOrdersTabState extends State<AdminOrdersTab> {
-  // فلاتر
+
   final _searchCtrl = TextEditingController();
-  Set<OrderStatus> _statuses = {}; // فارغة = الكل
+  Set<OrderStatus> _statuses = {};
   DateTimeRange? _range;
 
-  // فرز
+
   _SortKey _sort = _SortKey.createdDesc;
 
-  // اختيار جماعي
+
   final Set<String> _selected = {};
 
-  // صفحـة
+
   int _page = 0;
   static const _pageSize = 10;
 
-  // تنسيقات
+
   final _df = DateFormat('yyyy/MM/dd – HH:mm');
 
   @override
@@ -69,7 +65,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
           ),
       helpText: 'اختيار مدة زمنية',
       saveText: 'اختيار',
-      // ✅ استخدمنا ui.TextDirection.rtl علشان نتفادى أي تعارض
+
       builder: (ctx, child) => Directionality(textDirection: ui.TextDirection.rtl, child: child!),
     );
     if (picked != null) {
@@ -83,7 +79,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
   List<OrderDoc> _applyFiltersSort(List<OrderDoc> input) {
     Iterable<OrderDoc> l = input;
 
-    // بحث حر (كود/مشتري/بائع/سطر عنصر)
+
     final q = _searchCtrl.text.trim();
     if (q.isNotEmpty) {
       final qq = q.toLowerCase();
@@ -98,21 +94,21 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
       });
     }
 
-    // الحالات
+
     if (_statuses.isNotEmpty) {
       l = l.where((o) => _statuses.contains(o.status));
     }
 
-    // المدى الزمني
+
     if (_range != null) {
       final start = DateTime(_range!.start.year, _range!.start.month, _range!.start.day);
-      final endExclusive = _range!.end.add(const Duration(days: 1)); // شمول نهاية اليوم
+      final endExclusive = _range!.end.add(const Duration(days: 1));
       l = l.where((o) =>
       o.stamps.createdAt.isAfter(start.subtract(const Duration(microseconds: 1))) &&
           o.stamps.createdAt.isBefore(endExclusive));
     }
 
-    // الفرز
+
     final list = l.toList();
     list.sort((a, b) {
       switch (_sort) {
@@ -134,7 +130,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
     final ids = pageList.where((o) => _selected.contains(o.id)).map((o) => o.id).toList();
     if (ids.isEmpty) return;
 
-    // تحديثات متسلسلة بسيطة (مصدر الذاكرة سريع)
+
     for (final id in ids) {
       await widget.repo.updateStatus(orderId: id, next: s);
     }
@@ -221,14 +217,14 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
     final cs = Theme.of(context).colorScheme;
 
     return Directionality(
-      textDirection: ui.TextDirection.rtl, // ✅ خليّناه عبر alias
+      textDirection: ui.TextDirection.rtl,
       child: StreamBuilder<List<OrderDoc>>(
         stream: widget.repo.watchAllOrdersAdmin(),
         builder: (_, snap) {
           final raw = snap.data ?? const <OrderDoc>[];
           final filtered = _applyFiltersSort(raw);
 
-          // صفحات
+
           final total = filtered.length;
           final pages = total == 0 ? 0 : (total / _pageSize).ceil();
           if (pages == 0) _page = 0;
@@ -240,7 +236,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
 
           return Column(
             children: [
-              // شريط أدوات فخم
+
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
@@ -252,13 +248,13 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // سطر البحث والفرز والمدى
+
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        // بحث
+
                         ConstrainedBox(
                           constraints: const BoxConstraints(minWidth: 220, maxWidth: 380),
                           child: TextField(
@@ -283,7 +279,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                           ),
                         ),
 
-                        // مدى زمني
+
                         FilledButton.tonalIcon(
                           onPressed: _pickRange,
                           icon: const Icon(Icons.calendar_month),
@@ -298,7 +294,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                             icon: const Icon(Icons.close),
                           ),
 
-                        // الفرز
+
                         DropdownButton<_SortKey>(
                           value: _sort,
                           onChanged: (v) => setState(() => _sort = v ?? _sort),
@@ -322,7 +318,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                           ],
                         ),
 
-                        // إعادة الضبط
+
                         OutlinedButton.icon(
                           onPressed: _resetFilters,
                           icon: const Icon(Icons.refresh),
@@ -331,7 +327,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
 
                         const SizedBox(width: 12),
 
-                        // حالات كـ Chips
+
                         Wrap(
                           spacing: 6,
                           runSpacing: 6,
@@ -348,7 +344,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
 
                     const SizedBox(height: 10),
 
-                    // سطر الاختيار الجماعي وعمليات Bulk
+
                     Row(
                       children: [
                         Checkbox(
@@ -385,7 +381,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
 
               const SizedBox(height: 10),
 
-              // القائمة
+
               Expanded(
                 child: pageList.isEmpty
                     ? const Center(child: Text('لا توجد طلبات مطابقة'))
@@ -442,13 +438,13 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                           ],
                         ),
                         children: [
-                          // تفاصيل الطلب
+
                           Padding(
                             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                // طوابع زمنية
+
                                 Wrap(
                                   spacing: 6,
                                   runSpacing: 6,
@@ -473,7 +469,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
 
                                 const Divider(height: 18),
 
-                                // عناصر الطلب
+
                                 ListView.separated(
                                   itemCount: o.items.length,
                                   shrinkWrap: true,
@@ -504,7 +500,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                 ),
               ),
 
-              // ترقيم الصفحات
+
               Row(
                 children: [
                   Text('الإجمالي: $total'),
@@ -517,13 +513,13 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                   IconButton(
                     tooltip: 'السابق',
                     onPressed: (_page > 0) ? () => setState(() => _page -= 1) : null,
-                    icon: const Icon(Icons.chevron_right), // RTL
+                    icon: const Icon(Icons.chevron_right),
                   ),
                   Text('صفحة ${pages == 0 ? 0 : (_page + 1)} / $pages'),
                   IconButton(
                     tooltip: 'التالي',
                     onPressed: (pages > 0 && (_page + 1) < pages) ? () => setState(() => _page += 1) : null,
-                    icon: const Icon(Icons.chevron_left), // RTL
+                    icon: const Icon(Icons.chevron_left),
                   ),
                   IconButton(
                     tooltip: 'الأخيرة',
