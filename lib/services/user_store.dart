@@ -1,9 +1,8 @@
-// lib/services/user_store.dart
-
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
 import 'package:auto_spare/services/tow_directory.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum SellerStatus { pending, approved, rejected }
 
@@ -18,7 +17,6 @@ class TowCompanyRequest {
   final String contactName;
   final String contactEmail;
   final String contactPhone;
-
 
   final String? commercialRegUrl;
   final String? taxCardUrl;
@@ -46,16 +44,93 @@ class TowCompanyRequest {
     this.userId,
     this.tempPassword,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'companyName': companyName,
+      'area': area,
+      'lat': lat,
+      'lng': lng,
+      'baseCost': baseCost,
+      'pricePerKm': pricePerKm,
+      'contactName': contactName,
+      'contactEmail': contactEmail,
+      'contactPhone': contactPhone,
+      'commercialRegUrl': commercialRegUrl,
+      'taxCardUrl': taxCardUrl,
+      'status': status.name,
+      'rejectReason': rejectReason,
+      'userId': userId,
+      'tempPassword': tempPassword,
+    };
+  }
+
+  factory TowCompanyRequest.fromDoc(String id, Map<String, dynamic> data) {
+    final statusStr = data['status'] as String? ?? 'pending';
+    final status = SellerStatus.values.firstWhere(
+      (e) => e.name == statusStr,
+      orElse: () => SellerStatus.pending,
+    );
+
+    return TowCompanyRequest(
+      id: id,
+      companyName: data['companyName'] as String? ?? '',
+      area: data['area'] as String? ?? '',
+      lat: (data['lat'] as num?)?.toDouble() ?? 0.0,
+      lng: (data['lng'] as num?)?.toDouble() ?? 0.0,
+      baseCost: (data['baseCost'] as num?)?.toDouble() ?? 0.0,
+      pricePerKm: (data['pricePerKm'] as num?)?.toDouble() ?? 0.0,
+      contactName: data['contactName'] as String? ?? '',
+      contactEmail: data['contactEmail'] as String? ?? '',
+      contactPhone: data['contactPhone'] as String? ?? '',
+      commercialRegUrl: data['commercialRegUrl'] as String?,
+      taxCardUrl: data['taxCardUrl'] as String?,
+      status: status,
+      rejectReason: data['rejectReason'] as String?,
+      userId: data['userId'] as String?,
+      tempPassword: data['tempPassword'] as String?,
+    );
+  }
 }
 
 class UserStore {
-  UserStore._internal();
+  UserStore._internal() {
+    _listenTowRequests();
+  }
+
   static final UserStore _instance = UserStore._internal();
   factory UserStore() => _instance;
 
-  final List<TowCompanyRequest> _tows = [];
   AppUser? currentUser;
 
+  bool isGuest = false;
+
+  void setGuest() {
+    currentUser = null;
+    isGuest = true;
+  }
+
+  void setLoggedInUser(AppUser user) {
+    currentUser = user;
+    isGuest = false;
+  }
+
+  final List<TowCompanyRequest> _tows = [];
+
+  final _db = FirebaseFirestore.instance;
+
+  CollectionReference<Map<String, dynamic>> get _towCol =>
+      _db.collection('towCompanyRequests');
+
+  void _listenTowRequests() {
+    _towCol.snapshots().listen((snap) {
+      _tows
+        ..clear()
+        ..addAll(
+          snap.docs.map((d) => TowCompanyRequest.fromDoc(d.id, d.data())),
+        );
+    });
+  }
 
   Future<void> signUpBuyer({
     required String email,
@@ -64,14 +139,12 @@ class UserStore {
     required String address,
     required String phone,
   }) async {
-
     final auth = FirebaseAuth.instance;
     final cred = await auth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
     final id = cred.user!.uid;
-
 
     final user = AppUser(
       id: id,
@@ -85,7 +158,6 @@ class UserStore {
 
     await usersRepo.addUser(user);
   }
-
 
   Future<void> signUpSeller({
     required String email,
@@ -122,8 +194,7 @@ class UserStore {
     await usersRepo.addUser(user);
   }
 
-
-  void signUpTow({
+  Future<void> signUpTow({
     required String companyName,
     required String area,
     required double lat,
@@ -136,10 +207,10 @@ class UserStore {
     required String password,
     String? commercialRegUrl,
     String? taxCardUrl,
-  }) {
-    final reqId = 'T-${DateTime.now().millisecondsSinceEpoch}';
+  }) async {
+    final doc = _towCol.doc();
     final req = TowCompanyRequest(
-      id: reqId,
+      id: doc.id,
       companyName: companyName,
       area: area,
       lat: lat,
@@ -152,19 +223,30 @@ class UserStore {
       tempPassword: password,
       commercialRegUrl: commercialRegUrl,
       taxCardUrl: taxCardUrl,
+      status: SellerStatus.pending,
     );
-    _tows.add(req);
+
+    await doc.set(req.toMap());
   }
 
   List<TowCompanyRequest> pendingTowCompanies() {
     return _tows.where((t) => t.status == SellerStatus.pending).toList();
   }
 
-  void rejectTow(String id, String reason) {
+  List<TowCompanyRequest> get tows => List.unmodifiable(_tows);
+
+  Future<void> rejectTow(String id, String reason) async {
     final i = _tows.indexWhere((t) => t.id == id);
     if (i == -1) return;
-    _tows[i].status = SellerStatus.rejected;
-    _tows[i].rejectReason = reason;
+
+    final req = _tows[i];
+    req.status = SellerStatus.rejected;
+    req.rejectReason = reason;
+
+    await _towCol.doc(id).update({
+      'status': SellerStatus.rejected.name,
+      'rejectReason': reason,
+    });
   }
 
   Future<void> approveTow(String reqId) async {
@@ -174,10 +256,9 @@ class UserStore {
     final req = _tows[idx];
     req.status = SellerStatus.approved;
 
-    // إنشاء حساب Firebase Auth لسائق الونش
     final auth = FirebaseAuth.instance;
     final email = req.contactEmail;
-    final password = req.tempPassword ?? "1234";
+    final password = req.tempPassword ?? '1234';
 
     final cred = await auth.createUserWithEmailAndPassword(
       email: email,
@@ -201,6 +282,13 @@ class UserStore {
     await usersRepo.addUser(user);
     req.userId = userId;
 
+    await _towCol.doc(req.id).update({
+      'status': SellerStatus.approved.name,
+      'userId': userId,
+      'rejectReason': null,
+      'tempPassword': null,
+    });
+
     TowDirectory().addApproved(
       TowCompany(
         id: req.id,
@@ -215,10 +303,9 @@ class UserStore {
     );
   }
 
-  List<TowCompanyRequest> get tows => List.unmodifiable(_tows);
-
   Future<void> signOutCurrentUser() async {
     currentUser = null;
+    isGuest = false;
     await FirebaseAuth.instance.signOut();
   }
 }

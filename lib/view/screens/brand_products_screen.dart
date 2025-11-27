@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:auto_spare/model/catalog.dart';
+import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/view/screens/product_details_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/controller/navigation/navigation.dart';
 
 class BrandProductsScreen extends StatefulWidget {
   final CarBrand brand;
-  final String? logoUrl;
+  final String? logoAssetPath;
 
   const BrandProductsScreen({
     super.key,
     required this.brand,
-    this.logoUrl,
+    this.logoAssetPath,
   });
 
   @override
@@ -24,10 +25,8 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
   String _query = '';
   _SortBy _sortBy = _SortBy.newest;
 
-  List<CatalogProduct> _filtered() {
-
-    var list = Catalog().all().where((p) => p.brand == widget.brand).toList();
-
+  List<CatalogProduct> _filtered(List<CatalogProduct> all) {
+    var list = all.where((p) => p.brand == widget.brand).toList();
 
     if (_query.trim().isNotEmpty) {
       final q = _query.trim().toLowerCase();
@@ -38,7 +37,6 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
         return title.contains(q) || model.contains(q) || years.contains(q);
       }).toList();
     }
-
 
     list.sort((a, b) {
       switch (_sortBy) {
@@ -60,9 +58,27 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     final brandName = kBrandName[widget.brand] ?? widget.brand.name;
-    final products = _filtered();
 
+    Widget appLogoChip() {
+      final chipBg = theme.colorScheme.primary.withOpacity(.10);
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: chipBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: theme.colorScheme.primary.withOpacity(.25)),
+        ),
+        child: Text(
+          'AutoSpare',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
 
     Widget header() => Row(
       children: [
@@ -70,13 +86,12 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
           child: Text(
             'منتجات $brandName',
             textDirection: TextDirection.rtl,
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
-        if (widget.logoUrl != null && widget.logoUrl!.isNotEmpty)
+        if (widget.logoAssetPath != null && widget.logoAssetPath!.isNotEmpty)
           Container(
             height: 40,
             width: 40,
@@ -86,36 +101,34 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
               color: cs.surface,
               border: Border.all(color: cs.outlineVariant),
             ),
-            child: Image.network(
-              widget.logoUrl!,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) =>
-              const Icon(Icons.image_not_supported_outlined),
-            ),
+            child: Image.asset(widget.logoAssetPath!, fit: BoxFit.contain),
           ),
       ],
     );
 
-
-    Widget searchAndSort() => Row(
+    Widget searchAndSort(void Function(void Function()) setStateOuter) => Row(
       children: [
         Expanded(
           child: TextField(
             textAlign: TextAlign.right,
             decoration: InputDecoration(
               hintText: 'ابحث داخل $brandName...',
-              prefixIcon:
-              const Icon(Icons.search, color: AppColors.primaryGreen),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.primaryGreen,
+              ),
               filled: true,
               fillColor: cs.surfaceContainerLowest,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: cs.outlineVariant),
               ),
-              contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 0,
+              ),
             ),
-            onChanged: (v) => setState(() => _query = v),
+            onChanged: (v) => setStateOuter(() => _query = v),
           ),
         ),
         const SizedBox(width: 8),
@@ -125,62 +138,104 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
           items: const [
             DropdownMenuItem(value: _SortBy.newest, child: Text('الأحدث')),
             DropdownMenuItem(
-                value: _SortBy.priceLow, child: Text('السعر: من الأقل')),
+              value: _SortBy.priceLow,
+              child: Text('السعر: من الأقل'),
+            ),
             DropdownMenuItem(
-                value: _SortBy.priceHigh, child: Text('السعر: من الأعلى')),
+              value: _SortBy.priceHigh,
+              child: Text('السعر: من الأعلى'),
+            ),
             DropdownMenuItem(
-                value: _SortBy.stockHigh, child: Text('المخزون الأعلى')),
+              value: _SortBy.stockHigh,
+              child: Text('المخزون الأعلى'),
+            ),
           ],
-          onChanged: (v) => setState(() => _sortBy = v ?? _sortBy),
+          onChanged: (v) => setStateOuter(() => _sortBy = v ?? _sortBy),
         ),
       ],
     );
 
-
-    Widget grid() {
-      if (products.isEmpty) {
-        return const Center(child: Text('لا توجد منتجات لهذه الماركة حالياً'));
-      }
-      return GridView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.74,
-        ),
-        itemCount: products.length,
-        itemBuilder: (_, i) => _ProductCard(p: products[i]),
-      );
-    }
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AppNavigationScaffold(
-
         title: 'منتجات $brandName',
         currentIndex: 1,
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: header(),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-              child: searchAndSort(),
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('عدد النتائج: ${products.length}',
-                    style: const TextStyle(fontSize: 12)),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Expanded(child: grid()),
-          ],
+        body: StreamBuilder<List<CatalogProduct>>(
+          stream: productsRepo.watchApprovedProducts(),
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snap.hasError) {
+              return const Center(
+                child: Text(
+                  'حدث خطأ أثناء تحميل المنتجات',
+                  style: TextStyle(color: Colors.red),
+                ),
+              );
+            }
+
+            final all = snap.data ?? const <CatalogProduct>[];
+            final products = _filtered(all);
+
+            Widget grid() {
+              if (products.isEmpty) {
+                return const Center(
+                  child: Text('لا توجد منتجات لهذه الماركة حالياً'),
+                );
+              }
+              return GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.70,
+                ),
+                itemCount: products.length,
+                itemBuilder: (_, i) => _ProductCard(p: products[i]),
+              );
+            }
+
+            return Column(
+              children: [
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: appLogoChip(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: header(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                  child: StatefulBuilder(
+                    builder: (context, setInner) => searchAndSort(setInner),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'عدد النتائج: ${products.length}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Expanded(child: grid()),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -279,11 +334,13 @@ class _ProductCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color:
-                    (p.stock > 0 ? Colors.green : Colors.red).withOpacity(.12),
+                    color: (p.stock > 0 ? Colors.green : Colors.red)
+                        .withOpacity(.12),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: p.stock > 0 ? Colors.green : Colors.red,

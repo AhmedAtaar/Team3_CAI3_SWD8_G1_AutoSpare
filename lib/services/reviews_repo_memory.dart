@@ -8,7 +8,7 @@ class ReviewsRepoMemory implements ReviewsRepository {
   factory ReviewsRepoMemory() => _i;
 
   final _product = <ProductReview>[];
-  final _seller  = <SellerReview>[];
+  final _seller = <SellerReview>[];
 
   final _prodCtrl = StreamController<List<ProductReview>>.broadcast();
   final _sellCtrl = StreamController<List<SellerReview>>.broadcast();
@@ -23,9 +23,12 @@ class ReviewsRepoMemory implements ReviewsRepository {
 
   @override
   Future<void> addProductReview(ProductReview r) async {
-    // مرّة واحدة لكل (orderId + productId + buyerId)
-    final exists = _product.any((e) =>
-    e.orderId == r.orderId && e.productId == r.productId && e.buyerId == r.buyerId);
+    final exists = _product.any(
+      (e) =>
+          e.orderId == r.orderId &&
+          e.productId == r.productId &&
+          e.buyerId == r.buyerId,
+    );
     if (!exists) {
       _product.add(r);
       _notifyProduct(r.productId);
@@ -34,9 +37,12 @@ class ReviewsRepoMemory implements ReviewsRepository {
 
   @override
   Future<void> addSellerReview(SellerReview r) async {
-    // مرّة واحدة لكل (orderId + sellerId + buyerId)
-    final exists = _seller.any((e) =>
-    e.orderId == r.orderId && e.sellerId == r.sellerId && e.buyerId == r.buyerId);
+    final exists = _seller.any(
+      (e) =>
+          e.orderId == r.orderId &&
+          e.sellerId == r.sellerId &&
+          e.buyerId == r.buyerId,
+    );
     if (!exists) {
       _seller.add(r);
       _notifySeller(r.sellerId);
@@ -44,15 +50,31 @@ class ReviewsRepoMemory implements ReviewsRepository {
   }
 
   @override
-  Future<bool> hasProductReview({required String orderId, required String productId, required String buyerId}) async {
-    return _product.any((e) =>
-    e.orderId == orderId && e.productId == productId && e.buyerId == buyerId);
+  Future<bool> hasProductReview({
+    required String orderId,
+    required String productId,
+    required String buyerId,
+  }) async {
+    return _product.any(
+      (e) =>
+          e.orderId == orderId &&
+          e.productId == productId &&
+          e.buyerId == buyerId,
+    );
   }
 
   @override
-  Future<bool> hasSellerReview({required String orderId, required String sellerId, required String buyerId}) async {
-    return _seller.any((e) =>
-    e.orderId == orderId && e.sellerId == sellerId && e.buyerId == buyerId);
+  Future<bool> hasSellerReview({
+    required String orderId,
+    required String sellerId,
+    required String buyerId,
+  }) async {
+    return _seller.any(
+      (e) =>
+          e.orderId == orderId &&
+          e.sellerId == sellerId &&
+          e.buyerId == buyerId,
+    );
   }
 
   @override
@@ -60,20 +82,14 @@ class ReviewsRepoMemory implements ReviewsRepository {
     final controller = StreamController<List<ProductReview>>.broadcast();
 
     void emit() {
-      controller.add(
-        _product.where((e) => e.productId == productId).toList(),
-      );
+      controller.add(_product.where((e) => e.productId == productId).toList());
     }
 
     controller.onListen = () {
-      // أول قيمة فورية
       emit();
-      // أي تغيير داخلي يعيّض على نفس الفلترة
+
       _prodCtrl.stream.listen((_) => emit());
     };
-
-    // (اختياري) لو حابب تنظّف، ما تقفلش هنا علشان ممكن يبقى فيه مستمعين تانيين
-    // controller.onCancel = controller.close;
 
     return controller.stream;
   }
@@ -83,9 +99,7 @@ class ReviewsRepoMemory implements ReviewsRepository {
     final controller = StreamController<List<SellerReview>>.broadcast();
 
     void emit() {
-      controller.add(
-        _seller.where((e) => e.sellerId == sellerId).toList(),
-      );
+      controller.add(_seller.where((e) => e.sellerId == sellerId).toList());
     }
 
     controller.onListen = () {
@@ -96,24 +110,33 @@ class ReviewsRepoMemory implements ReviewsRepository {
     return controller.stream;
   }
 
-
   @override
   Stream<({double avg, int count})> watchProductSummary(String productId) {
     void emit() => _prodSumCtrls[productId]?.add(_calcProduct(productId));
-    _prodSumCtrls.putIfAbsent(productId, () => StreamController<({double avg, int count})>.broadcast());
+    _prodSumCtrls.putIfAbsent(
+      productId,
+      () => StreamController<({double avg, int count})>.broadcast(),
+    );
     final c = _prodSumCtrls[productId]!;
     c.onListen = emit;
-    _prodCtrl.stream.listen((_) { emit(); });
+    _prodCtrl.stream.listen((_) {
+      emit();
+    });
     return c.stream;
   }
 
   @override
   Stream<({double avg, int count})> watchSellerSummary(String sellerId) {
     void emit() => _sellSumCtrls[sellerId]?.add(_calcSeller(sellerId));
-    _sellSumCtrls.putIfAbsent(sellerId, () => StreamController<({double avg, int count})>.broadcast());
+    _sellSumCtrls.putIfAbsent(
+      sellerId,
+      () => StreamController<({double avg, int count})>.broadcast(),
+    );
     final c = _sellSumCtrls[sellerId]!;
     c.onListen = emit;
-    _sellCtrl.stream.listen((_) { emit(); });
+    _sellCtrl.stream.listen((_) {
+      emit();
+    });
     return c.stream;
   }
 
@@ -131,6 +154,8 @@ class ReviewsRepoMemory implements ReviewsRepository {
     return (avg: s / list.length, count: list.length);
   }
 
-  final Map<String, StreamController<({double avg, int count})>> _prodSumCtrls = {};
-  final Map<String, StreamController<({double avg, int count})>> _sellSumCtrls = {};
+  final Map<String, StreamController<({double avg, int count})>> _prodSumCtrls =
+      {};
+  final Map<String, StreamController<({double avg, int count})>> _sellSumCtrls =
+      {};
 }

@@ -43,15 +43,22 @@ class CartItemCard extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: (item.imageUrl == null || item.imageUrl!.isEmpty)
                       ? Center(
-                    child: Icon(Icons.image, size: 40, color: AppColors.primaryGreen),
-                  )
+                          child: Icon(
+                            Icons.image,
+                            size: 40,
+                            color: AppColors.primaryGreen,
+                          ),
+                        )
                       : Image.network(
-                    item.imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Center(
-                      child: Icon(Icons.broken_image_outlined, color: theme.colorScheme.outline),
-                    ),
-                  ),
+                          item.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -72,7 +79,9 @@ class CartItemCard extends StatelessWidget {
                         item.details,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey[600],
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -97,7 +106,10 @@ class CartItemCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.lightText,
                     borderRadius: BorderRadius.circular(10),
@@ -113,11 +125,16 @@ class CartItemCard extends StatelessWidget {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Text(item.quantity.toString(), style: theme.textTheme.titleMedium),
+                        child: Text(
+                          item.quantity.toString(),
+                          style: theme.textTheme.titleMedium,
+                        ),
                       ),
                       _buildQuantityButton(
                         icon: Icons.remove,
-                        onTap: item.quantity > 1 ? () => onQuantityChanged(false) : null,
+                        onTap: item.quantity > 1
+                            ? () => onQuantityChanged(false)
+                            : null,
                         theme: theme,
                         isDecrement: true,
                       ),

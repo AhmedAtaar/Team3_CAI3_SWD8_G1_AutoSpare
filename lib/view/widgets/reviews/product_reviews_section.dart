@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:auto_spare/services/reviews.dart';
@@ -19,10 +18,8 @@ class ProductReviewsSection extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('yyyy/MM/dd – HH:mm');
 
-
     final prodSummary$ = reviewsRepo.watchProductSummary(productId);
     final sellerSummary$ = reviewsRepo.watchSellerSummary(sellerId);
-
 
     final prodList$ = reviewsRepo.watchProductReviews(productId);
     final sellerList$ = reviewsRepo.watchSellerReviews(sellerId);
@@ -40,7 +37,7 @@ class ProductReviewsSection extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: List.generate(
           5,
-              (i) => Icon(i < n ? Icons.star : Icons.star_border, size: size),
+          (i) => Icon(i < n ? Icons.star : Icons.star_border, size: size),
         ),
       );
     }
@@ -87,7 +84,6 @@ class ProductReviewsSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
             Row(
               children: [
                 const Icon(Icons.rate_review_outlined),
@@ -96,7 +92,8 @@ class ProductReviewsSection extends StatelessWidget {
                 const Spacer(),
                 StreamBuilder<({double avg, int count})>(
                   stream: prodSummary$,
-                  builder: (_, s) => badge(s.data?.avg ?? 0, s.data?.count ?? 0),
+                  builder: (_, s) =>
+                      badge(s.data?.avg ?? 0, s.data?.count ?? 0),
                 ),
                 const SizedBox(width: 6),
                 StreamBuilder<({double avg, int count})>(
@@ -110,7 +107,6 @@ class ProductReviewsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-
 
             Container(
               padding: const EdgeInsets.all(12),
@@ -165,7 +161,6 @@ class ProductReviewsSection extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
-
 
             Container(
               padding: const EdgeInsets.all(12),

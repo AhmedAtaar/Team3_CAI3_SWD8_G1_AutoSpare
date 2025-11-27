@@ -23,6 +23,8 @@ const Map<CarBrand, List<String>> kModelsByBrand = {
 
 final List<int> kYears = List<int>.generate(13, (i) => 2013 + i);
 
+enum ProductStatus { pending, approved, rejected }
+
 @immutable
 class CatalogProduct {
   final String id;
@@ -36,6 +38,10 @@ class CatalogProduct {
   final DateTime createdAt;
   final int stock;
 
+  final ProductStatus status;
+
+  final String? rejectionReason;
+
   const CatalogProduct({
     required this.id,
     required this.title,
@@ -47,6 +53,8 @@ class CatalogProduct {
     required this.stock,
     required this.createdAt,
     this.imageUrl,
+    this.status = ProductStatus.approved,
+    this.rejectionReason,
   });
 
   CatalogProduct copyWith({
@@ -59,6 +67,8 @@ class CatalogProduct {
     List<int>? years,
     int? stock,
     DateTime? createdAt,
+    ProductStatus? status,
+    String? rejectionReason,
   }) {
     return CatalogProduct(
       id: id,
@@ -71,6 +81,8 @@ class CatalogProduct {
       years: years ?? this.years,
       stock: stock ?? this.stock,
       createdAt: createdAt ?? this.createdAt,
+      status: status ?? this.status,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
     );
   }
 }
@@ -104,7 +116,9 @@ class Catalog {
     for (final it in items) {
       final p = findById(it.id);
       if (p == null) return 'العنصر "${it.name}" غير موجود في الكتالوج.';
-      if (p.stock < it.qty) return 'المخزون الحالي من "${it.name}" هو ${p.stock} فقط.';
+      if (p.stock < it.qty) {
+        return 'المخزون الحالي من "${it.name}" هو ${p.stock} فقط.';
+      }
     }
     return null;
   }
@@ -124,21 +138,16 @@ class Catalog {
     return true;
   }
 
-  // ===================== جديد: إدارة المخزون للبائع =====================
-
-  /// زيادة/نقصان المخزون بالقيمة [delta] (موجب للزيادة، سالب للنقصان).
-  /// ترجع true لو اتحدث بنجاح.
   bool restock(String productId, int delta) {
     final idx = _items.indexWhere((e) => e.id == productId);
     if (idx == -1) return false;
     final cur = _items[idx].stock;
-    final next = (cur + delta).clamp(0, 1 << 31); // لا سالب
+    final next = (cur + delta).clamp(0, 1 << 31);
     if (next == cur) return true;
     _items[idx] = _items[idx].copyWith(stock: next);
     return true;
   }
 
-  /// تعيين المخزون مباشرة إلى قيمة محددة.
   bool setStock(String productId, int newStock) {
     final idx = _items.indexWhere((e) => e.id == productId);
     if (idx == -1) return false;

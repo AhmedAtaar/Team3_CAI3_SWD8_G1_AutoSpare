@@ -1,4 +1,3 @@
-import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/cart_service.dart';
 import 'package:auto_spare/services/user_store.dart';
@@ -11,7 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import '../../controller/navigation/navigation.dart';
 import '../themes/app_colors.dart';
 import 'map_picker_screen.dart';
-import 'package:auto_spare/services/orders.dart'; // << سنجلتون
+import 'package:auto_spare/services/orders.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -34,6 +33,10 @@ class _CartScreenState extends State<CartScreen> {
   Position? _pos;
   double? _delLat, _delLng;
 
+  double _discount = 0.0;
+  String? _couponCode;
+  String? _orderNote;
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +47,16 @@ class _CartScreenState extends State<CartScreen> {
     _cart.addListener(_onCartChanged);
   }
 
-  void _onCartChanged() => setState(() {});
+  void _onCartChanged() {
+    setState(() {
+      if (_cart.items.isEmpty) {
+        _discount = 0.0;
+        _couponCode = null;
+        _orderNote = null;
+      }
+    });
+  }
+
   @override
   void dispose() {
     _cart.removeListener(_onCartChanged);
@@ -58,7 +70,11 @@ class _CartScreenState extends State<CartScreen> {
 
   double get _subtotal => _cart.subtotal * 1.05;
   double get _shipping => 15.0;
-  double get _grandTotal => _subtotal + _shipping;
+
+  double get _grandTotal {
+    final total = _subtotal + _shipping - _discount;
+    return total < 0 ? 0 : total;
+  }
 
   Future<void> _useCurrentLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -70,15 +86,20 @@ class _CartScreenState extends State<CartScreen> {
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
     }
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) return;
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever)
+      return;
 
-    final p = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    final p = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
     if (!mounted) return;
     setState(() {
       _pos = p;
       _delLat = p.latitude;
       _delLng = p.longitude;
-      _deliveryCtrl.text = '(${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)})';
+      _deliveryCtrl.text =
+          '(${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)})';
     });
   }
 
@@ -87,14 +108,17 @@ class _CartScreenState extends State<CartScreen> {
     final baseLng = _pos?.longitude ?? 31.2357;
     final res = await Navigator.push<MapPickResult>(
       context,
-      MaterialPageRoute(builder: (_) => MapPickerScreen(initLat: baseLat, initLng: baseLng)),
+      MaterialPageRoute(
+        builder: (_) => MapPickerScreen(initLat: baseLat, initLng: baseLng),
+      ),
     );
     if (res != null && mounted) {
       setState(() {
         _delLat = res.lat;
         _delLng = res.lng;
-        _deliveryCtrl.text =
-        res.address.isNotEmpty ? res.address : '(${res.lat.toStringAsFixed(5)}, ${res.lng.toStringAsFixed(5)})';
+        _deliveryCtrl.text = res.address.isNotEmpty
+            ? res.address
+            : '(${res.lat.toStringAsFixed(5)}, ${res.lng.toStringAsFixed(5)})';
       });
     }
   }
@@ -102,88 +126,154 @@ class _CartScreenState extends State<CartScreen> {
   void _updateQuantity(String itemId, bool increase) {
     final item = _cart.items.firstWhere((e) => e.id == itemId);
     final next = item.quantity + (increase ? 1 : -1);
-    _cart.setQuantity(itemId, next);
-  }
 
-  void _removeItem(String itemId) => _cart.remove(itemId);
-
-  Future<void> _handleProceedToOrder() async {
-    if (_cart.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('السلة فارغة')));
+    if (!increase && next <= 0) {
+      _cart.setQuantity(itemId, next);
       return;
     }
 
-    final checkList = _cart.items
-        .map<({String id, String name, int qty})>((e) => (id: e.id, name: e.name, qty: e.quantity))
-        .toList();
-
-    final err = Catalog().canFulfillItems(checkList);
-    if (err != null) {
+    if (increase && next > item.maxQty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err, textDirection: TextDirection.rtl), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    final ok = Catalog().deductStockFor(
-      checkList.map<({String id, int qty})>((e) => (id: e.id, qty: e.qty)).toList(),
-    );
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('حدث تغيير في المخزون. حاول مرة أخرى.', textDirection: TextDirection.rtl),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(
+            'لا يمكنك طلب أكثر من المتاح في المخزون (${item.maxQty})',
+            textDirection: TextDirection.rtl,
+          ),
         ),
       );
       return;
     }
 
+    _cart.setQuantity(itemId, next);
+  }
+
+  void _removeItem(String itemId) => _cart.remove(itemId);
+
+  void _handleApplyCoupon(String code) {
+    final upper = code.trim().toUpperCase();
+    double newDiscount = 0.0;
+
+    if (upper == 'SAVE50') {
+      newDiscount = 50.0;
+    } else if (upper == 'OFF10') {
+      newDiscount = _subtotal * 0.10;
+    } else if (upper == 'FREESHIP') {
+      newDiscount = _shipping;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('كود خصم غير صالح', textDirection: TextDirection.rtl),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _discount = 0.0;
+        _couponCode = null;
+      });
+      return;
+    }
+
+    final maxAllowed = _subtotal + _shipping;
+    if (newDiscount > maxAllowed) newDiscount = maxAllowed;
+
+    setState(() {
+      _discount = newDiscount;
+      _couponCode = upper;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'تم تطبيق كود الخصم: $upper',
+          textDirection: TextDirection.rtl,
+        ),
+        backgroundColor: AppColors.primaryGreen,
+      ),
+    );
+  }
+
+  Future<void> _handleProceedToOrder() async {
+    if (_cart.items.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('السلة فارغة')));
+      return;
+    }
+
     final buyer = UserStore().currentUser;
-    final buyerId = buyer?.id ?? 'guest';
+    if (buyer == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('من فضلك قم بتسجيل الدخول أولاً')),
+      );
+      return;
+    }
+
+    final buyerId = buyer.id;
 
     final orderItems = _cart.items.map((ci) {
-      final p = Catalog().findById(ci.id);
-      final sellerId = (p?.seller ?? 'seller');
       return OrderItem(
         productId: ci.id,
-        sellerId: sellerId,
+        sellerId: ci.sellerId,
         titleSnap: ci.name,
         price: ci.price,
         qty: ci.quantity,
       );
     }).toList();
 
-    final (orderId, code) = await ordersRepo.createOrder(
-      buyerId: buyerId,
-      items: orderItems,
-      itemsTotal: _subtotal,
-      shipping: _shipping,
-      lat: _delLat,
-      lng: _delLng,
-    );
+    try {
+      final (orderId, code) = await ordersRepo.createOrder(
+        buyerId: buyerId,
+        items: orderItems,
+        itemsTotal: _subtotal,
+        shipping: _shipping,
+        discount: _discount,
+        couponCode: _couponCode,
+        note: _orderNote,
+        lat: _delLat,
+        lng: _delLng,
+      );
 
-    _cart.clear();
+      _cart.clear();
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم إنشاء الطلب ($code) • #$orderId', textDirection: TextDirection.rtl),
-        backgroundColor: AppColors.primaryGreen,
-        duration: const Duration(milliseconds: 1400),
-      ),
-    );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم إنشاء الطلب ($code) • #$orderId',
+            textDirection: TextDirection.rtl,
+          ),
+          backgroundColor: AppColors.primaryGreen,
+          duration: const Duration(milliseconds: 1400),
+        ),
+      );
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (_) => false,
-    );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (_) => false,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString(), textDirection: TextDirection.rtl),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _handleCancelOrder() {
     _cart.clear();
+    setState(() {
+      _discount = 0.0;
+      _couponCode = null;
+      _orderNote = null;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('تم إلغاء جميع العناصر في السلة', textDirection: TextDirection.rtl),
+        content: Text(
+          'تم إلغاء جميع العناصر في السلة',
+          textDirection: TextDirection.rtl,
+        ),
         backgroundColor: Colors.red,
       ),
     );
@@ -208,12 +298,21 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: const [Icon(Icons.person_outline), SizedBox(width: 8), Text('بيانات العميل')]),
+              Row(
+                children: const [
+                  Icon(Icons.person_outline),
+                  SizedBox(width: 8),
+                  Text('بيانات العميل'),
+                ],
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: _nameCtrl,
                 readOnly: true,
-                decoration: const InputDecoration(labelText: 'الاسم', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'الاسم',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 10),
               TextField(
@@ -223,7 +322,8 @@ class _CartScreenState extends State<CartScreen> {
                   labelText: 'العنوان',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    onPressed: () => setState(() => _editAddress = !_editAddress),
+                    onPressed: () =>
+                        setState(() => _editAddress = !_editAddress),
                     icon: Icon(_editAddress ? Icons.check : Icons.edit),
                   ),
                 ),
@@ -246,7 +346,10 @@ class _CartScreenState extends State<CartScreen> {
               TextField(
                 controller: _altPhoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'رقم آخر للتواصل', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'رقم آخر للتواصل',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ],
           ),
@@ -268,11 +371,20 @@ class _CartScreenState extends State<CartScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: const [Icon(Icons.place_outlined), SizedBox(width: 8), Text('موقع التسليم (اختياري)')]),
+              Row(
+                children: const [
+                  Icon(Icons.place_outlined),
+                  SizedBox(width: 8),
+                  Text('موقع التسليم (اختياري)'),
+                ],
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: _deliveryCtrl,
-                decoration: const InputDecoration(labelText: 'العنوان أو الإحداثيات', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                  labelText: 'العنوان أو الإحداثيات',
+                  border: OutlineInputBorder(),
+                ),
               ),
               const SizedBox(height: 10),
               Row(
@@ -314,24 +426,26 @@ class _CartScreenState extends State<CartScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: cartItems.isEmpty
                     ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 50.0),
-                    child: Text(
-                      'عربة التسوق فارغة',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey),
-                      textDirection: TextDirection.rtl,
-                    ),
-                  ),
-                )
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 50.0),
+                          child: Text(
+                            'عربة التسوق فارغة',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(color: Colors.grey),
+                            textDirection: TextDirection.rtl,
+                          ),
+                        ),
+                      )
                     : Column(
-                  children: cartItems.map((item) {
-                    return CartItemCard(
-                      item: item,
-                      onQuantityChanged: (increase) => _updateQuantity(item.id, increase),
-                      onRemove: () => _removeItem(item.id),
-                    );
-                  }).toList(),
-                ),
+                        children: cartItems.map((item) {
+                          return CartItemCard(
+                            item: item,
+                            onQuantityChanged: (increase) =>
+                                _updateQuantity(item.id, increase),
+                            onRemove: () => _removeItem(item.id),
+                          );
+                        }).toList(),
+                      ),
               ),
               const SizedBox(height: 8),
               Divider(indent: 16, endIndent: 16, color: cs.outlineVariant),
@@ -342,9 +456,16 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(height: 12),
               OrderSummary(
                 subtotal: _subtotal,
+                shipping: _shipping,
+                grandTotal: _grandTotal,
+                discount: _discount,
                 itemCount: cartItems.length,
                 onProceedToOrder: _handleProceedToOrder,
                 onCancel: _handleCancelOrder,
+                onApplyCoupon: _handleApplyCoupon,
+                onNoteChanged: (note) {
+                  _orderNote = note;
+                },
               ),
               const SizedBox(height: 10),
             ],

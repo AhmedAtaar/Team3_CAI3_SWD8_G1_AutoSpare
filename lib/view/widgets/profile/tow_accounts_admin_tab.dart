@@ -1,6 +1,3 @@
-// lib/view/widgets/profile/tow_accounts_admin_tab.dart
-// تبويب للأدمن لإدارة حسابات الأوناش (نسخة متوافقة مع AppUser + usersRepo)
-
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
@@ -23,15 +20,15 @@ class TowAccountsAdminTab extends StatelessWidget {
 
   Future<void> _editTowUser(BuildContext context, AppUser u) async {
     final formKey = GlobalKey<FormState>();
-    final capacityCtrl =
-    TextEditingController(text: (u.maxWinches ?? 0).toString());
+    final capacityCtrl = TextEditingController(
+      text: (u.maxWinches ?? 0).toString(),
+    );
     bool approved = u.approved;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title:
-        Text('إدارة حساب الونش — ${u.name}', textAlign: TextAlign.right),
+        title: Text('إدارة حساب الونش — ${u.name}', textAlign: TextAlign.right),
         content: Form(
           key: formKey,
           child: Column(
@@ -72,7 +69,7 @@ class TowAccountsAdminTab extends StatelessWidget {
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
-                  if (!approved) return null; // لو مش مقبول مش هنلزمه بعدد
+                  if (!approved) return null;
                   final n = int.tryParse((v ?? '').trim());
                   if (n == null || n <= 0) return 'أدخل رقم صحيح (> 0)';
                   return null;
@@ -107,11 +104,7 @@ class TowAccountsAdminTab extends StatelessWidget {
     if (ok == true) {
       final n = int.tryParse(capacityCtrl.text.trim()) ?? (u.maxWinches ?? 0);
 
-      await usersRepo.updateWinch(
-        u.id,
-        approved: approved,
-        maxWinches: n,
-      );
+      await usersRepo.updateWinch(u.id, approved: approved, maxWinches: n);
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,8 +154,7 @@ class TowAccountsAdminTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text('الإيميل: ${u.email}'),
-                      if (u.storeName != null)
-                        Text('الشركة: ${u.storeName}'),
+                      if (u.storeName != null) Text('الشركة: ${u.storeName}'),
                       Text(
                         'الحالة: $statusText',
                         style: TextStyle(color: statusColor),
@@ -174,8 +166,7 @@ class TowAccountsAdminTab extends StatelessWidget {
                           'سجل تجاري: ${u.commercialRegUrl}',
                           style: const TextStyle(fontSize: 11),
                         ),
-                      if (u.taxCardUrl != null &&
-                          u.taxCardUrl!.isNotEmpty)
+                      if (u.taxCardUrl != null && u.taxCardUrl!.isNotEmpty)
                         Text(
                           'بطاقة ضريبية: ${u.taxCardUrl}',
                           style: const TextStyle(fontSize: 11),

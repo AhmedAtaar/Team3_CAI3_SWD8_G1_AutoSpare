@@ -1,5 +1,3 @@
-// lib/view/screens/sign_up_screen.dart
-
 import 'package:auto_spare/services/user_store.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -21,19 +19,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _address = TextEditingController();
   final _phone = TextEditingController();
 
-  // بائع
   final _store = TextEditingController();
   final _crUrl = TextEditingController();
   final _taxUrl = TextEditingController();
 
-  // ونش
   final _company = TextEditingController();
   final _area = TextEditingController();
   final _baseCost = TextEditingController();
   final _pricePerKm = TextEditingController();
   final _latCtrl = TextEditingController();
   final _lngCtrl = TextEditingController();
-
 
   final _towCrUrl = TextEditingController();
   final _towTaxUrl = TextEditingController();
@@ -107,9 +102,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_password.text.trim() != _confirm.text.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
       return;
     }
 
@@ -120,7 +115,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final addr = _address.text.trim();
 
     try {
-
       if (_isTow) {
         final lat = double.tryParse(_latCtrl.text.trim());
         final lng = double.tryParse(_lngCtrl.text.trim());
@@ -146,19 +140,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           contactEmail: email,
           contactPhone: phone,
           password: pass,
-          commercialRegUrl:
-          _towCrUrl.text.trim().isEmpty ? null : _towCrUrl.text.trim(),
-          taxCardUrl:
-          _towTaxUrl.text.trim().isEmpty ? null : _towTaxUrl.text.trim(),
+          commercialRegUrl: _towCrUrl.text.trim().isEmpty
+              ? null
+              : _towCrUrl.text.trim(),
+          taxCardUrl: _towTaxUrl.text.trim().isEmpty
+              ? null
+              : _towTaxUrl.text.trim(),
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إرسال طلب شركة الونش للمراجعة'),
-          ),
+          const SnackBar(content: Text('تم إرسال طلب شركة الونش للمراجعة')),
         );
-
-
       } else if (_isSeller) {
         await UserStore().signUpSeller(
           email: email,
@@ -167,19 +159,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           address: addr,
           phone: phone,
           storeName: _store.text.trim(),
-          commercialRegUrl:
-          _crUrl.text.trim().isEmpty ? null : _crUrl.text.trim(),
-          taxCardUrl:
-          _taxUrl.text.trim().isEmpty ? null : _taxUrl.text.trim(),
+          commercialRegUrl: _crUrl.text.trim().isEmpty
+              ? null
+              : _crUrl.text.trim(),
+          taxCardUrl: _taxUrl.text.trim().isEmpty ? null : _taxUrl.text.trim(),
         );
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إرسال طلب تسجيل كبائع للمراجعة'),
-          ),
+          const SnackBar(content: Text('تم إرسال طلب تسجيل كبائع للمراجعة')),
         );
-
-
       } else {
         await UserStore().signUpBuyer(
           email: email,
@@ -189,16 +177,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
           phone: phone,
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إنشاء حساب مشتري'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('تم إنشاء حساب مشتري')));
       }
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     } on FirebaseAuthException catch (e) {
       String msg = 'حدث خطأ أثناء إنشاء الحساب';
       if (e.code == 'email-already-in-use') {
@@ -206,23 +192,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
       } else if (e.code == 'weak-password') {
         msg = 'كلمة المرور ضعيفة، برجاء اختيار كلمة أقوى';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } on StateError catch (e) {
       if (e.message == 'exists') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('الحساب موجود بالفعل')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('الحساب موجود بالفعل')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ: ${e.message}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('خطأ: ${e.message}')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ غير متوقع: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('حدث خطأ غير متوقع: $e')));
     }
   }
 
@@ -238,7 +222,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             key: _formKey,
             child: Column(
               children: [
-                // اختيار نوع الحساب
                 Row(
                   children: [
                     Expanded(
@@ -272,8 +255,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   decoration: _dec('الإيميل'),
-                  validator: (v) =>
-                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
@@ -285,13 +267,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       icon: Icon(
                         _obscure1 ? Icons.visibility_off : Icons.visibility,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscure1 = !_obscure1),
+                      onPressed: () => setState(() => _obscure1 = !_obscure1),
                     ),
                   ),
-                  validator: (v) => (v == null || v.length < 4)
-                      ? 'على الأقل 4 حروف'
-                      : null,
+                  validator: (v) =>
+                      (v == null || v.length < 4) ? 'على الأقل 4 حروف' : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
@@ -303,56 +283,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       icon: Icon(
                         _obscure2 ? Icons.visibility_off : Icons.visibility,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscure2 = !_obscure2),
+                      onPressed: () => setState(() => _obscure2 = !_obscure2),
                     ),
                   ),
-                  validator: (v) =>
-                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _name,
                   decoration: _dec('الاسم'),
-                  validator: (v) =>
-                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _address,
                   decoration: _dec('العنوان'),
-                  validator: (v) =>
-                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _phone,
                   keyboardType: TextInputType.phone,
                   decoration: _dec('رقم التليفون'),
-                  validator: (v) =>
-                  (v == null || v.isEmpty) ? 'مطلوب' : null,
+                  validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                 ),
-
 
                 if (_isSeller) ...[
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _store,
                     decoration: _dec('اسم المتجر'),
-                    validator: (v) =>
-                    (v == null || v.isEmpty) ? 'مطلوب' : null,
+                    validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _crUrl,
-                    decoration:
-                    _dec('رابط صورة السجل التجاري (Drive/Link)'),
+                    decoration: _dec('رابط صورة السجل التجاري (Drive/Link)'),
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _taxUrl,
-                    decoration: _dec(
-                        'رابط صورة البطاقة الضريبية (Drive/Link)'),
+                    decoration: _dec('رابط صورة البطاقة الضريبية (Drive/Link)'),
                   ),
                   const SizedBox(height: 6),
                   const Align(
@@ -363,29 +334,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
 
-
                 if (_isTow) ...[
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _company,
                     decoration: _dec('اسم الشركة'),
-                    validator: (v) =>
-                    (v == null || v.isEmpty) ? 'مطلوب' : null,
+                    validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _area,
                     decoration: _dec('المنطقة/التغطية'),
-                    validator: (v) =>
-                    (v == null || v.isEmpty) ? 'مطلوب' : null,
+                    validator: (v) => (v == null || v.isEmpty) ? 'مطلوب' : null,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _baseCost,
                     keyboardType: TextInputType.number,
                     decoration: _dec('سعر الخدمة (جنيه)'),
-                    validator: (v) =>
-                    (double.tryParse(v ?? '') == null)
+                    validator: (v) => (double.tryParse(v ?? '') == null)
                         ? 'أدخل رقمًا صحيحًا'
                         : null,
                   ),
@@ -394,8 +361,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     controller: _pricePerKm,
                     keyboardType: TextInputType.number,
                     decoration: _dec('سعر الكيلو (جنيه)'),
-                    validator: (v) =>
-                    (double.tryParse(v ?? '') == null)
+                    validator: (v) => (double.tryParse(v ?? '') == null)
                         ? 'أدخل رقمًا صحيحًا'
                         : null,
                   ),
@@ -407,8 +373,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           controller: _latCtrl,
                           keyboardType: TextInputType.number,
                           decoration: _dec('Latitude'),
-                          validator: (v) =>
-                          (double.tryParse(v ?? '') == null)
+                          validator: (v) => (double.tryParse(v ?? '') == null)
                               ? 'أدخل رقمًا'
                               : null,
                         ),
@@ -419,8 +384,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           controller: _lngCtrl,
                           keyboardType: TextInputType.number,
                           decoration: _dec('Longitude'),
-                          validator: (v) =>
-                          (double.tryParse(v ?? '') == null)
+                          validator: (v) => (double.tryParse(v ?? '') == null)
                               ? 'أدخل رقمًا'
                               : null,
                         ),
@@ -441,16 +405,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _towCrUrl,
-                    decoration: _dec(
-                      'رابط صورة السجل التجاري (Drive/Link)',
-                    ),
+                    decoration: _dec('رابط صورة السجل التجاري (Drive/Link)'),
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _towTaxUrl,
-                    decoration: _dec(
-                      'رابط صورة البطاقة الضريبية (Drive/Link)',
-                    ),
+                    decoration: _dec('رابط صورة البطاقة الضريبية (Drive/Link)'),
                   ),
                   const SizedBox(height: 6),
                   const Align(

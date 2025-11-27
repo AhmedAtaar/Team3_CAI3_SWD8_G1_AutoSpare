@@ -1,6 +1,6 @@
-// lib/services/tow_directory.dart
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TowCompany {
   final String id;
@@ -10,9 +10,9 @@ class TowCompany {
   final double lng;
   final double baseCost;
   final double pricePerKm;
-
-
   final bool isOnline;
+
+  final String? phone;
 
   const TowCompany({
     required this.id,
@@ -23,6 +23,7 @@ class TowCompany {
     required this.baseCost,
     required this.pricePerKm,
     this.isOnline = true,
+    this.phone,
   });
 
   TowCompany copyWith({
@@ -33,6 +34,7 @@ class TowCompany {
     double? baseCost,
     double? pricePerKm,
     bool? isOnline,
+    String? phone,
   }) {
     return TowCompany(
       id: id,
@@ -43,84 +45,41 @@ class TowCompany {
       baseCost: baseCost ?? this.baseCost,
       pricePerKm: pricePerKm ?? this.pricePerKm,
       isOnline: isOnline ?? this.isOnline,
+      phone: phone ?? this.phone,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'area': area,
+      'lat': lat,
+      'lng': lng,
+      'baseCost': baseCost,
+      'pricePerKm': pricePerKm,
+      'isOnline': isOnline,
+      'phone': phone,
+    };
+  }
+
+  factory TowCompany.fromMap(String id, Map<String, dynamic> data) {
+    return TowCompany(
+      id: id,
+      name: (data['name'] ?? '') as String,
+      area: (data['area'] ?? '') as String,
+      lat: (data['lat'] as num).toDouble(),
+      lng: (data['lng'] as num).toDouble(),
+      baseCost: (data['baseCost'] as num).toDouble(),
+      pricePerKm: (data['pricePerKm'] as num).toDouble(),
+      isOnline: (data['isOnline'] as bool?) ?? true,
+      phone: data['phone'] as String?,
     );
   }
 }
 
 class TowDirectory extends ChangeNotifier {
   TowDirectory._internal() {
-    _approved.addAll(const [
-      TowCompany(
-        id: 'c1',
-        name: 'شركة الفضل للأوناش',
-        area: 'المعادي',
-        lat: 29.9600,
-        lng: 31.2610,
-        baseCost: 300,
-        pricePerKm: 50,
-        isOnline: true,
-      ),
-      TowCompany(
-        id: 'c2',
-        name: 'السفير للأوناش',
-        area: 'المهندسين',
-        lat: 30.0480,
-        lng: 31.2030,
-        baseCost: 270,
-        pricePerKm: 44,
-        isOnline: true,
-      ),
-      TowCompany(
-        id: 'c3',
-        name: 'هليوبليس سيرفز لخدمات الاوناش',
-        area: 'مصر الجديدة',
-        lat: 30.0870,
-        lng: 31.3440,
-        baseCost: 400,
-        pricePerKm: 38,
-        isOnline: true,
-      ),
-      TowCompany(
-        id: 'c4',
-        name: 'اريزونا لأعطال السيارات وسحب السيارات',
-        area: 'التحرير',
-        lat: 30.0444,
-        lng: 31.2357,
-        baseCost: 300,
-        pricePerKm: 50,
-        isOnline: true,
-      ),
-      TowCompany(
-        id: 'c5',
-        name: 'النسر – لخدمات الأعطال',
-        area: 'القاهرة الجديدة',
-        lat: 30.0074,
-        lng: 31.4913,
-        baseCost: 300,
-        pricePerKm: 45,
-        isOnline: true,
-      ),
-      TowCompany(
-        id: 'c6',
-        name: 'الأمل لخدمات الأوناش',
-        area: 'القاهرة الجديدة',
-        lat: 30.0230,
-        lng: 31.4350,
-        baseCost: 300,
-        pricePerKm: 70,
-        isOnline: false, // أوفلاين
-      ),
-      TowCompany(
-        id: 'c7',
-        name: 'الحرية للأعطال وسحب السيارات',
-        area: '٦ أكتوبر',
-        lat: 29.9389,
-        lng: 30.9138,
-        baseCost: 250,
-        pricePerKm: 55,
-        isOnline: true,
-      ),
-    ]);
+    _subscribeFirestore();
   }
 
   static final TowDirectory _i = TowDirectory._internal();
@@ -128,20 +87,36 @@ class TowDirectory extends ChangeNotifier {
 
   final List<TowCompany> _approved = [];
 
+  final _col = FirebaseFirestore.instance.collection('tow_companies');
+
+  void _subscribeFirestore() {
+    _col.snapshots().listen((snapshot) {
+      _approved.clear();
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        try {
+          final company = TowCompany.fromMap(doc.id, data);
+          _approved.add(company);
+        } catch (_) {}
+      }
+      notifyListeners();
+    });
+  }
 
   List<TowCompany> get all => List.unmodifiable(_approved);
-
 
   List<TowCompany> get onlineOnly =>
       _approved.where((c) => c.isOnline).toList(growable: false);
 
-  bool isOnline(String id) =>
-      _approved.any((c) => c.id == id && c.isOnline);
+  bool isOnline(String id) => _approved.any((c) => c.id == id && c.isOnline);
 
   void setOnline(String id, bool online) {
     final i = _approved.indexWhere((c) => c.id == id);
     if (i == -1) return;
-    _approved[i] = _approved[i].copyWith(isOnline: online);
+    final updated = _approved[i].copyWith(isOnline: online);
+    _approved[i] = updated;
+
+    _col.doc(id).set(updated.toMap(), SetOptions(merge: true));
     notifyListeners();
   }
 
@@ -149,8 +124,7 @@ class TowDirectory extends ChangeNotifier {
     final i = _approved.indexWhere((c) => c.id == id);
     if (i == -1) return;
     final cur = _approved[i].isOnline;
-    _approved[i] = _approved[i].copyWith(isOnline: !cur);
-    notifyListeners();
+    setOnline(id, !cur);
   }
 
   void addApproved(TowCompany c) {
@@ -160,51 +134,31 @@ class TowDirectory extends ChangeNotifier {
     } else {
       _approved[idx] = c;
     }
+
+    _col.doc(c.id).set(c.toMap(), SetOptions(merge: true));
     notifyListeners();
   }
-
 
   TowCompany? nearestOnline(double userLat, double userLng) {
     final online = _approved.where((c) => c.isOnline).toList();
     if (online.isEmpty) return null;
 
     online.sort((a, b) {
-      final da = Geolocator.distanceBetween(
-        userLat,
-        userLng,
-        a.lat,
-        a.lng,
-      );
-      final db = Geolocator.distanceBetween(
-        userLat,
-        userLng,
-        b.lat,
-        b.lng,
-      );
+      final da = Geolocator.distanceBetween(userLat, userLng, a.lat, a.lng);
+      final db = Geolocator.distanceBetween(userLat, userLng, b.lat, b.lng);
       return da.compareTo(db);
     });
 
     return online.first;
   }
 
-
   TowCompany? nearestAny(double userLat, double userLng) {
     if (_approved.isEmpty) return null;
 
     final list = List<TowCompany>.from(_approved);
     list.sort((a, b) {
-      final da = Geolocator.distanceBetween(
-        userLat,
-        userLng,
-        a.lat,
-        a.lng,
-      );
-      final db = Geolocator.distanceBetween(
-        userLat,
-        userLng,
-        b.lat,
-        b.lng,
-      );
+      final da = Geolocator.distanceBetween(userLat, userLng, a.lat, a.lng);
+      final db = Geolocator.distanceBetween(userLat, userLng, b.lat, b.lng);
       return da.compareTo(db);
     });
 

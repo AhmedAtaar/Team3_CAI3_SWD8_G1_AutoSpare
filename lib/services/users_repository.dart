@@ -1,5 +1,3 @@
-
-
 import 'dart:async';
 
 import 'package:auto_spare/model/app_user.dart';
@@ -9,12 +7,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class UsersRepository {
   UsersRepository._internal() {
-    init();
+    _init();
   }
 
   static final UsersRepository _instance = UsersRepository._internal();
   factory UsersRepository() => _instance;
-
 
   final Map<String, AppUser> _byId = {};
   final Map<String, String> _emailIndex = {};
@@ -22,11 +19,11 @@ class UsersRepository {
 
   final _winchCtrl = StreamController<List<AppUser>>.broadcast();
 
-  final CollectionReference<Map<String, dynamic>> _usersCol =
-  FirebaseFirestore.instance.collection('users');
+  final CollectionReference<Map<String, dynamic>> _usersCol = FirebaseFirestore
+      .instance
+      .collection('users');
 
-  void init() {
-
+  void _init() {
     _usersCol.snapshots().listen((snapshot) {
       _byId.clear();
       _emailIndex.clear();
@@ -39,8 +36,9 @@ class UsersRepository {
         _phoneIndex[user.phone] = user.id;
       }
 
-      final winches =
-      _byId.values.where((u) => u.canTow == true).toList(growable: false);
+      final winches = _byId.values
+          .where((u) => u.role == AppUserRole.winch || u.canTow == true)
+          .toList(growable: false);
       _winchCtrl.add(winches);
     });
   }
@@ -48,7 +46,7 @@ class UsersRepository {
   AppUser _fromFirestore(String id, Map<String, dynamic> data) {
     final roleString = (data['role'] as String?) ?? 'buyer';
     final role = AppUserRole.values.firstWhere(
-          (r) => r.name == roleString,
+      (r) => r.name == roleString,
       orElse: () => AppUserRole.buyer,
     );
 
@@ -58,7 +56,6 @@ class UsersRepository {
       email: (data['email'] ?? '') as String,
       phone: (data['phone'] ?? '') as String,
       address: (data['address'] ?? '') as String,
-
       password: '',
       role: role,
       approved: (data['approved'] as bool?) ?? false,
@@ -96,17 +93,19 @@ class UsersRepository {
     };
   }
 
-
   Future<void> addUser(AppUser user) async {
-    // منع تكرار الإيميل أو الموبايل
-    final emailSnap =
-    await _usersCol.where('email', isEqualTo: user.email).limit(1).get();
+    final emailSnap = await _usersCol
+        .where('email', isEqualTo: user.email)
+        .limit(1)
+        .get();
     if (emailSnap.docs.isNotEmpty) {
       throw StateError('exists');
     }
 
-    final phoneSnap =
-    await _usersCol.where('phone', isEqualTo: user.phone).limit(1).get();
+    final phoneSnap = await _usersCol
+        .where('phone', isEqualTo: user.phone)
+        .limit(1)
+        .get();
     if (phoneSnap.docs.isNotEmpty) {
       throw StateError('exists');
     }
@@ -114,19 +113,17 @@ class UsersRepository {
     await _usersCol.doc(user.id).set(_toFirestore(user));
   }
 
-
   Future<void> updateUser(AppUser user) async {
     await _usersCol.doc(user.id).update(_toFirestore(user));
   }
 
   List<AppUser> get allUsers => _byId.values.toList(growable: false);
 
-
-  Future<AppUser?> findByPhoneAndPassword(
-      String phone, String password) async {
-
-    final snap =
-    await _usersCol.where('phone', isEqualTo: phone).limit(1).get();
+  Future<AppUser?> findByPhoneAndPassword(String phone, String password) async {
+    final snap = await _usersCol
+        .where('phone', isEqualTo: phone)
+        .limit(1)
+        .get();
     if (snap.docs.isEmpty) {
       return null;
     }
@@ -156,9 +153,10 @@ class UsersRepository {
     return user;
   }
 
-
   Future<AppUser?> signInWithEmailAndPassword(
-      String email, String password) async {
+    String email,
+    String password,
+  ) async {
     try {
       final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -210,12 +208,11 @@ class UsersRepository {
     );
   }
 
-
   Future<void> updateWinch(
-      String userId, {
-        bool? approved,
-        int? maxWinches,
-      }) async {
+    String userId, {
+    bool? approved,
+    int? maxWinches,
+  }) async {
     final doc = await _usersCol.doc(userId).get();
     if (!doc.exists) return;
     final existing = _fromFirestore(doc.id, doc.data()!);

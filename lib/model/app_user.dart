@@ -1,11 +1,4 @@
-// lib/model/app_user.dart
-
-enum AppUserRole {
-  buyer,
-  seller,
-  admin,
-  winch,
-}
+enum AppUserRole { buyer, seller, admin, winch }
 
 class AppUser {
   final String id;

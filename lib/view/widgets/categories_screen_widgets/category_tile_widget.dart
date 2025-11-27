@@ -1,102 +1,57 @@
 import 'package:flutter/material.dart';
-import '../../themes/app_colors.dart';
 
 class CategoryTile extends StatelessWidget {
-  final String imageUrl;
+  final String imagePath;
   final String title;
   final int itemCount;
   final VoidCallback onTap;
 
   const CategoryTile({
-    required this.imageUrl,
+    super.key,
+    required this.imagePath,
     required this.title,
     required this.itemCount,
     required this.onTap,
-    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
+
+    Widget logo() {
+      if (imagePath.isEmpty) {
+        return const Icon(Icons.image_outlined, size: 32);
+      }
+
+      return Image.asset(imagePath, fit: BoxFit.contain);
+    }
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
       child: Container(
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.primaryGreenShade100,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color.fromARGB(20, 0, 0, 0),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: cs.outlineVariant),
         ),
-        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primaryGreen, width: 2),
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryGreen,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    );
-                  },
-
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.directions_car,
-                      color: AppColors.primaryGreen,
-                      size: 28,
-                    );
-                  },
-                ),
-              ),
+            Expanded(
+              child: Center(child: SizedBox(height: 48, child: logo())),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.darkText,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$itemCountأغراض ',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.darkText.withAlpha(200),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'عدد المنتجات: $itemCount',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
             ),
           ],
         ),

@@ -1,5 +1,3 @@
-// lib/view/screens/login_screen.dart
-
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/user_store.dart';
 import 'package:auto_spare/services/users_repository.dart';
@@ -34,7 +32,6 @@ class LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-
   UserRole _mapRole(AppUserRole r) {
     switch (r) {
       case AppUserRole.admin:
@@ -48,11 +45,9 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
-
   Future<AppUser?> _loginByEmail(String email, String pass) {
     return usersRepo.signInWithEmailAndPassword(email, pass);
   }
-
 
   Future<void> _handleSignIn() async {
     if (!_formKey.currentState!.validate()) {
@@ -68,12 +63,11 @@ class LoginScreenState extends State<LoginScreen> {
     final u = await _loginByEmail(email, pass);
 
     if (u == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid credentials')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
       return;
     }
-
 
     if (u.role == AppUserRole.winch && !u.approved) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,9 +81,7 @@ class LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-
-    UserStore().currentUser = u;
-
+    UserStore().setLoggedInUser(u);
 
     UserSession.initFromProfile(
       name: u.name,
@@ -101,7 +93,6 @@ class LoginScreenState extends State<LoginScreen> {
       towCompanyId: u.towCompanyId,
     );
 
-
     Widget dest;
     if (u.role == AppUserRole.admin) {
       dest = const ProfileScreen();
@@ -109,21 +100,22 @@ class LoginScreenState extends State<LoginScreen> {
       dest = const HomeScreen();
     }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => dest),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (context) => dest));
   }
 
   void _continueAsGuest() {
-    UserSession.initFromProfile(
-      name: 'Guest',
-      role: UserRole.buyer,
-    );
+    final store = UserStore();
+
+    store.setGuest();
+
+    UserSession.initFromProfile(name: 'Guest', role: UserRole.buyer);
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const HomeScreen()),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -163,10 +155,7 @@ class LoginScreenState extends State<LoginScreen> {
                         Text(
                           'Sign in to access your auto parts marketplace',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -175,7 +164,6 @@ class LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            // Form
             Padding(
               padding: const EdgeInsets.all(25.0),
               child: Form(
@@ -183,7 +171,6 @@ class LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     CustomFormField(
                       controller: _userController,
                       labelText: 'Email',
@@ -191,7 +178,7 @@ class LoginScreenState extends State<LoginScreen> {
                       icon: Icons.email,
                       keyboardType: TextInputType.emailAddress,
                       validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Required' : null,
+                          (v == null || v.isEmpty) ? 'Required' : null,
                     ),
                     const SizedBox(height: 20),
                     CustomFormField(
@@ -201,7 +188,7 @@ class LoginScreenState extends State<LoginScreen> {
                       icon: Icons.lock_outline,
                       obscureText: _obscurePassword,
                       validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Required' : null,
+                          (v == null || v.isEmpty) ? 'Required' : null,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -210,7 +197,7 @@ class LoginScreenState extends State<LoginScreen> {
                           color: Colors.grey,
                         ),
                         onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
+                          () => _obscurePassword = !_obscurePassword,
                         ),
                       ),
                     ),
@@ -248,9 +235,7 @@ class LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     CustomOutlinedButton(
                       text: 'Continue with Google',
-                      onPressed: () {
-                        // TODO: ربط لاحقًا مع Firebase Google Sign-In
-                      },
+                      onPressed: () {},
                     ),
                     const SizedBox(height: 15),
                     CustomOutlinedButton(

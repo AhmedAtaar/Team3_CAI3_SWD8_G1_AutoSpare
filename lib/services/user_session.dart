@@ -1,5 +1,3 @@
-// lib/services/user_session.dart
-
 enum UserRole { buyer, seller, admin }
 
 class UserSession {
@@ -26,7 +24,7 @@ class UserSession {
   static bool get isBuyerNow => !isAdmin && currentRole == UserRole.buyer;
 
   static bool get canSwitchToSeller => canSell && isBuyerNow;
-  static bool get canSwitchToBuyer  => isSellerNow;
+  static bool get canSwitchToBuyer => isSellerNow;
 
   static void initFromProfile({
     required String name,

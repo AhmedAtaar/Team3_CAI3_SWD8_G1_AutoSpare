@@ -1,140 +1,206 @@
 import 'package:flutter/material.dart';
-import '../../themes/app_colors.dart';
 
-class OrderSummary extends StatelessWidget {
+class OrderSummary extends StatefulWidget {
   final double subtotal;
+  final double shipping;
+  final double grandTotal;
+  final double discount;
   final int itemCount;
+
   final VoidCallback onProceedToOrder;
   final VoidCallback onCancel;
 
+  final void Function(String code) onApplyCoupon;
+  final ValueChanged<String>? onNoteChanged;
+
   const OrderSummary({
+    super.key,
     required this.subtotal,
+    required this.shipping,
+    required this.grandTotal,
+    required this.discount,
     required this.itemCount,
     required this.onProceedToOrder,
     required this.onCancel,
-    super.key,
+    required this.onApplyCoupon,
+    this.onNoteChanged,
   });
 
-  static const double _shippingCost = 15.00;
-  double get _total => subtotal + _shippingCost;
+  @override
+  State<OrderSummary> createState() => _OrderSummaryState();
+}
 
-  Widget _buildSummaryRow({
-    required String title,
-    required String value,
-    bool isTotal = false,
-  }) {
-    final TextStyle style = isTotal
-        ? const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: AppColors.primaryGreen,
-          )
-        : const TextStyle(fontSize: 16, color: AppColors.darkText);
+class _OrderSummaryState extends State<OrderSummary> {
+  final _couponCtrl = TextEditingController();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: style),
-          Text(value, style: style),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    _couponCtrl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      margin: const EdgeInsets.only(top: 16.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'ملخص الطلب ($itemCount عناصر)',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.darkText,
-            ),
-          ),
-          const Divider(height: 24),
-          _buildSummaryRow(
-            title: 'المجموع الفرعي',
-            value: 'EGP ${subtotal.toStringAsFixed(2)}',
-          ),
-          _buildSummaryRow(
-            title: 'الشحن والتوصيل',
-            value: 'EGP ${_shippingCost.toStringAsFixed(2)}',
-          ),
-          const Divider(height: 24, thickness: 1.5),
-          _buildSummaryRow(
-            title: 'المجموع الكلي',
-            value: 'EGP ${_total.toStringAsFixed(2)}',
-            isTotal: true,
-          ),
-          const SizedBox(height: 24),
+    final cs = Theme.of(context).colorScheme;
 
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed:
-                  itemCount >
-                      0
-                  ? onProceedToOrder
-                  : null,
-              icon: const Icon(
-                Icons.local_shipping,
-                color: AppColors.lightText,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Card(
+        elevation: 0,
+        color: cs.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: cs.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.receipt_long_outlined),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'ملخص الطلب',
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              label: Text(
-                'طلب ونقل (${_total.toStringAsFixed(0)} EGP)',
-                style: const TextStyle(
-                  color: AppColors.lightText,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 12),
+
+              _row(
+                label: 'إجمالي المنتجات (${widget.itemCount} عنصر)',
+                value: '${widget.subtotal.toStringAsFixed(2)} ج',
+                isBold: false,
+              ),
+
+              const SizedBox(height: 4),
+
+              _row(
+                label: 'الشحن',
+                value: '${widget.shipping.toStringAsFixed(2)} ج',
+                isBold: false,
+              ),
+
+              const SizedBox(height: 4),
+
+              if (widget.discount > 0)
+                _row(
+                  label: 'الخصم',
+                  value: '- ${widget.discount.toStringAsFixed(2)} ج',
+                  isBold: false,
+                ),
+
+              const SizedBox(height: 8),
+              Divider(color: cs.outlineVariant),
+              const SizedBox(height: 8),
+
+              _row(
+                label: 'الإجمالي النهائي',
+                value: '${widget.grandTotal.toStringAsFixed(2)} ج',
+                isBold: true,
+              ),
+
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'كود الخصم (اختياري)',
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _couponCtrl,
+                      textAlign: TextAlign.right,
+                      decoration: const InputDecoration(
+                        labelText: 'ادخل الكود',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (v) {
+                        if (v.trim().isEmpty) return;
+                        widget.onApplyCoupon(v.trim());
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: () {
+                      final code = _couponCtrl.text.trim();
+                      if (code.isEmpty) return;
+                      widget.onApplyCoupon(code);
+                    },
+                    child: const Text('تطبيق'),
+                  ),
+                ],
               ),
-            ),
+
+              const SizedBox(height: 12),
+
+              TextField(
+                maxLines: 2,
+                textAlign: TextAlign.right,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظة للطلب (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (v) => widget.onNoteChanged?.call(v.trim()),
+              ),
+
+              const SizedBox(height: 16),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: widget.onCancel,
+                      child: const Text('إلغاء'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: widget.onProceedToOrder,
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('إتمام الطلب'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          // MARK: Cancel button
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: OutlinedButton(
-              onPressed: onCancel,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                'الغاء',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _row({
+    required String label,
+    required String value,
+    bool isBold = false,
+  }) {
+    final style = isBold
+        ? const TextStyle(fontWeight: FontWeight.w700)
+        : const TextStyle();
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label, textAlign: TextAlign.right, style: style),
+        ),
+        const SizedBox(width: 8),
+        Text(value, style: style),
+      ],
     );
   }
 }

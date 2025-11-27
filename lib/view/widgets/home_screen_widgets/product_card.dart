@@ -24,7 +24,7 @@ class ProductCard extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (_, __, ___) =>
-          const Center(child: Icon(Icons.broken_image_outlined, size: 40)),
+              const Center(child: Icon(Icons.broken_image_outlined, size: 40)),
         ),
       );
     }
@@ -55,8 +55,9 @@ class ProductCard extends StatelessWidget {
                       ),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant
-                              .withOpacity(.35),
+                          color: theme.colorScheme.surfaceVariant.withOpacity(
+                            .35,
+                          ),
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(18),
                           ),

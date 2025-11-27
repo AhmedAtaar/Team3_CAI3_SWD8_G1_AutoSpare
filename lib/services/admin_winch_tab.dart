@@ -1,11 +1,3 @@
-// lib/view/widgets/admin/admin_winch_tab.dart
-//
-// تبويب للأدمن لمراجعة حسابات الأوناش:
-// - يشوف كل حسابات الـ UserType.winch
-// - يطّلع على المستندات (docUrls)
-// - يحدد عدد الأوناش maxWinches
-// - يوافق على الحساب (approved = true)
-
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +28,7 @@ class AdminWinchTab extends StatelessWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (_, i) {
               final u = list[i];
-              // ✅ علشان ما نشتغلش على null
+
               final docs = u.docUrls ?? const <String>[];
 
               return Card(
@@ -54,9 +46,7 @@ class AdminWinchTab extends StatelessWidget {
                       Text(
                         'الونش: ${u.name} (${u.id})',
                         textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text('الهاتف: ${u.phone}', textAlign: TextAlign.right),
@@ -75,7 +65,6 @@ class AdminWinchTab extends StatelessWidget {
                         textAlign: TextAlign.right,
                       ),
 
-                      // ✅ التعامل مع docUrls لو كانت null
                       if (docs.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         const Text(
@@ -101,10 +90,11 @@ class AdminWinchTab extends StatelessWidget {
                           tooltip: 'إجراءات',
                           onSelected: (val) async {
                             if (val == 'approve') {
-                              final capacity =
-                              await _askCapacity(context, u.maxWinches);
+                              final capacity = await _askCapacity(
+                                context,
+                                u.maxWinches,
+                              );
                               if (capacity != null) {
-                                // ✅ استدعاء الميثود اللي هنضيفها في UsersRepository
                                 await usersRepo.updateWinch(
                                   u.id,
                                   approved: true,
