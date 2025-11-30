@@ -1,4 +1,5 @@
 import 'package:auto_spare/services/user_store.dart';
+import 'package:auto_spare/services/users_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
@@ -113,6 +114,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final pass = _password.text.trim();
     final name = _name.text.trim();
     final addr = _address.text.trim();
+
+    if (!_isTow) {
+      final sameEmailUsers = usersRepo.allUsers
+          .where((u) => u.email.toLowerCase() == email.toLowerCase())
+          .toList();
+
+      if (sameEmailUsers.isNotEmpty) {
+        final existing = sameEmailUsers.first;
+        final bool isBanned =
+            existing.approved == false && existing.canSell == false;
+
+        if (isBanned) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'لا يمكن إنشاء حساب جديد بهذا البريد.\n'
+                'تم حظر الحساب نهائيًا من قبل الإدارة.',
+                textAlign: TextAlign.right,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+    }
 
     try {
       if (_isTow) {
@@ -249,7 +275,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _email,

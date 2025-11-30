@@ -7,9 +7,9 @@
         <compositeConfiguration>
           <compositeBuild compositeDefinitionSource="SCRIPT">
             <builds>
-              <build path="$PROJECT_DIR$/../../src/flutter/packages/flutter_tools/gradle" name="gradle">
+              <build path="$PROJECT_DIR$/../src/flutter/packages/flutter_tools/gradle" name="gradle">
                 <projects>
-                  <project path="$PROJECT_DIR$/../../src/flutter/packages/flutter_tools/gradle" />
+                  <project path="$PROJECT_DIR$/../src/flutter/packages/flutter_tools/gradle" />
                 </projects>
               </build>
             </builds>
@@ -20,13 +20,18 @@
         <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
         <option name="modules">
           <set>
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/cloud_firestore-6.1.0/android" />
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_auth-6.1.2/android" />
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_core-4.2.1/android" />
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_messaging-16.0.4/android" />
+            <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_local_notifications-17.2.4/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/geocoding_android-3.3.1/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/geolocator_android-5.0.2/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-8.3.1/android" />
             <option value="$USER_HOME$/AppData/Local/Pub/Cache/hosted/pub.dev/url_launcher_android-6.3.20/android" />
             <option value="$PROJECT_DIR$/android" />
             <option value="$PROJECT_DIR$/android/app" />
-            <option value="$PROJECT_DIR$/../../src/flutter/packages/flutter_tools/gradle" />
+            <option value="$PROJECT_DIR$/../src/flutter/packages/flutter_tools/gradle" />
           </set>
         </option>
       </GradleProjectSettings>

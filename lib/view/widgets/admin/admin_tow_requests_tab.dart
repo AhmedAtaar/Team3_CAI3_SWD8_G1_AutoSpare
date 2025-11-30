@@ -13,7 +13,20 @@ class AdminTowRequestsTab extends StatelessWidget {
       child: StreamBuilder<List<TowRequestDoc>>(
         stream: towRequestsRepo.watchAllAdmin(),
         builder: (_, snap) {
+          if (snap.hasError) {
+            return Center(
+              child: Text(
+                'حدث خطأ أثناء تحميل طلبات السحب:\n${snap.error}',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+
           final list = snap.data ?? const <TowRequestDoc>[];
+
+          if (snap.connectionState == ConnectionState.waiting && list.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           if (list.isEmpty) {
             return const Center(
@@ -48,6 +61,8 @@ class AdminTowRequestsTab extends StatelessWidget {
                       Text(
                         'الشركة: ${r.companyNameSnapshot} (${r.companyId})',
                         textAlign: TextAlign.right,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -66,6 +81,8 @@ class AdminTowRequestsTab extends StatelessWidget {
                       Text(
                         'المركبة: ${r.vehicle} • اللوحة: ${r.plate}',
                         textAlign: TextAlign.right,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(

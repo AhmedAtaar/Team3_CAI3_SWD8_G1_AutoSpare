@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/view/screens/product_details_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/controller/navigation/navigation.dart';
+import 'package:auto_spare/core/app_fees.dart';
 
 class BrandProductsScreen extends StatefulWidget {
   final CarBrand brand;
@@ -61,6 +63,8 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
     final theme = Theme.of(context);
     final brandName = kBrandName[widget.brand] ?? widget.brand.name;
 
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     Widget appLogoChip() {
       final chipBg = theme.colorScheme.primary.withOpacity(.10);
       return Container(
@@ -106,7 +110,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
       ],
     );
 
-    Widget searchAndSort(void Function(void Function()) setStateOuter) => Row(
+    Widget searchAndSort() => Row(
       children: [
         Expanded(
           child: TextField(
@@ -128,29 +132,41 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
                 vertical: 0,
               ),
             ),
-            onChanged: (v) => setStateOuter(() => _query = v),
+            onChanged: (v) {
+              setState(() {
+                _query = v;
+              });
+            },
           ),
         ),
         const SizedBox(width: 8),
-        DropdownButton<_SortBy>(
-          value: _sortBy,
-          underline: const SizedBox.shrink(),
-          items: const [
-            DropdownMenuItem(value: _SortBy.newest, child: Text('الأحدث')),
-            DropdownMenuItem(
-              value: _SortBy.priceLow,
-              child: Text('السعر: من الأقل'),
-            ),
-            DropdownMenuItem(
-              value: _SortBy.priceHigh,
-              child: Text('السعر: من الأعلى'),
-            ),
-            DropdownMenuItem(
-              value: _SortBy.stockHigh,
-              child: Text('المخزون الأعلى'),
-            ),
-          ],
-          onChanged: (v) => setStateOuter(() => _sortBy = v ?? _sortBy),
+        SizedBox(
+          width: 150,
+          child: DropdownButton<_SortBy>(
+            isExpanded: true,
+            value: _sortBy,
+            underline: const SizedBox.shrink(),
+            items: const [
+              DropdownMenuItem(value: _SortBy.newest, child: Text('الأحدث')),
+              DropdownMenuItem(
+                value: _SortBy.priceLow,
+                child: Text('السعر: من الأقل'),
+              ),
+              DropdownMenuItem(
+                value: _SortBy.priceHigh,
+                child: Text('السعر: من الأعلى'),
+              ),
+              DropdownMenuItem(
+                value: _SortBy.stockHigh,
+                child: Text('المخزون الأعلى'),
+              ),
+            ],
+            onChanged: (v) {
+              setState(() {
+                _sortBy = v ?? _sortBy;
+              });
+            },
+          ),
         ),
       ],
     );
@@ -179,60 +195,72 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
             final all = snap.data ?? const <CatalogProduct>[];
             final products = _filtered(all);
 
-            Widget grid() {
-              if (products.isEmpty) {
-                return const Center(
-                  child: Text('لا توجد منتجات لهذه الماركة حالياً'),
-                );
-              }
-              return GridView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.70,
-                ),
-                itemCount: products.length,
-                itemBuilder: (_, i) => _ProductCard(p: products[i]),
+            if (products.isEmpty) {
+              return const Center(
+                child: Text('لا توجد منتجات لهذه الماركة حالياً'),
               );
             }
 
-            return Column(
-              children: [
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 4,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: appLogoChip(),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                  child: header(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-                  child: StatefulBuilder(
-                    builder: (context, setInner) => searchAndSort(setInner),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
+            final double bottomPadding = (bottomInset > 0
+                ? bottomInset + 16
+                : 16);
+
+            return CustomScrollView(
+              slivers: [
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'عدد النتائج: ${products.length}',
-                      style: const TextStyle(fontSize: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: appLogoChip(),
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                Expanded(child: grid()),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                    child: header(),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                    child: searchAndSort(),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'عدد النتائج: ${products.length}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 6)),
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.60,
+                        ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _ProductCard(p: products[index]),
+                      childCount: products.length,
+                    ),
+                  ),
+                ),
               ],
             );
           },
@@ -249,6 +277,8 @@ class _ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
+    final double displayPrice = applyAppFee(p.price);
 
     Widget thumb() {
       if (p.imageUrl == null || p.imageUrl!.isEmpty) {
@@ -323,35 +353,41 @@ class _ProductCard extends StatelessWidget {
               textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 12),
             ),
-            const Spacer(),
+            const SizedBox(height: 6),
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    '${p.price.toStringAsFixed(2)} ج',
+                    '${displayPrice.toStringAsFixed(2)} ج',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                     textAlign: TextAlign.right,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (p.stock > 0 ? Colors.green : Colors.red)
-                        .withOpacity(.12),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: p.stock > 0 ? Colors.green : Colors.red,
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
                     ),
-                  ),
-                  child: Text(
-                    p.stock > 0 ? 'متاح: ${p.stock}' : 'غير متاح',
-                    style: TextStyle(
-                      color: p.stock > 0 ? Colors.green : Colors.red,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                    decoration: BoxDecoration(
+                      color: (p.stock > 0 ? Colors.green : Colors.red)
+                          .withOpacity(.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: p.stock > 0 ? Colors.green : Colors.red,
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        p.stock > 0 ? 'متاح: ${p.stock}' : 'غير متاح',
+                        style: TextStyle(
+                          color: p.stock > 0 ? Colors.green : Colors.red,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ),

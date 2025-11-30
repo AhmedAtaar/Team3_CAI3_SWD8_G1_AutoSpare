@@ -13,6 +13,8 @@ class OrderSummary extends StatefulWidget {
   final void Function(String code) onApplyCoupon;
   final ValueChanged<String>? onNoteChanged;
 
+  final bool isSubmitting;
+
   const OrderSummary({
     super.key,
     required this.subtotal,
@@ -24,6 +26,7 @@ class OrderSummary extends StatefulWidget {
     required this.onCancel,
     required this.onApplyCoupon,
     this.onNoteChanged,
+    this.isSubmitting = false,
   });
 
   @override
@@ -117,6 +120,7 @@ class _OrderSummaryState extends State<OrderSummary> {
                 ),
               ),
               const SizedBox(height: 4),
+
               Row(
                 children: [
                   Expanded(
@@ -163,16 +167,28 @@ class _OrderSummaryState extends State<OrderSummary> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: widget.onCancel,
+                      onPressed: widget.isSubmitting ? null : widget.onCancel,
                       child: const Text('إلغاء'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: FilledButton.icon(
-                      onPressed: widget.onProceedToOrder,
-                      icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('إتمام الطلب'),
+                      onPressed: widget.isSubmitting
+                          ? null
+                          : widget.onProceedToOrder,
+                      icon: widget.isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check_circle_outline),
+                      label: Text(
+                        widget.isSubmitting
+                            ? 'جارٍ إنشاء الطلب...'
+                            : 'إتمام الطلب',
+                      ),
                     ),
                   ),
                 ],

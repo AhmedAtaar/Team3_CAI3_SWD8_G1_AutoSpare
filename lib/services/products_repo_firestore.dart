@@ -34,6 +34,7 @@ class ProductsRepoFirestore implements ProductsRepository {
     );
 
     final rejectionReason = data['rejectionReason'] as String?;
+    final description = data['description'] as String? ?? '';
 
     return CatalogProduct(
       id: doc.id,
@@ -48,6 +49,7 @@ class ProductsRepoFirestore implements ProductsRepository {
       createdAt: createdAt,
       status: status,
       rejectionReason: rejectionReason,
+      description: description,
     );
   }
 
@@ -64,10 +66,9 @@ class ProductsRepoFirestore implements ProductsRepository {
       'createdAt': Timestamp.fromDate(p.createdAt),
 
       'status': p.status.name,
-
       'approved': p.status == ProductStatus.approved,
-
       'rejectionReason': p.rejectionReason,
+      'description': p.description,
     };
   }
 
@@ -97,12 +98,16 @@ class ProductsRepoFirestore implements ProductsRepository {
   }
 
   @override
+  Stream<List<CatalogProduct>> watchAllProducts() {
+    return _col.snapshots().map((snap) => snap.docs.map(_fromDoc).toList());
+  }
+
+  @override
   Future<void> increaseStock({
     required String productId,
     required int delta,
   }) async {
     if (delta == 0) return;
-
     await _col.doc(productId).update({'stock': FieldValue.increment(delta)});
   }
 

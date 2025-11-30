@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/services/cart_service.dart';
 import 'cart_screen.dart';
-
+import 'package:auto_spare/core/app_fees.dart';
 import 'package:auto_spare/services/reviews.dart';
 import 'package:auto_spare/view/widgets/reviews/product_reviews_section.dart';
 
@@ -15,6 +15,7 @@ class ProductDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final double finalPrice = applyAppFee(p.price);
 
     Widget image() {
       if (p.imageUrl == null || p.imageUrl!.isEmpty) {
@@ -51,14 +52,50 @@ class ProductDetailsScreen extends StatelessWidget {
     }
 
     void addToCart() {
-      CartService().addCatalogProduct(p);
+      final finalPrice = applyAppFee(p.price);
+
+      final productForCart = CatalogProduct(
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        seller: p.seller,
+        price: finalPrice,
+        imageUrl: p.imageUrl,
+        brand: p.brand,
+        model: p.model,
+        years: p.years,
+        stock: p.stock,
+        createdAt: p.createdAt,
+        status: p.status,
+        rejectionReason: p.rejectionReason,
+      );
+
+      CartService().addCatalogProduct(productForCart);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تمت إضافة المنتج إلى السلة')),
       );
     }
 
     void buyNow() {
-      CartService().buyNow(p);
+      final finalPrice = applyAppFee(p.price);
+
+      final productForCart = CatalogProduct(
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        seller: p.seller,
+        price: finalPrice,
+        imageUrl: p.imageUrl,
+        brand: p.brand,
+        model: p.model,
+        years: p.years,
+        stock: p.stock,
+        createdAt: p.createdAt,
+        status: p.status,
+        rejectionReason: p.rejectionReason,
+      );
+
+      CartService().buyNow(productForCart);
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const CartScreen()));
@@ -125,9 +162,10 @@ class ProductDetailsScreen extends StatelessWidget {
         Text('المخزون المتاح: ${p.stock}'),
         const SizedBox(height: 10),
         Text(
-          'السعر: ${p.price.toStringAsFixed(2)} جنيه',
+          'السعر: ${finalPrice.toStringAsFixed(2)} جنيه',
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
+
         const SizedBox(height: 16),
 
         Row(

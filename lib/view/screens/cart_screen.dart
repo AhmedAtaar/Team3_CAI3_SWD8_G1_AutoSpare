@@ -11,6 +11,7 @@ import '../../controller/navigation/navigation.dart';
 import '../themes/app_colors.dart';
 import 'map_picker_screen.dart';
 import 'package:auto_spare/services/orders.dart';
+import 'package:auto_spare/services/coupons_repo.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -36,6 +37,8 @@ class _CartScreenState extends State<CartScreen> {
   double _discount = 0.0;
   String? _couponCode;
   String? _orderNote;
+
+  bool _isSubmittingOrder = false;
 
   @override
   void initState() {
@@ -68,7 +71,7 @@ class _CartScreenState extends State<CartScreen> {
     super.dispose();
   }
 
-  double get _subtotal => _cart.subtotal * 1.05;
+  double get _subtotal => _cart.subtotal;
   double get _shipping => 15.0;
 
   double get _grandTotal {
@@ -87,8 +90,9 @@ class _CartScreenState extends State<CartScreen> {
       perm = await Geolocator.requestPermission();
     }
     if (perm == LocationPermission.denied ||
-        perm == LocationPermission.deniedForever)
+        perm == LocationPermission.deniedForever) {
       return;
+    }
 
     final p = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
@@ -149,50 +153,114 @@ class _CartScreenState extends State<CartScreen> {
 
   void _removeItem(String itemId) => _cart.remove(itemId);
 
-  void _handleApplyCoupon(String code) {
+  Future<void> _handleApplyCoupon(String code) async {
     final upper = code.trim().toUpperCase();
-    double newDiscount = 0.0;
-
-    if (upper == 'SAVE50') {
-      newDiscount = 50.0;
-    } else if (upper == 'OFF10') {
-      newDiscount = _subtotal * 0.10;
-    } else if (upper == 'FREESHIP') {
-      newDiscount = _shipping;
-    } else {
+    if (upper.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('كود خصم غير صالح', textDirection: TextDirection.rtl),
-          backgroundColor: Colors.red,
+          content: Text(
+            'من فضلك أدخل كود الخصم',
+            textDirection: TextDirection.rtl,
+          ),
         ),
       );
-      setState(() {
-        _discount = 0.0;
-        _couponCode = null;
-      });
       return;
     }
 
-    final maxAllowed = _subtotal + _shipping;
-    if (newDiscount > maxAllowed) newDiscount = maxAllowed;
+    try {
+      final coupon = await couponsRepo.getByCode(upper);
+      if (coupon == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('كود خصم غير صالح', textDirection: TextDirection.rtl),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _discount = 0.0;
+          _couponCode = null;
+        });
+        return;
+      }
 
-    setState(() {
-      _discount = newDiscount;
-      _couponCode = upper;
-    });
+      if (!coupon.isUsable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'هذا الكود غير مفعّل أو منتهي الصلاحية',
+              textDirection: TextDirection.rtl,
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _discount = 0.0;
+          _couponCode = null;
+        });
+        return;
+      }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'تم تطبيق كود الخصم: $upper',
-          textDirection: TextDirection.rtl,
+      final sellerItems = _cart.items
+          .where((e) => e.sellerId == coupon.sellerId)
+          .toList();
+
+      if (sellerItems.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'لا توجد منتجات في السلة من البائع صاحب هذا الكود',
+              textDirection: TextDirection.rtl,
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _discount = 0.0;
+          _couponCode = null;
+        });
+        return;
+      }
+
+      double sellerSubtotal = 0.0;
+      for (final item in sellerItems) {
+        sellerSubtotal += item.price * item.quantity;
+      }
+
+      double newDiscount = sellerSubtotal * (coupon.discountPercent / 100.0);
+
+      final maxAllowed = _subtotal + _shipping;
+      if (newDiscount > maxAllowed) newDiscount = maxAllowed;
+
+      setState(() {
+        _discount = newDiscount;
+        _couponCode = upper;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'تم تطبيق كود الخصم: $upper',
+            textDirection: TextDirection.rtl,
+          ),
+          backgroundColor: AppColors.primaryGreen,
         ),
-        backgroundColor: AppColors.primaryGreen,
-      ),
-    );
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'حصل خطأ أثناء تطبيق الكود: $e',
+            textDirection: TextDirection.rtl,
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _handleProceedToOrder() async {
+    if (_isSubmittingOrder) return;
+
     if (_cart.items.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -208,6 +276,25 @@ class _CartScreenState extends State<CartScreen> {
       return;
     }
 
+    if (_nameCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('من فضلك أدخل اسم العميل')));
+      return;
+    }
+    if (_addrCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('من فضلك أدخل العنوان')));
+      return;
+    }
+    if (_phoneCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('من فضلك أدخل رقم التليفون')),
+      );
+      return;
+    }
+
     final buyerId = buyer.id;
 
     final orderItems = _cart.items.map((ci) {
@@ -219,6 +306,56 @@ class _CartScreenState extends State<CartScreen> {
         qty: ci.quantity,
       );
     }).toList();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('تأكيد الطلب'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('العميل: ${_nameCtrl.text}'),
+              Text('العنوان: ${_addrCtrl.text}'),
+              Text('رقم التليفون: ${_phoneCtrl.text}'),
+              if (_deliveryCtrl.text.trim().isNotEmpty)
+                Text('موقع التسليم: ${_deliveryCtrl.text}'),
+              const SizedBox(height: 8),
+              Text('عدد العناصر: ${_cart.totalItems}'),
+              Text('إجمالي المنتجات: ${_subtotal.toStringAsFixed(2)} ج'),
+              Text('الشحن: ${_shipping.toStringAsFixed(2)} ج'),
+              if (_discount > 0)
+                Text('الخصم: - ${_discount.toStringAsFixed(2)} ج'),
+              const Divider(),
+              Text(
+                'الإجمالي النهائي: ${_grandTotal.toStringAsFixed(2)} ج',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              if (_orderNote != null && _orderNote!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text('ملاحظة: ${_orderNote!}'),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('رجوع'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('تأكيد'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isSubmittingOrder = true);
 
     try {
       final (orderId, code) = await ordersRepo.createOrder(
@@ -252,12 +389,17 @@ class _CartScreenState extends State<CartScreen> {
         (_) => false,
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString(), textDirection: TextDirection.rtl),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingOrder = false);
+      }
     }
   }
 
@@ -466,6 +608,7 @@ class _CartScreenState extends State<CartScreen> {
                 onNoteChanged: (note) {
                   _orderNote = note;
                 },
+                isSubmitting: _isSubmittingOrder,
               ),
               const SizedBox(height: 10),
             ],

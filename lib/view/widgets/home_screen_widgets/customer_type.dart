@@ -4,7 +4,9 @@ class SegmentButton extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+
   const SegmentButton({
+    super.key,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -36,6 +38,9 @@ class SegmentButton extends StatelessWidget {
         ),
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
           style: theme.textTheme.labelLarge?.copyWith(
             color: fg,
             fontWeight: FontWeight.w700,

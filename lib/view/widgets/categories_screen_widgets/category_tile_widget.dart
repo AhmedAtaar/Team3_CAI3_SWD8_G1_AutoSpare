@@ -45,6 +45,8 @@ class CategoryTile extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),

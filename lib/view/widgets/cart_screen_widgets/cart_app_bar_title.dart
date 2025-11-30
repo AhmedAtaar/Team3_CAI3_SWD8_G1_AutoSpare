@@ -12,6 +12,7 @@ class CartAppTitle extends StatelessWidget {
       padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
       child: Text(
         'عربة التسوق ($itemCount عناصر)',
+        textAlign: TextAlign.right,
         style: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.bold,
         ),

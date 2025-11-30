@@ -27,77 +27,79 @@ class TowAccountsAdminTab extends StatelessWidget {
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text('إدارة حساب الونش — ${u.name}', textAlign: TextAlign.right),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'الإيميل: ${u.email}\nرقم الهاتف: ${u.phone}\nالعنوان: ${u.address ?? '-'}',
-                textAlign: TextAlign.right,
-              ),
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-              const Text(
-                'حالة الحساب',
-                textAlign: TextAlign.right,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              StatefulBuilder(
-                builder: (_, setS) => SwitchListTile(
-                  value: approved,
-                  onChanged: (v) => setS(() => approved = v),
-                  title: const Text('السماح بالعمل كـ ونش (مقبول)'),
-                  subtitle: const Text(
-                    'إغلاق السويتش = الحساب ينتقل لوضع قيد المراجعة / موقوف.',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(fontSize: 11),
+      builder: (_) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text('إدارة حساب الونش — ${u.name}'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'الإيميل: ${u.email}\nرقم الهاتف: ${u.phone}\nالعنوان: ${u.address ?? '-'}',
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'حالة الحساب',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  StatefulBuilder(
+                    builder: (_, setS) => SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: approved,
+                      onChanged: (v) => setS(() => approved = v),
+                      title: const Text('السماح بالعمل كـ ونش (مقبول)'),
+                      subtitle: const Text(
+                        'إغلاق السويتش = الحساب ينتقل لوضع قيد المراجعة / موقوف.',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: capacityCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'عدد الأوناش المتاحة في الخدمة',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (v) {
+                      if (!approved) return null;
+                      final n = int.tryParse((v ?? '').trim());
+                      if (n == null || n <= 0) return 'أدخل رقم صحيح (> 0)';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'لو الحساب مقبول وعدد الأوناش = 0، مش هيقدر يفعّل أي ونش.',
+                    style: TextStyle(fontSize: 11, color: Colors.redAccent),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: capacityCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'عدد الأوناش المتاحة في الخدمة',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  if (!approved) return null;
-                  final n = int.tryParse((v ?? '').trim());
-                  if (n == null || n <= 0) return 'أدخل رقم صحيح (> 0)';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'لو الحساب مقبول وعدد الأوناش = 0، مش هيقدر يفعّل أي ونش.',
-                style: TextStyle(fontSize: 11, color: Colors.redAccent),
-                textAlign: TextAlign.right,
-              ),
-            ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.pop(context, true);
+                }
+              },
+              child: const Text('حفظ'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('حفظ'),
-          ),
-        ],
       ),
     );
 

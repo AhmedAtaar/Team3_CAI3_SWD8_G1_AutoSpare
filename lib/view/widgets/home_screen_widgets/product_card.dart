@@ -48,22 +48,15 @@ class ProductCard extends StatelessWidget {
                 child: Stack(
                   children: [
                     Container(
-                      decoration: const BoxDecoration(
-                        borderRadius: BorderRadius.vertical(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceVariant.withOpacity(
+                          .35,
+                        ),
+                        borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(18),
                         ),
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceVariant.withOpacity(
-                            .35,
-                          ),
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(18),
-                          ),
-                        ),
-                        child: image(),
-                      ),
+                      child: image(),
                     ),
                     if (item.badge != null)
                       PositionedDirectional(
@@ -90,11 +83,12 @@ class ProductCard extends StatelessWidget {
                   ],
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
                 child: Text(
                   item.title,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textDirection: TextDirection.rtl,
                   style: theme.textTheme.titleSmall?.copyWith(
@@ -102,21 +96,35 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                 child: Row(
                   children: [
-                    Text(
-                      '${item.price} جنيه',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        '${item.price} جنيه',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textDirection: TextDirection.rtl,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    const Spacer(),
+
+                    const SizedBox(width: 4),
+
                     IconButton(
                       icon: const Icon(Icons.add_shopping_cart_outlined),
                       onPressed: () {},
                       tooltip: 'أضف إلى السلة',
+                      iconSize: 22,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   ],
                 ),

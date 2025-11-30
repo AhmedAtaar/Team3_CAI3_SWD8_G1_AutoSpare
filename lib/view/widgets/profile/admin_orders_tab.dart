@@ -183,6 +183,18 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
       child: StreamBuilder<List<OrderDoc>>(
         stream: widget.repo.watchAllOrdersAdmin(),
         builder: (_, snap) {
+          if (snap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'حدث خطأ أثناء تحميل الطلبات:\n${snap.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
           final raw = snap.data ?? const <OrderDoc>[];
           final filtered = _applyFiltersSort(raw);
 
@@ -192,8 +204,11 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
           if (pages > 0 && _page >= pages) _page = pages - 1;
 
           final start = pages == 0 ? 0 : _page * _pageSize;
-          final end = pages == 0 ? 0 : (start + _pageSize).clamp(0, total);
-          final pageList = filtered.isEmpty
+          final end = pages == 0
+              ? 0
+              : ((start + _pageSize).clamp(0, total) as int);
+
+          final pageList = (filtered.isEmpty || start >= end)
               ? <OrderDoc>[]
               : filtered.sublist(start, end);
 
@@ -346,6 +361,9 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                               ),
                               subtitle: Text(
                                 'العميل: ${o.buyerId} • عناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,

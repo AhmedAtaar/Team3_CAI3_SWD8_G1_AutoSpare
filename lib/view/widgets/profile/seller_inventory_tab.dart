@@ -23,15 +23,51 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
 
     _ordersSub = ordersRepo.watchSellerOrders(widget.sellerId).listen((orders) {
       final agg = <String, ({int qty, double revenue})>{};
+
       for (final o in orders) {
-        for (final it in o.items.where((e) => e.sellerId == widget.sellerId)) {
+        if (o.status != OrderStatus.delivered) continue;
+
+        final sellerItems = o.items
+            .where((it) => it.sellerId == widget.sellerId)
+            .toList();
+        if (sellerItems.isEmpty) continue;
+
+        final sellerTotal = sellerItems.fold<double>(
+          0.0,
+          (p, it) => p + it.price * it.qty,
+        );
+        if (sellerTotal <= 0) continue;
+
+        double sellerDiscountShare = 0.0;
+        if (o.discount > 0) {
+          final allItemsTotal = o.itemsTotal <= 0
+              ? o.items.fold<double>(0.0, (p, it) => p + it.price * it.qty)
+              : o.itemsTotal;
+
+          if (allItemsTotal > 0) {
+            final ratio = sellerTotal / allItemsTotal;
+            sellerDiscountShare = o.discount * ratio;
+          }
+        }
+
+        for (final it in sellerItems) {
+          final base = it.price * it.qty;
+          double net = base;
+
+          if (sellerDiscountShare > 0 && sellerTotal > 0) {
+            final itemRatio = base / sellerTotal;
+            final itemDisc = sellerDiscountShare * itemRatio;
+            net = base - itemDisc;
+          }
+
           final prev = agg[it.productId] ?? (qty: 0, revenue: 0.0);
           agg[it.productId] = (
             qty: prev.qty + it.qty,
-            revenue: prev.revenue + (it.price * it.qty),
+            revenue: prev.revenue + net,
           );
         }
       }
+
       if (!mounted) return;
       setState(() {
         _soldAgg

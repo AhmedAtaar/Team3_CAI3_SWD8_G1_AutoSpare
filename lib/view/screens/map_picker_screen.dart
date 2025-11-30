@@ -34,20 +34,24 @@ class MapPickerScreen extends StatefulWidget {
 class _MapPickerScreenState extends State<MapPickerScreen> {
   late final MapController _map = MapController();
 
-  final TextEditingController _searchCtrl = TextEditingController();
-  Timer? _debounce;
-
   LatLng _pin = LatLng(0, 0);
   String _addr = '';
 
-  List<_PlaceResult> _results = [];
-  bool _isSearching = false;
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  bool _isLoading = false;
+  List<_PlaceSuggestion> _suggestions = [];
+  Timer? _debounce;
+
+  bool _ignoreSearchChange = false;
+
+  int _lastRequestId = 0;
 
   @override
   void initState() {
     super.initState();
     _pin = LatLng(widget.initLat, widget.initLng);
-    _reverse();
+    _reverseFromPin();
   }
 
   @override
@@ -57,7 +61,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     super.dispose();
   }
 
-  Future<void> _reverse() async {
+  Future<void> _reverseFromPin() async {
     try {
       final list = await placemarkFromCoordinates(
         _pin.latitude,
@@ -65,17 +69,165 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       );
       if (list.isNotEmpty) {
         final p = list.first;
+        final addr = [
+          p.street,
+          p.subLocality,
+          p.locality,
+          p.administrativeArea,
+          p.country,
+        ].where((e) => (e ?? '').trim().isNotEmpty).join('، ');
+
+        if (!mounted) return;
         setState(() {
-          _addr = [
-            p.street,
-            p.subLocality,
-            p.locality,
-            p.administrativeArea,
-            p.country,
-          ].where((e) => (e ?? '').trim().isNotEmpty).join('، ');
+          _addr = addr;
         });
+
+        _ignoreSearchChange = true;
+        _searchCtrl.text = addr;
+        _ignoreSearchChange = false;
       }
     } catch (_) {}
+  }
+
+  Future<void> _goToLatLng(LatLng target, {String? displayName}) async {
+    setState(() {
+      _pin = target;
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        _addr = displayName;
+      }
+    });
+
+    _map.move(target, 15);
+
+    if (displayName == null) {
+      await _reverseFromPin();
+    } else {
+      _ignoreSearchChange = true;
+      _searchCtrl.text = displayName;
+      _ignoreSearchChange = false;
+    }
+  }
+
+  void _onQueryChanged(String q) {
+    if (_ignoreSearchChange) return;
+
+    setState(() {});
+
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _fetchSuggestions(q);
+    });
+  }
+
+  Future<void> _fetchSuggestions(String q, {bool moveToFirst = false}) async {
+    q = q.trim();
+    if (q.length < 3) {
+      if (!mounted) return;
+      setState(() {
+        _suggestions = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final int requestId = ++_lastRequestId;
+
+    setState(() {
+      _isLoading = true;
+      if (!moveToFirst) {
+        _suggestions = [];
+      }
+    });
+
+    try {
+      final uri = Uri.parse(
+        'https://nominatim.openstreetmap.org/search'
+        '?q=${Uri.encodeQueryComponent(q)}'
+        '&format=json&addressdetails=1&limit=5&accept-language=ar,en',
+      );
+
+      final res = await http.get(
+        uri,
+        headers: const {
+          'User-Agent': 'auto_spare_app/1.0 (your-email@example.com)',
+        },
+      );
+
+      if (!mounted || requestId != _lastRequestId) return;
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as List;
+        final list = data
+            .map<_PlaceSuggestion?>((e) {
+              final latStr = e['lat'] as String?;
+              final lonStr = e['lon'] as String?;
+              final name = e['display_name'] as String? ?? '';
+
+              final lat = double.tryParse(latStr ?? '');
+              final lon = double.tryParse(lonStr ?? '');
+              if (lat == null || lon == null) return null;
+
+              return _PlaceSuggestion(name: name, point: LatLng(lat, lon));
+            })
+            .whereType<_PlaceSuggestion>()
+            .toList();
+
+        if (moveToFirst && list.isNotEmpty) {
+          final first = list.first;
+          setState(() {
+            _suggestions = list;
+          });
+          await _goToLatLng(first.point, displayName: first.name);
+        } else {
+          setState(() {
+            _suggestions = list;
+          });
+        }
+      } else {
+        setState(() {
+          _suggestions = [];
+        });
+      }
+    } catch (_) {
+      if (!mounted || requestId != _lastRequestId) return;
+      setState(() {
+        _suggestions = [];
+      });
+    } finally {
+      if (!mounted || requestId != _lastRequestId) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _searchByAddressSubmit() async {
+    final q = _searchCtrl.text.trim();
+    if (q.isEmpty) return;
+
+    _debounce?.cancel();
+    await _fetchSuggestions(q, moveToFirst: true);
+  }
+
+  void _onSuggestionTap(_PlaceSuggestion s) {
+    FocusScope.of(context).unfocus();
+
+    _ignoreSearchChange = true;
+    _searchCtrl.text = s.name;
+    _ignoreSearchChange = false;
+
+    setState(() => _suggestions = []);
+    _goToLatLng(s.point, displayName: s.name);
+  }
+
+  void _clearSearch() {
+    _debounce?.cancel();
+    _ignoreSearchChange = true;
+    _searchCtrl.clear();
+    _ignoreSearchChange = false;
+
+    setState(() {
+      _suggestions = [];
+      _isLoading = false;
+    });
   }
 
   void _confirm() {
@@ -85,90 +237,11 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     );
   }
 
-  Future<void> _searchPlaces(String q) async {
-    q = q.trim();
-    if (q.isEmpty) {
-      setState(() {
-        _results = [];
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-      _results = [];
-    });
-
-    try {
-      final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
-        'q': q,
-        'format': 'json',
-        'addressdetails': '1',
-        'limit': '5',
-        'accept-language': 'ar,en',
-      });
-
-      final res = await http.get(
-        uri,
-        headers: const {
-          'User-Agent': 'autospare-app/1.0 (your_email@example.com)',
-        },
-      );
-
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body) as List<dynamic>;
-
-        final list = data
-            .map<_PlaceResult?>((e) {
-              final latStr = e['lat'] as String?;
-              final lonStr = e['lon'] as String?;
-              final name = e['display_name'] as String? ?? '';
-
-              final lat = double.tryParse(latStr ?? '');
-              final lon = double.tryParse(lonStr ?? '');
-              if (lat == null || lon == null) return null;
-
-              return _PlaceResult(name: name, lat: lat, lng: lon);
-            })
-            .whereType<_PlaceResult>()
-            .toList();
-
-        setState(() {
-          _results = list;
-        });
-      } else {
-        debugPrint('Nominatim error: ${res.statusCode} ${res.body}');
-        setState(() => _results = []);
-      }
-    } catch (e) {
-      debugPrint('Nominatim exception: $e');
-      setState(() => _results = []);
-    } finally {
-      if (!mounted) return;
-      setState(() => _isSearching = false);
-    }
-  }
-
-  void _onSearchChanged(String value) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      _searchPlaces(value);
-    });
-  }
-
-  void _selectPlace(_PlaceResult p) {
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _pin = LatLng(p.lat, p.lng);
-      _addr = p.name;
-      _results = [];
-    });
-    _map.move(_pin, 16);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final hasQuery = _searchCtrl.text.trim().length >= 3;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -185,8 +258,11 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 initialCenter: _pin,
                 initialZoom: 14,
                 onTap: (tapPos, latlng) {
-                  setState(() => _pin = latlng);
-                  _reverse();
+                  setState(() {
+                    _pin = latlng;
+                    _suggestions = [];
+                  });
+                  _reverseFromPin();
                 },
               ),
               children: [
@@ -214,74 +290,125 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
             Positioned(
               left: 12,
               right: 12,
-              top: 12,
-              child: Material(
-                elevation: 4,
-                borderRadius: BorderRadius.circular(24),
-                child: TextField(
-                  controller: _searchCtrl,
-                  onChanged: _onSearchChanged,
-                  textInputAction: TextInputAction.search,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'ابحث عن مكان (مسجد – شارع – منطقة...)',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            if (_results.isNotEmpty)
-              Positioned(
-                left: 12,
-                right: 12,
-                top: 70,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(12),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 260),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: _results.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, i) {
-                        final p = _results[i];
-                        return ListTile(
-                          dense: true,
-                          leading: const Icon(Icons.place_outlined),
-                          title: Text(p.name, textAlign: TextAlign.right),
-                          onTap: () => _selectPlace(p),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              )
-            else if (_isSearching)
-              Positioned(
-                left: 12,
-                right: 12,
-                top: 70,
-                child: Material(
-                  elevation: 4,
-                  borderRadius: BorderRadius.circular(12),
-                  child: const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Center(
-                      child: SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+              top: 16,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Material(
+                    elevation: 3,
+                    borderRadius: BorderRadius.circular(12),
+                    child: TextField(
+                      controller: _searchCtrl,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (_) => _searchByAddressSubmit(),
+                      onChanged: _onQueryChanged,
+                      decoration: InputDecoration(
+                        hintText: 'ابحث عن عنوان أو مكان...',
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        suffixIcon: _isLoading
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_searchCtrl.text.isNotEmpty)
+                                    IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: _clearSearch,
+                                    ),
+                                  IconButton(
+                                    icon: const Icon(Icons.search),
+                                    onPressed: _searchByAddressSubmit,
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
                   ),
-                ),
+
+                  if (_isLoading && _suggestions.isEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(blurRadius: 4, color: Colors.black12),
+                        ],
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    )
+                  else if (_suggestions.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      constraints: const BoxConstraints(maxHeight: 220),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(blurRadius: 6, color: Colors.black12),
+                        ],
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: _suggestions.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final s = _suggestions[i];
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.place_outlined),
+                            title: Text(
+                              s.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                            ),
+                            onTap: () => _onSuggestionTap(s),
+                          );
+                        },
+                      ),
+                    )
+                  else if (hasQuery && !_isLoading)
+                    Container(
+                      margin: const EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(blurRadius: 4, color: Colors.black12),
+                        ],
+                      ),
+                      child: const Text(
+                        'لا توجد نتائج لهذا البحث حاليًا.\n'
+                        'جرّب تعديل العنوان أو التأكد من اتصال الإنترنت.',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                ],
               ),
+            ),
 
             Positioned(
               left: 12,
@@ -317,9 +444,8 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 }
 
-class _PlaceResult {
+class _PlaceSuggestion {
   final String name;
-  final double lat;
-  final double lng;
-  _PlaceResult({required this.name, required this.lat, required this.lng});
+  final LatLng point;
+  _PlaceSuggestion({required this.name, required this.point});
 }

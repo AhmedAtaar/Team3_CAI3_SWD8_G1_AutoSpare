@@ -39,8 +39,9 @@ class CatalogProduct {
   final int stock;
 
   final ProductStatus status;
-
   final String? rejectionReason;
+
+  final String description;
 
   const CatalogProduct({
     required this.id,
@@ -55,6 +56,8 @@ class CatalogProduct {
     this.imageUrl,
     this.status = ProductStatus.approved,
     this.rejectionReason,
+
+    this.description = '',
   });
 
   CatalogProduct copyWith({
@@ -69,6 +72,7 @@ class CatalogProduct {
     DateTime? createdAt,
     ProductStatus? status,
     String? rejectionReason,
+    String? description,
   }) {
     return CatalogProduct(
       id: id,
@@ -83,6 +87,7 @@ class CatalogProduct {
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
       rejectionReason: rejectionReason ?? this.rejectionReason,
+      description: description ?? this.description,
     );
   }
 }

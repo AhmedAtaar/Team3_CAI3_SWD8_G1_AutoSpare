@@ -3,7 +3,6 @@ import 'package:auto_spare/services/user_store.dart';
 import 'package:auto_spare/services/users_repository.dart';
 import 'package:auto_spare/services/user_session.dart';
 import 'package:auto_spare/view/screens/home_screen.dart';
-import 'package:auto_spare/view/screens/profile_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_buttons.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_form_field.dart';
@@ -23,7 +22,7 @@ class LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _rememberMe = false;
   bool _obscurePassword = true;
-  bool _isArabicSelected = false;
+  bool _isArabicSelected = true;
 
   @override
   void dispose() {
@@ -39,7 +38,6 @@ class LoginScreenState extends State<LoginScreen> {
       case AppUserRole.seller:
       case AppUserRole.winch:
         return UserRole.seller;
-      case AppUserRole.buyer:
       default:
         return UserRole.buyer;
     }
@@ -51,9 +49,9 @@ class LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleSignIn() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please correct the errors above.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('من فضلك صحّح البيانات.')));
       return;
     }
 
@@ -65,19 +63,14 @@ class LoginScreenState extends State<LoginScreen> {
     if (u == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      ).showSnackBar(const SnackBar(content: Text('بيانات الدخول غير صحيحة')));
       return;
     }
 
     if (u.role == AppUserRole.winch && !u.approved) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'حساب الونش في انتظار موافقة الإدارة، برجاء المحاولة لاحقًا.',
-            textAlign: TextAlign.right,
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('حساب الونش غير مفعل بعد.')));
       return;
     }
 
@@ -93,160 +86,179 @@ class LoginScreenState extends State<LoginScreen> {
       towCompanyId: u.towCompanyId,
     );
 
-    Widget dest;
-    if (u.role == AppUserRole.admin) {
-      dest = const ProfileScreen();
-    } else {
-      dest = const HomeScreen();
-    }
-
-    Navigator.of(
+    Navigator.pushReplacement(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (context) => dest));
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
   void _continueAsGuest() {
-    final store = UserStore();
+    UserStore().setGuest();
+    UserSession.initFromProfile(name: "Guest", role: UserRole.buyer);
 
-    store.setGuest();
-
-    UserSession.initFromProfile(name: 'Guest', role: UserRole.buyer);
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              height: MediaQuery.of(context).size.height * 0.25,
-              width: double.infinity,
-              decoration: const BoxDecoration(color: AppColors.primaryGreen),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 40,
-                    right: 20,
-                    child: CustomToggleSwitch(
-                      isArabicSelected: _isArabicSelected,
-                      onChanged: (bool v) =>
-                          setState(() => _isArabicSelected = v),
-                    ),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        SizedBox(height: 5),
-                        Text(
-                          'Welcome Back',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          'Sign in to access your auto parts marketplace',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
               ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(25.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CustomFormField(
-                      controller: _userController,
-                      labelText: 'Email',
-                      hintText: 'example@mail.com',
-                      icon: Icons.email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Required' : null,
-                    ),
-                    const SizedBox(height: 20),
-                    CustomFormField(
-                      controller: _passwordController,
-                      labelText: 'Password',
-                      hintText: 'Enter your password',
-                      icon: Icons.lock_outline,
-                      obscureText: _obscurePassword,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Required' : null,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: Colors.grey,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 220,
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryGreen,
                         ),
-                        onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              top: 40,
+                              left: 20,
+                              child: CustomToggleSwitch(
+                                isArabicSelected: _isArabicSelected,
+                                onChanged: (v) =>
+                                    setState(() => _isArabicSelected = v),
+                              ),
+                            ),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/logo_light_theme.png',
+                                    height: 70,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'مرحبًا بعودتك',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'سجل الدخول للوصول إلى التطبيق',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (v) =>
-                              setState(() => _rememberMe = v ?? false),
-                          activeColor: AppColors.primaryGreen,
-                        ),
-                        const Text('Remember me'),
-                      ],
-                    ),
-                    const SizedBox(height: 25),
-                    CustomElevatedButton(
-                      text: 'Sign In',
-                      onPressed: _handleSignIn,
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SignUpScreen(),
+
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              CustomFormField(
+                                controller: _userController,
+                                labelText: "البريد الإلكتروني",
+                                hintText: "example@mail.com",
+                                icon: Icons.email,
+                                validator: (v) =>
+                                    (v == null || v.isEmpty) ? "مطلوب" : null,
+                              ),
+                              const SizedBox(height: 20),
+                              CustomFormField(
+                                controller: _passwordController,
+                                labelText: "كلمة المرور",
+                                hintText: "••••••••",
+                                icon: Icons.lock_outline,
+                                obscureText: _obscurePassword,
+                                validator: (v) =>
+                                    (v == null || v.isEmpty) ? "مطلوب" : null,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                  ),
+                                  onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
+                                ),
+                              ),
+
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: _rememberMe,
+                                    onChanged: (v) => setState(
+                                      () => _rememberMe = v ?? false,
+                                    ),
+                                  ),
+                                  const Text("تذكرني"),
+                                ],
+                              ),
+
+                              const SizedBox(height: 16),
+                              CustomElevatedButton(
+                                text: "تسجيل الدخول",
+                                onPressed: _handleSignIn,
+                              ),
+                              const SizedBox(height: 14),
+
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const SignUpScreen(),
+                                    ),
+                                  );
+                                },
+                                child: const Text("إنشاء حساب جديد"),
+                              ),
+
+                              const SizedBox(height: 10),
+                              const OrDivider(),
+                              const SizedBox(height: 16),
+
+                              CustomOutlinedButton(
+                                text: "الدخول باستخدام Google",
+                                onPressed: () {},
+                              ),
+                              const SizedBox(height: 12),
+
+                              CustomOutlinedButton(
+                                text: "الدخول كزائر",
+                                onPressed: _continueAsGuest,
+                              ),
+
+                              const SizedBox(height: 40),
+                            ],
                           ),
                         ),
-                        child: const Text("Create a new account"),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    const OrDivider(),
-                    const SizedBox(height: 20),
-                    CustomOutlinedButton(
-                      text: 'Continue with Google',
-                      onPressed: () {},
-                    ),
-                    const SizedBox(height: 15),
-                    CustomOutlinedButton(
-                      text: 'Continue as Guest',
-                      onPressed: _continueAsGuest,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

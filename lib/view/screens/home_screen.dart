@@ -1,8 +1,9 @@
+import 'package:flutter/material.dart';
+
 import 'package:auto_spare/model/product.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/services/products_repository.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
-import 'package:flutter/material.dart';
 
 import 'categories_screen.dart';
 import 'cart_screen.dart';
@@ -12,6 +13,7 @@ import 'product_details_screen.dart';
 import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/services/tow_badge_stream.dart';
 import 'package:auto_spare/view/widgets/navigation/global_bottom_nav.dart';
+import 'package:auto_spare/core/app_fees.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -72,13 +74,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         appBar: _buildAppBar(theme),
         body: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
           child: StreamBuilder<List<CatalogProduct>>(
             stream: productsRepo.watchApprovedProducts(),
             builder: (context, snapshot) {
@@ -99,6 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 return const Center(child: Text('لا توجد نتائج مطابقة لبحثك'));
               }
 
+              final double bottomPadding = bottomInset > 0
+                  ? bottomInset + 16
+                  : 100;
+
               return GridView.builder(
                 itemCount: items.length,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -107,12 +115,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSpacing: 12,
                   childAspectRatio: .8,
                 ),
+                padding: EdgeInsets.fromLTRB(0, 0, 0, bottomPadding),
                 itemBuilder: (context, index) {
                   final c = items[index];
+
+                  final double displayPrice = applyAppFee(c.price);
+
                   final cardData = Product(
                     title:
                         '${c.title} • ${kBrandName[c.brand]} ${c.model} • ${c.years.join(', ')}',
-                    price: c.price.toStringAsFixed(2),
+                    price: displayPrice.toStringAsFixed(2),
                     imageUrl: c.imageUrl,
                     badge: null,
                   );

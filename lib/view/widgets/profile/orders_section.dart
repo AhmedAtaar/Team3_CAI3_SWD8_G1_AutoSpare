@@ -7,6 +7,8 @@ import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/services/reviews.dart';
 import 'package:auto_spare/model/review.dart';
 
+import 'package:auto_spare/view/screens/seller_order_details_screen.dart';
+
 enum OrdersSectionMode { buyer, seller, admin }
 
 class OrdersSection extends StatefulWidget {
@@ -20,10 +22,13 @@ class OrdersSection extends StatefulWidget {
 }
 
 class _OrdersSectionState extends State<OrdersSection> {
+  OrderStatus? _buyerStatusFilter;
+
   Color _statusColor(BuildContext ctx, OrderStatus s) {
+    final cs = Theme.of(ctx).colorScheme;
     switch (s) {
       case OrderStatus.processing:
-        return Theme.of(ctx).colorScheme.primary;
+        return cs.primary;
       case OrderStatus.prepared:
         return Colors.orange;
       case OrderStatus.handedToCourier:
@@ -33,6 +38,61 @@ class _OrdersSectionState extends State<OrdersSection> {
       case OrderStatus.cancelled:
         return Colors.red;
     }
+  }
+
+  Widget _buildBuyerFilterBar(ColorScheme cs) {
+    if (widget.mode != OrdersSectionMode.buyer) {
+      return const SizedBox.shrink();
+    }
+
+    Widget chip({required String label, OrderStatus? value}) {
+      final selected = _buyerStatusFilter == value;
+      return FilterChip(
+        label: Text(label),
+        selected: selected,
+        onSelected: (_) {
+          setState(() {
+            _buyerStatusFilter = selected ? null : value;
+          });
+        },
+        selectedColor: cs.primaryContainer,
+        showCheckmark: false,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            chip(label: 'الكل', value: null),
+            chip(
+              label: orderStatusAr(OrderStatus.processing),
+              value: OrderStatus.processing,
+            ),
+            chip(
+              label: orderStatusAr(OrderStatus.prepared),
+              value: OrderStatus.prepared,
+            ),
+            chip(
+              label: orderStatusAr(OrderStatus.handedToCourier),
+              value: OrderStatus.handedToCourier,
+            ),
+            chip(
+              label: orderStatusAr(OrderStatus.delivered),
+              value: OrderStatus.delivered,
+            ),
+            chip(
+              label: orderStatusAr(OrderStatus.cancelled),
+              value: OrderStatus.cancelled,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
   }
 
   @override
@@ -180,254 +240,498 @@ class _OrdersSectionState extends State<OrdersSection> {
         child: StreamBuilder<List<OrderDoc>>(
           stream: stream,
           builder: (context, snap) {
-            final list = snap.data ?? const <OrderDoc>[];
-            if (list.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Center(child: Text('لا توجد طلبات')),
+            final rawList = snap.data ?? const <OrderDoc>[];
+
+            if (mode == OrdersSectionMode.buyer) {
+              List<OrderDoc> list = rawList;
+              if (_buyerStatusFilter != null) {
+                list = rawList
+                    .where((o) => o.status == _buyerStatusFilter)
+                    .toList();
+              }
+
+              list.sort(
+                (a, b) => b.stamps.createdAt.compareTo(a.stamps.createdAt),
               );
-            }
-            return ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: list.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final o = list[i];
-                final itemsCount = o.items.fold<int>(0, (a, it) => a + it.qty);
 
-                Widget timeline(OrderDoc od) {
-                  Widget dot(bool on, String label) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        on ? Icons.check_circle : Icons.radio_button_unchecked,
-                        size: 16,
-                        color: on ? Colors.green : cs.outline,
+              final buyerId = userId;
+
+              if (list.isEmpty) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildBuyerFilterBar(cs),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        'عدد الطلبات: 0',
+                        style: const TextStyle(fontSize: 12),
                       ),
-                      const SizedBox(width: 4),
-                      Text(label),
-                    ],
-                  );
-                  return Wrap(
-                    spacing: 12,
-                    runSpacing: 6,
-                    children: [
-                      dot(true, 'أُنشئ'),
-                      dot(od.stamps.preparedAt != null, 'تم التجهيز'),
-                      dot(od.stamps.handedToCourierAt != null, 'مع الشحن'),
-                      dot(od.stamps.deliveredAt != null, 'تم الاستلام'),
-                      if (od.stamps.cancelledAt != null) dot(true, 'أُلغي'),
-                    ],
-                  );
-                }
-
-                final isBuyer = mode == OrdersSectionMode.buyer;
-                final buyerId = isBuyer ? o.buyerId : '';
-
-                return Material(
-                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(10),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 2,
                     ),
-                    leading: const Icon(Icons.receipt_long_outlined),
-                    title: Wrap(
-                      spacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          o.code,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                    const SizedBox(height: 16),
+                    const Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Center(
+                        child: Text(
+                          'لا توجد طلبات',
+                          textAlign: TextAlign.center,
                         ),
-                        Chip(
-                          label: Text(orderStatusAr(o.status)),
-                          avatar: const Icon(Icons.flag_outlined, size: 18),
-                        ),
-                      ],
+                      ),
                     ),
-                    subtitle: Text(
-                      isBuyer
-                          ? 'العناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}'
-                          : 'المشتري: ${o.buyerId} • عناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
-                      textAlign: TextAlign.right,
-                    ),
-                    trailing: Text(
-                      df.format(o.stamps.createdAt),
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildBuyerFilterBar(cs),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'عدد الطلبات: ${list.length}',
                       style: const TextStyle(fontSize: 12),
                     ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                  ),
+                  const SizedBox(height: 8),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: list.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final o = list[i];
+                      final itemsCount = o.items.fold<int>(
+                        0,
+                        (a, it) => a + it.qty,
+                      );
+
+                      Widget timeline(OrderDoc od) {
+                        Widget dot(bool on, String label) => Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (isBuyer) ...[
-                              timeline(o),
-                              const SizedBox(height: 8),
+                            Icon(
+                              on
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              size: 16,
+                              color: on ? Colors.green : cs.outline,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(label),
+                          ],
+                        );
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 6,
+                          children: [
+                            dot(true, 'أُنشئ'),
+                            dot(od.stamps.preparedAt != null, 'تم التجهيز'),
+                            dot(
+                              od.stamps.handedToCourierAt != null,
+                              'مع الشحن',
+                            ),
+                            dot(od.stamps.deliveredAt != null, 'تم الاستلام'),
+                            if (od.stamps.cancelledAt != null)
+                              dot(true, 'أُلغي'),
+                          ],
+                        );
+                      }
+
+                      final isLatest = (i == 0) && (_buyerStatusFilter == null);
+
+                      return Material(
+                        color: isLatest
+                            ? cs.primary.withOpacity(0.04)
+                            : Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLowest,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: BorderSide(
+                            color: _statusColor(
+                              context,
+                              o.status,
+                            ).withOpacity(isLatest ? 0.7 : 0.35),
+                          ),
+                        ),
+                        child: ExpansionTile(
+                          tilePadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 2,
+                          ),
+                          leading: const Icon(Icons.receipt_long_outlined),
+                          title: Wrap(
+                            spacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                o.code,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Chip(
+                                label: Text(orderStatusAr(o.status)),
+                                avatar: const Icon(
+                                  Icons.flag_outlined,
+                                  size: 18,
+                                ),
+                              ),
+                              if (isLatest)
+                                const Chip(
+                                  label: Text(
+                                    'الأحدث',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                  avatar: Icon(
+                                    Icons.fiber_new,
+                                    size: 18,
+                                    color: Colors.red,
+                                  ),
+                                ),
                             ],
-                            ListView.separated(
-                              itemCount: o.items.length,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              separatorBuilder: (_, __) =>
-                                  const SizedBox(height: 6),
-                              itemBuilder: (_, j) {
-                                final it = o.items[j];
+                          ),
+                          subtitle: Text(
+                            'العناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
+                            textAlign: TextAlign.right,
+                          ),
+                          trailing: Text(
+                            df.format(o.stamps.createdAt),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  timeline(o),
+                                  const SizedBox(height: 8),
+                                  ListView.separated(
+                                    itemCount: o.items.length,
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(height: 6),
+                                    itemBuilder: (_, j) {
+                                      final it = o.items[j];
 
-                                final prodSummary = reviewsRepo
-                                    .watchProductSummary(it.productId);
-                                final sellSummary = reviewsRepo
-                                    .watchSellerSummary(it.sellerId);
+                                      final prodSummary = reviewsRepo
+                                          .watchProductSummary(it.productId);
+                                      final sellSummary = reviewsRepo
+                                          .watchSellerSummary(it.sellerId);
 
-                                return Column(
-                                  children: [
-                                    ListTile(
-                                      dense: true,
-                                      leading: const CircleAvatar(
-                                        child: Icon(Icons.inventory_2_outlined),
-                                      ),
-                                      title: Text(
-                                        '${it.titleSnap} × ${it.qty}',
-                                        textAlign: TextAlign.right,
-                                      ),
-                                      subtitle: Text(
-                                        isBuyer
-                                            ? 'البائع: ${it.sellerId} • السعر: ${it.price.toStringAsFixed(2)}'
-                                            : 'السعر: ${it.price.toStringAsFixed(2)}',
-                                        textAlign: TextAlign.right,
-                                      ),
-                                      trailing: Text(
-                                        (it.price * it.qty).toStringAsFixed(2),
-                                      ),
-                                    ),
-                                    if (isBuyer)
-                                      StreamBuilder<({double avg, int count})>(
-                                        stream: prodSummary,
-                                        builder: (_, ps) {
-                                          final pAvg = ps.data?.avg ?? 0;
-                                          final pCnt = ps.data?.count ?? 0;
-                                          return SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Row(
-                                              children: [
-                                                _reviewBadge(pAvg, pCnt),
-                                                const SizedBox(width: 8),
-                                                StreamBuilder<
-                                                  ({double avg, int count})
-                                                >(
-                                                  stream: sellSummary,
-                                                  builder: (_, ss) {
-                                                    final sAvg =
-                                                        ss.data?.avg ?? 0;
-                                                    final sCnt =
-                                                        ss.data?.count ?? 0;
-                                                    return _reviewBadge(
-                                                      sAvg,
-                                                      sCnt,
-                                                    );
-                                                  },
-                                                ),
-                                                const SizedBox(width: 16),
-                                                if (o.status ==
-                                                    OrderStatus.delivered) ...[
-                                                  FutureBuilder<bool>(
-                                                    future: reviewsRepo
-                                                        .hasProductReview(
-                                                          orderId: o.id,
-                                                          productId:
-                                                              it.productId,
-                                                          buyerId: buyerId,
-                                                        ),
-                                                    builder: (_, has) {
-                                                      final done =
-                                                          has.data == true;
-                                                      return FilledButton.tonalIcon(
-                                                        onPressed: done
-                                                            ? null
-                                                            : () => _openReviewDialog(
-                                                                ctx: context,
-                                                                forProduct:
-                                                                    true,
-                                                                orderId: o.id,
-                                                                buyerId:
-                                                                    buyerId,
-                                                                productId: it
-                                                                    .productId,
-                                                                sellerId:
-                                                                    it.sellerId,
-                                                                title: it
-                                                                    .titleSnap,
-                                                              ),
-                                                        icon: const Icon(
-                                                          Icons.star,
-                                                        ),
-                                                        label: Text(
-                                                          done
-                                                              ? 'تم التقييم'
-                                                              : 'قيّم المنتج',
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                  const SizedBox(width: 8),
-
-                                                  FutureBuilder<bool>(
-                                                    future: reviewsRepo
-                                                        .hasSellerReview(
-                                                          orderId: o.id,
-                                                          sellerId: it.sellerId,
-                                                          buyerId: buyerId,
-                                                        ),
-                                                    builder: (_, has) {
-                                                      final done =
-                                                          has.data == true;
-                                                      return OutlinedButton.icon(
-                                                        onPressed: done
-                                                            ? null
-                                                            : () => _openReviewDialog(
-                                                                ctx: context,
-                                                                forProduct:
-                                                                    false,
-                                                                orderId: o.id,
-                                                                buyerId:
-                                                                    buyerId,
-                                                                sellerId:
-                                                                    it.sellerId,
-                                                                title:
-                                                                    it.sellerId,
-                                                              ),
-                                                        icon: const Icon(
-                                                          Icons.storefront,
-                                                        ),
-                                                        label: Text(
-                                                          done
-                                                              ? 'تم تقييم البائع'
-                                                              : 'قيّم البائع',
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                ],
-                                              ],
+                                      return Column(
+                                        children: [
+                                          ListTile(
+                                            dense: true,
+                                            leading: const CircleAvatar(
+                                              child: Icon(
+                                                Icons.inventory_2_outlined,
+                                              ),
                                             ),
-                                          );
-                                        },
-                                      ),
-                                    const Divider(height: 18),
-                                  ],
+                                            title: Text(
+                                              '${it.titleSnap} × ${it.qty}',
+                                              textAlign: TextAlign.right,
+                                            ),
+                                            subtitle: Text(
+                                              'البائع: ${it.sellerId} • السعر: ${it.price.toStringAsFixed(2)}',
+                                              textAlign: TextAlign.right,
+                                            ),
+                                            trailing: Text(
+                                              (it.price * it.qty)
+                                                  .toStringAsFixed(2),
+                                            ),
+                                          ),
+                                          StreamBuilder<
+                                            ({double avg, int count})
+                                          >(
+                                            stream: prodSummary,
+                                            builder: (_, ps) {
+                                              final pAvg = ps.data?.avg ?? 0;
+                                              final pCnt = ps.data?.count ?? 0;
+                                              return SingleChildScrollView(
+                                                scrollDirection:
+                                                    Axis.horizontal,
+                                                child: Row(
+                                                  children: [
+                                                    _reviewBadge(pAvg, pCnt),
+                                                    const SizedBox(width: 8),
+                                                    StreamBuilder<
+                                                      ({double avg, int count})
+                                                    >(
+                                                      stream: sellSummary,
+                                                      builder: (_, ss) {
+                                                        final sAvg =
+                                                            ss.data?.avg ?? 0;
+                                                        final sCnt =
+                                                            ss.data?.count ?? 0;
+                                                        return _reviewBadge(
+                                                          sAvg,
+                                                          sCnt,
+                                                        );
+                                                      },
+                                                    ),
+                                                    const SizedBox(width: 16),
+                                                    if (o.status ==
+                                                        OrderStatus
+                                                            .delivered) ...[
+                                                      FutureBuilder<bool>(
+                                                        future: reviewsRepo
+                                                            .hasProductReview(
+                                                              orderId: o.id,
+                                                              productId:
+                                                                  it.productId,
+                                                              buyerId: buyerId,
+                                                            ),
+                                                        builder: (_, has) {
+                                                          final done =
+                                                              has.data == true;
+                                                          return FilledButton.tonalIcon(
+                                                            onPressed: done
+                                                                ? null
+                                                                : () => _openReviewDialog(
+                                                                    ctx:
+                                                                        context,
+                                                                    forProduct:
+                                                                        true,
+                                                                    orderId:
+                                                                        o.id,
+                                                                    buyerId:
+                                                                        buyerId,
+                                                                    productId: it
+                                                                        .productId,
+                                                                    sellerId: it
+                                                                        .sellerId,
+                                                                    title: it
+                                                                        .titleSnap,
+                                                                  ),
+                                                            icon: const Icon(
+                                                              Icons.star,
+                                                            ),
+                                                            label: Text(
+                                                              done
+                                                                  ? 'تم التقييم'
+                                                                  : 'قيّم المنتج',
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      FutureBuilder<bool>(
+                                                        future: reviewsRepo
+                                                            .hasSellerReview(
+                                                              orderId: o.id,
+                                                              sellerId:
+                                                                  it.sellerId,
+                                                              buyerId: buyerId,
+                                                            ),
+                                                        builder: (_, has) {
+                                                          final done =
+                                                              has.data == true;
+                                                          return OutlinedButton.icon(
+                                                            onPressed: done
+                                                                ? null
+                                                                : () => _openReviewDialog(
+                                                                    ctx:
+                                                                        context,
+                                                                    forProduct:
+                                                                        false,
+                                                                    orderId:
+                                                                        o.id,
+                                                                    buyerId:
+                                                                        buyerId,
+                                                                    sellerId: it
+                                                                        .sellerId,
+                                                                    title: it
+                                                                        .sellerId,
+                                                                  ),
+                                                            icon: const Icon(
+                                                              Icons.storefront,
+                                                            ),
+                                                            label: Text(
+                                                              done
+                                                                  ? 'تم تقييم البائع'
+                                                                  : 'قيّم البائع',
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          const Divider(height: 18),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            }
+
+            if (rawList.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text('لا توجد طلبات', textAlign: TextAlign.center),
+                ),
+              );
+            }
+
+            final list = [
+              ...rawList,
+            ]..sort((a, b) => b.stamps.createdAt.compareTo(a.stamps.createdAt));
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'عدد الطلبات: ${list.length}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: list.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (_, i) {
+                    final o = list[i];
+
+                    final sellerItems = widget.mode == OrdersSectionMode.seller
+                        ? o.items
+                              .where((it) => it.sellerId == widget.userId)
+                              .toList()
+                        : o.items;
+
+                    final sellerItemsCount = sellerItems.fold<int>(
+                      0,
+                      (p, it) => p + it.qty,
+                    );
+
+                    final sellerSubtotal = sellerItems.fold<double>(
+                      0.0,
+                      (p, it) => p + it.price * it.qty,
+                    );
+
+                    final allItemsTotal = o.itemsTotal > 0
+                        ? o.itemsTotal
+                        : o.items.fold<double>(
+                            0.0,
+                            (p, it) => p + it.price * it.qty,
+                          );
+
+                    double sellerDiscountShare = 0.0;
+                    double sellerNet = sellerSubtotal;
+
+                    if (widget.mode == OrdersSectionMode.seller &&
+                        o.discount > 0 &&
+                        allItemsTotal > 0 &&
+                        sellerSubtotal > 0) {
+                      final ratio = sellerSubtotal / allItemsTotal;
+                      sellerDiscountShare = o.discount * ratio;
+                      sellerNet = sellerSubtotal - sellerDiscountShare;
+                    }
+
+                    final totalItems = o.items.fold<int>(
+                      0,
+                      (p, it) => p + it.qty,
+                    );
+
+                    return Material(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerLowest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(
+                          color: _statusColor(
+                            context,
+                            o.status,
+                          ).withOpacity(.4),
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(Icons.receipt_long_outlined),
+                        onTap: widget.mode == OrdersSectionMode.seller
+                            ? () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => SellerOrderDetailsScreen(
+                                      order: o,
+                                      sellerId: widget.userId,
+                                    ),
+                                  ),
                                 );
-                              },
+                              }
+                            : null,
+                        title: Text(
+                          'الطلب: ${o.code}',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text('المشتري: ${o.buyerId}'),
+                            const SizedBox(height: 2),
+                            if (widget.mode == OrdersSectionMode.seller) ...[
+                              Text(
+                                'العناصر الخاصة بك: $sellerItemsCount من أصل $totalItems',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                'صافي قيمة منتجاتك: ${sellerNet.toStringAsFixed(2)}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ] else ...[
+                              Text(
+                                'العناصر: $totalItems • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              orderStatusAr(o.status),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _statusColor(context, o.status),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              df.format(o.stamps.createdAt),
+                              style: const TextStyle(fontSize: 10),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                );
-              },
+                    );
+                  },
+                ),
+              ],
             );
           },
         ),

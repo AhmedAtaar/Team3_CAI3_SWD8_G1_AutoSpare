@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/services/user_session.dart';
+import 'package:auto_spare/core/earnings_utils.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({super.key});
@@ -114,10 +115,8 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                         0,
                         (a, it) => a + it.qty,
                       );
-                      final totalForSeller = itemsForSeller.fold<double>(
-                        0,
-                        (a, it) => a + it.price * it.qty,
-                      );
+
+                      final sellerNet = computeSellerNetForOrder(o, sellerKey);
 
                       final allowed = _allowedNextStatusesForSeller(o.status);
 
@@ -147,10 +146,10 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                               ),
                             ],
                           ),
-                          subtitle: Text(
-                            'عناصر: $itemCount • إجمالي (لك كبائع): ${totalForSeller.toStringAsFixed(2)} جنيه',
-                          ),
 
+                          subtitle: Text(
+                            'عناصر: $itemCount • صافي أرباحك من الطلب: ${sellerNet.toStringAsFixed(2)} جنيه',
+                          ),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -236,7 +235,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                                             '${it.titleSnap} × ${it.qty}',
                                           ),
                                           subtitle: Text(
-                                            'السعر: ${it.price.toStringAsFixed(2)}',
+                                            'السعر النهائي: ${it.price.toStringAsFixed(2)}',
                                           ),
                                           trailing: Text(
                                             (it.price * it.qty).toStringAsFixed(
