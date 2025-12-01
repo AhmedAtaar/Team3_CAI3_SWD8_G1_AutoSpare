@@ -7,9 +7,7 @@ import 'package:auto_spare/services/user_store.dart';
 import 'package:auto_spare/services/users_repository.dart';
 import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/services/orders.dart';
-import 'package:auto_spare/services/tow_requests.dart';
 import 'package:auto_spare/view/widgets/profile/admin_orders_tab.dart';
-import 'package:auto_spare/view/widgets/admin/admin_winch_tab.dart';
 import 'package:auto_spare/view/screens/admin_tow_orders_screen.dart';
 import 'package:auto_spare/view/screens/admin_earnings_screen.dart';
 
@@ -106,7 +104,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              '$label: ${has ? url! : '—'}',
+              '$label: ${has ? url : '—'}',
               textDirection: TextDirection.rtl,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -115,12 +113,12 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           if (has) ...[
             IconButton(
               tooltip: 'معاينة',
-              onPressed: () => _openImagePreview(url!, title: label),
+              onPressed: () => _openImagePreview(url, title: label),
               icon: const Icon(Icons.visibility_outlined),
             ),
             IconButton(
               tooltip: 'فتح في المتصفح',
-              onPressed: () => _openExternal(url!),
+              onPressed: () => _openExternal(url),
               icon: const Icon(Icons.open_in_new),
             ),
           ],
@@ -131,11 +129,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
 
   List<AppUser> _pendingSellers() {
     return usersRepo.allUsers
-        .where(
-          (u) =>
-              u.role == AppUserRole.seller &&
-              (u.approved == false || u.approved == null),
-        )
+        .where((u) => u.role == AppUserRole.seller && u.approved != true)
         .toList();
   }
 
@@ -374,7 +368,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
 }
 
 class _PendingProductsAdminTab extends StatelessWidget {
-  const _PendingProductsAdminTab({super.key});
+  const _PendingProductsAdminTab();
 
   Future<void> _approveProduct(BuildContext context, CatalogProduct p) async {
     final updated = CatalogProduct(
@@ -715,7 +709,7 @@ class AdminTowRequestsTab extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              '$label: ${has ? url! : '—'}',
+              '$label: ${has ? url : '—'}',
               textDirection: TextDirection.rtl,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -724,12 +718,12 @@ class AdminTowRequestsTab extends StatelessWidget {
           if (has) ...[
             IconButton(
               tooltip: 'معاينة',
-              onPressed: () => _openImagePreview(context, url!, title: label),
+              onPressed: () => _openImagePreview(context, url, title: label),
               icon: const Icon(Icons.visibility_outlined),
             ),
             IconButton(
               tooltip: 'فتح في المتصفح',
-              onPressed: () => _openExternal(context, url!),
+              onPressed: () => _openExternal(context, url),
               icon: const Icon(Icons.open_in_new),
             ),
           ],

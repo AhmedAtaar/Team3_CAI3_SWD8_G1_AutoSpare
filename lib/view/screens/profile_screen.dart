@@ -35,7 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         return UserRole.seller;
       case AppUserRole.buyer:
       case AppUserRole.winch:
-      default:
         return UserRole.buyer;
     }
   }
@@ -79,43 +78,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     Navigator.of(
       context,
     ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
-  }
-
-  Widget _buildProfileIcon(int badgeCount, {required bool selected}) {
-    final baseIcon = Icon(selected ? Icons.person : Icons.person_outline);
-
-    if (badgeCount <= 0) {
-      return baseIcon;
-    }
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        baseIcon,
-        Positioned(
-          right: -4,
-          top: -4,
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-            child: Center(
-              child: Text(
-                badgeCount > 9 ? '9+' : '$badgeCount',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _profileIconWithBadge({required int count, required bool selected}) {

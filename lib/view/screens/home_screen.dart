@@ -2,17 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:auto_spare/model/product.dart';
 import 'package:auto_spare/model/catalog.dart';
-import 'package:auto_spare/services/products_repository.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
 
-import 'categories_screen.dart';
-import 'cart_screen.dart';
-import 'profile_screen.dart';
-import 'tow_screen.dart';
 import 'product_details_screen.dart';
 import 'package:auto_spare/services/products.dart';
-import 'package:auto_spare/services/tow_badge_stream.dart';
-import 'package:auto_spare/view/widgets/navigation/global_bottom_nav.dart';
 import 'package:auto_spare/core/app_fees.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,7 +19,6 @@ enum _SortBy { newest, oldest, priceLow, priceHigh, stockHigh }
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
-  int _bottomIndex = 0;
 
   _SortBy _sortBy = _SortBy.newest;
 
@@ -62,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
         case _SortBy.oldest:
           return a.createdAt.compareTo(b.createdAt);
         case _SortBy.newest:
-        default:
           return b.createdAt.compareTo(a.createdAt);
       }
     });
@@ -145,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
-        bottomNavigationBar: const GlobalBottomNav(currentIndex: 0),
       ),
     );
   }
@@ -245,70 +235,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomBar() {
-    return NavigationBar(
-      selectedIndex: _bottomIndex,
-      onDestinationSelected: (i) {
-        if (_bottomIndex == i) return;
-        setState(() => _bottomIndex = i);
-
-        late final Widget page;
-        switch (i) {
-          case 0:
-            page = const HomeScreen();
-            break;
-          case 1:
-            page = const CategoriesScreen();
-            break;
-          case 2:
-            page = const TowScreen();
-            break;
-          case 3:
-            page = const CartScreen();
-            break;
-          case 4:
-          default:
-            page = const ProfileScreen();
-            break;
-        }
-
-        if (i != 0) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => page),
-          );
-        }
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'الرئيسية',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.grid_view_outlined),
-          selectedIcon: Icon(Icons.grid_view),
-          label: 'التصنيفات',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.local_shipping_outlined),
-          selectedIcon: Icon(Icons.local_shipping),
-          label: 'الونش',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.shopping_cart_outlined),
-          selectedIcon: Icon(Icons.shopping_cart),
-          label: 'السلة',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person),
-          label: 'حسابي',
-        ),
-      ],
     );
   }
 }

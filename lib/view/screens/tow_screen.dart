@@ -51,8 +51,8 @@ class _TowScreenState extends State<TowScreen> {
     _towDir.addListener(_onTowDirectoryChanged);
 
     final u = UserStore().currentUser;
-    if (u != null && (u.phone ?? '').isNotEmpty) {
-      _phoneCtrl.text = u.phone!;
+    if (u != null && u.phone.isNotEmpty) {
+      _phoneCtrl.text = u.phone;
     }
 
     _initLocation();
@@ -298,7 +298,7 @@ class _TowScreenState extends State<TowScreen> {
       _problemCtrl.clear();
 
       if (UserStore().currentUser == null ||
-          (UserStore().currentUser!.phone ?? '').isEmpty) {
+          UserStore().currentUser!.phone.isEmpty) {
         _phoneCtrl.clear();
       }
 

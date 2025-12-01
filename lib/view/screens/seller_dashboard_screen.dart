@@ -281,7 +281,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             child: _SellerStatCard(
                               title: 'قيمة المنتجات (قبل الخصم)',
                               value: _fmtMoney(totalBaseAmount),
-                              subtitle: 'حسب السعر الذي أدخلته في المنتجات فقط',
                               icon: Icons.attach_money_outlined,
                               iconColor: Colors.teal,
                             ),
@@ -291,7 +290,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             child: _SellerStatCard(
                               title: 'إجمالي الخصومات على منتجاتك',
                               value: _fmtMoney(totalDiscount),
-                              subtitle: 'تشمل الخصومات والكوبونات في الفترة',
                               icon: Icons.local_offer_outlined,
                               iconColor: Colors.pink,
                             ),
@@ -301,8 +299,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             child: _SellerStatCard(
                               title: 'صافي أرباحك بعد الخصم (في الفترة)',
                               value: _fmtMoney(totalNet),
-                              subtitle:
-                                  'لا يشمل عمولة التطبيق ٥٪ (هذه محسوبة على المشتري)',
                               icon: Icons.trending_up_outlined,
                               iconColor: Colors.deepPurple,
                             ),
@@ -548,28 +544,17 @@ class _SellerHeader extends StatelessWidget {
 class _SellerStatCard extends StatelessWidget {
   final String title;
   final String value;
-  final String? subtitle;
   final IconData icon;
   final Color iconColor;
   final bool dense;
+  final String? subtitle = null;
 
   const _SellerStatCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.iconColor,
-    this.subtitle,
-    this.dense = false,
-  });
-
-  const _SellerStatCard.small({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.iconColor,
-    this.subtitle,
-  }) : dense = true;
-
+  }) : dense = false;
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;

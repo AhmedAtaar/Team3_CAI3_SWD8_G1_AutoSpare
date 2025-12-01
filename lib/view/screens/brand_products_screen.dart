@@ -51,7 +51,6 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
         case _SortBy.stockHigh:
           return b.stock.compareTo(a.stock);
         case _SortBy.newest:
-        default:
           return b.createdAt.compareTo(a.createdAt);
       }
     });

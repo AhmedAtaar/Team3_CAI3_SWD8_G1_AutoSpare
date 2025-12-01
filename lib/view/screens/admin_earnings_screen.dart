@@ -306,7 +306,6 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             child: _StatCard(
                               title: 'إجمالي المدفوع (Grand Total)',
                               value: _fmt(totalRevenue),
-                              subtitle: 'شاملة الشحن والخصم وعمولة التطبيق',
                               icon: Icons.payments_outlined,
                               iconColor: Colors.teal,
                             ),
@@ -316,7 +315,6 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             child: _StatCard(
                               title: 'إجمالي قيمة المنتجات',
                               value: _fmt(totalItemsAmount),
-                              subtitle: 'قبل الشحن والخصم',
                               icon: Icons.inventory_2_outlined,
                               iconColor: Colors.blue,
                             ),
@@ -335,8 +333,6 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             child: _StatCard(
                               title: 'إجمالي أرباح التطبيق (تقديري)',
                               value: _fmt(totalAppFee),
-                              subtitle:
-                                  'محسوبة من أسعار الطلبات النهائية بنسبة ٥٪',
                               icon: Icons.trending_up_outlined,
                               iconColor: Colors.deepPurple,
                             ),
@@ -371,7 +367,7 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                           children: [
                             SizedBox(
                               width: cw,
-                              child: _StatCard.small(
+                              child: _StatCard(
                                 title: 'عدد الطلبات في الفترة',
                                 value: '$totalOrders طلب',
                                 icon: Icons.receipt_long_outlined,
@@ -380,7 +376,7 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             ),
                             SizedBox(
                               width: cw,
-                              child: _StatCard.small(
+                              child: _StatCard(
                                 title: 'إجمالي المدفوع في الفترة',
                                 value: _fmt(totalRevenue),
                                 icon: Icons.payments_rounded,
@@ -389,7 +385,7 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             ),
                             SizedBox(
                               width: cw,
-                              child: _StatCard.small(
+                              child: _StatCard(
                                 title: 'أرباح التطبيق في الفترة',
                                 value: _fmt(totalAppFee),
                                 icon: Icons.trending_up,
@@ -426,27 +422,17 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
-  final String? subtitle;
   final IconData icon;
   final Color iconColor;
   final bool dense;
+  final String? subtitle = null;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.iconColor,
-    this.subtitle,
-    this.dense = false,
-  });
-
-  const _StatCard.small({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.iconColor,
-    this.subtitle,
-  }) : dense = true;
+  }) : dense = false;
 
   @override
   Widget build(BuildContext context) {

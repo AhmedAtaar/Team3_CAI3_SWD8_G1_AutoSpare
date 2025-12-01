@@ -5,7 +5,6 @@ import 'package:auto_spare/view/screens/brand_products_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/categories_screen_widgets/category_tile_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:auto_spare/view/widgets/navigation/global_bottom_nav.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});

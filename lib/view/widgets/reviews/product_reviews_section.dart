@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:auto_spare/services/reviews.dart';
 import 'package:auto_spare/model/review.dart';
@@ -88,7 +89,7 @@ class ProductReviewsSection extends StatelessWidget {
               children: [
                 const Icon(Icons.rate_review_outlined),
                 const SizedBox(width: 8),
-                const Text('التقييمات'),
+                Text('reviews.title'.tr()),
                 const Spacer(),
                 StreamBuilder<({double avg, int count})>(
                   stream: prodSummary$,
@@ -119,10 +120,10 @@ class ProductReviewsSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
-                    children: const [
-                      Icon(Icons.inventory_2_outlined),
-                      SizedBox(width: 6),
-                      Text('مراجعات المنتج'),
+                    children: [
+                      const Icon(Icons.inventory_2_outlined),
+                      const SizedBox(width: 6),
+                      Text('reviews.product_reviews'.tr()),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -131,10 +132,10 @@ class ProductReviewsSection extends StatelessWidget {
                     builder: (_, snap) {
                       final list = snap.data ?? const <ProductReview>[];
                       if (list.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
-                            'لا توجد مراجعات للمنتج بعد',
+                            'reviews.no_product_reviews_yet'.tr(),
                             textAlign: TextAlign.right,
                           ),
                         );
@@ -147,7 +148,9 @@ class ProductReviewsSection extends StatelessWidget {
                         itemBuilder: (_, i) {
                           final r = list[i];
                           return reviewTile(
-                            titleRight: 'المشتري: ${r.buyerId}',
+                            titleRight: 'reviews.buyer_id'.tr(
+                              args: [r.buyerId],
+                            ),
                             starsCount: r.stars,
                             text: r.text,
                             createdAt: r.createdAt,
@@ -173,10 +176,10 @@ class ProductReviewsSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
-                    children: const [
-                      Icon(Icons.storefront),
-                      SizedBox(width: 6),
-                      Text('مراجعات البائع'),
+                    children: [
+                      const Icon(Icons.storefront),
+                      const SizedBox(width: 6),
+                      Text('reviews.seller_reviews'.tr()),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -185,10 +188,10 @@ class ProductReviewsSection extends StatelessWidget {
                     builder: (_, snap) {
                       final list = snap.data ?? const <SellerReview>[];
                       if (list.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
-                            'لا توجد مراجعات للبائع بعد',
+                            'reviews.no_seller_reviews_yet'.tr(),
                             textAlign: TextAlign.right,
                           ),
                         );
@@ -201,7 +204,9 @@ class ProductReviewsSection extends StatelessWidget {
                         itemBuilder: (_, i) {
                           final r = list[i];
                           return reviewTile(
-                            titleRight: 'المشتري: ${r.buyerId}',
+                            titleRight: 'reviews.buyer_id'.tr(
+                              args: [r.buyerId],
+                            ),
                             starsCount: r.stars,
                             text: r.text,
                             createdAt: r.createdAt,

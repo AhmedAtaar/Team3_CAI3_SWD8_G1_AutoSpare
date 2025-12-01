@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders_repository.dart';
@@ -59,8 +59,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
             ).subtract(const Duration(days: 30)),
             end: DateTime(now.year, now.month, now.day),
           ),
-      helpText: 'اختيار مدة زمنية',
-      saveText: 'اختيار',
+      helpText: 'admin_orders.date_range_picker_help'.tr(),
+      saveText: 'admin_orders.select'.tr(),
       builder: (ctx, child) =>
           Directionality(textDirection: ui.TextDirection.rtl, child: child!),
     );
@@ -188,7 +188,9 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  'حدث خطأ أثناء تحميل الطلبات:\n${snap.error}',
+                  'admin_orders.error_loading_orders'.tr(
+                    args: [snap.error.toString()],
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -204,9 +206,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
           if (pages > 0 && _page >= pages) _page = pages - 1;
 
           final start = pages == 0 ? 0 : _page * _pageSize;
-          final end = pages == 0
-              ? 0
-              : ((start + _pageSize).clamp(0, total) as int);
+          final end = pages == 0 ? 0 : (start + _pageSize).clamp(0, total);
 
           final pageList = (filtered.isEmpty || start >= end)
               ? <OrderDoc>[]
@@ -240,13 +240,13 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                             onChanged: (_) => setState(() => _page = 0),
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.search),
-                              hintText: 'بحث: كود/مشتري/بائع/منتج…',
+                              hintText: 'admin_orders.search_hint'.tr(),
                               border: const OutlineInputBorder(),
                               isDense: true,
                               suffixIcon: _searchCtrl.text.isEmpty
                                   ? null
                                   : IconButton(
-                                      tooltip: 'مسح',
+                                      tooltip: 'admin_orders.clear'.tr(),
                                       onPressed: () {
                                         _searchCtrl.clear();
                                         setState(() => _page = 0);
@@ -261,42 +261,42 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                           icon: const Icon(Icons.calendar_month),
                           label: Text(
                             _range == null
-                                ? 'المدة: الكل'
+                                ? 'admin_orders.duration_all'.tr()
                                 : '${DateFormat('yyyy/MM/dd').format(_range!.start)} → ${DateFormat('yyyy/MM/dd').format(_range!.end)}',
                           ),
                         ),
                         if (_range != null)
                           IconButton(
-                            tooltip: 'إزالة المدة',
+                            tooltip: 'admin_orders.remove_duration'.tr(),
                             onPressed: () => setState(() => _range = null),
                             icon: const Icon(Icons.close),
                           ),
                         DropdownButton<_SortKey>(
                           value: _sort,
                           onChanged: (v) => setState(() => _sort = v ?? _sort),
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: _SortKey.createdDesc,
-                              child: Text('الأحدث أولاً'),
+                              child: Text('admin_orders.sort_newest'.tr()),
                             ),
                             DropdownMenuItem(
                               value: _SortKey.createdAsc,
-                              child: Text('الأقدم أولاً'),
+                              child: Text('admin_orders.sort_oldest'.tr()),
                             ),
                             DropdownMenuItem(
                               value: _SortKey.totalDesc,
-                              child: Text('المبلغ: الأعلى ↓'),
+                              child: Text('admin_orders.sort_amount_high'.tr()),
                             ),
                             DropdownMenuItem(
                               value: _SortKey.totalAsc,
-                              child: Text('المبلغ: الأقل ↑'),
+                              child: Text('admin_orders.sort_amount_low'.tr()),
                             ),
                           ],
                         ),
                         OutlinedButton.icon(
                           onPressed: _resetFilters,
                           icon: const Icon(Icons.refresh),
-                          label: const Text('إعادة الضبط'),
+                          label: Text('admin_orders.reset'.tr()),
                         ),
                         const SizedBox(width: 12),
                         Wrap(
@@ -315,7 +315,11 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                     const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text('عدد الطلبات المطابقة: $total'),
+                      child: Text(
+                        'admin_orders.matching_orders_count'.tr(
+                          args: [total.toString()],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -323,7 +327,9 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               const SizedBox(height: 10),
               Expanded(
                 child: pageList.isEmpty
-                    ? const Center(child: Text('لا توجد طلبات مطابقة'))
+                    ? Center(
+                        child: Text('admin_orders.no_matching_orders'.tr()),
+                      )
                     : ListView.separated(
                         itemCount: pageList.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -360,7 +366,16 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                 ],
                               ),
                               subtitle: Text(
-                                'العميل: ${o.buyerId} • عناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
+                                'admin_orders.customer_label'.tr(
+                                      args: [o.buyerId],
+                                    ) +
+                                    ' • ' +
+                                    'orders.items_total_summary'.tr(
+                                      args: [
+                                        itemsCount.toString(),
+                                        o.grandTotal.toStringAsFixed(2),
+                                      ],
+                                    ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.right,
@@ -390,35 +405,45 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                         spacing: 6,
                                         runSpacing: 6,
                                         children: [
-                                          _stamp('أُنشئ', o.stamps.createdAt),
+                                          _stamp(
+                                            'orders.created'.tr(),
+                                            o.stamps.createdAt,
+                                          ),
                                           if (o.stamps.preparedAt != null)
                                             _stamp(
-                                              'تم التجهيز',
+                                              'orders.prepared'.tr(),
                                               o.stamps.preparedAt!,
                                             ),
                                           if (o.stamps.handedToCourierAt !=
                                               null)
                                             _stamp(
-                                              'مع الشحن',
+                                              'orders.shipping'.tr(),
                                               o.stamps.handedToCourierAt!,
                                             ),
                                           if (o.stamps.deliveredAt != null)
                                             _stamp(
-                                              'تم الاستلام',
+                                              'orders.delivered'.tr(),
                                               o.stamps.deliveredAt!,
                                             ),
                                           if (o.stamps.cancelledAt != null)
                                             _stamp(
-                                              'أُلغي',
+                                              'orders.cancelled'.tr(),
                                               o.stamps.cancelledAt!,
                                             ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'العنوان الجغرافي: '
-                                        '${o.lat == null ? '—' : o.lat!.toStringAsFixed(5)}, '
-                                        '${o.lng == null ? '' : o.lng!.toStringAsFixed(5)}',
+                                        'admin_orders.geo_address'.tr(
+                                          args: [
+                                            o.lat == null
+                                                ? '—'
+                                                : o.lat!.toStringAsFixed(5),
+                                            o.lng == null
+                                                ? ''
+                                                : o.lng!.toStringAsFixed(5),
+                                          ],
+                                        ),
                                       ),
                                       const Divider(height: 18),
                                       ListView.separated(
@@ -446,7 +471,14 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                                 '${it.titleSnap} × ${it.qty}',
                                               ),
                                               subtitle: Text(
-                                                'البائع: ${it.sellerId} • السعر: ${it.price.toStringAsFixed(2)}',
+                                                'orders.seller_price_summary'
+                                                    .tr(
+                                                      args: [
+                                                        it.sellerId,
+                                                        it.price
+                                                            .toStringAsFixed(2),
+                                                      ],
+                                                    ),
                                               ),
                                               trailing: Text(
                                                 (it.price * it.qty)
@@ -467,32 +499,39 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               ),
               Row(
                 children: [
-                  Text('الإجمالي: $total'),
+                  Text('admin_orders.total_label'.tr(args: [total.toString()])),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'الأولى',
+                    tooltip: 'admin_orders.first_page'.tr(),
                     onPressed: (_page > 0)
                         ? () => setState(() => _page = 0)
                         : null,
                     icon: const Icon(Icons.first_page),
                   ),
                   IconButton(
-                    tooltip: 'السابق',
+                    tooltip: 'admin_orders.prev_page'.tr(),
                     onPressed: (_page > 0)
                         ? () => setState(() => _page -= 1)
                         : null,
                     icon: const Icon(Icons.chevron_right),
                   ),
-                  Text('صفحة ${pages == 0 ? 0 : (_page + 1)} / $pages'),
+                  Text(
+                    'admin_orders.page_info'.tr(
+                      args: [
+                        (pages == 0 ? 0 : (_page + 1)).toString(),
+                        pages.toString(),
+                      ],
+                    ),
+                  ),
                   IconButton(
-                    tooltip: 'التالي',
+                    tooltip: 'admin_orders.next_page'.tr(),
                     onPressed: (pages > 0 && (_page + 1) < pages)
                         ? () => setState(() => _page += 1)
                         : null,
                     icon: const Icon(Icons.chevron_left),
                   ),
                   IconButton(
-                    tooltip: 'الأخيرة',
+                    tooltip: 'admin_orders.last_page'.tr(),
                     onPressed: (pages > 0 && (_page + 1) < pages)
                         ? () => setState(() => _page = pages - 1)
                         : null,

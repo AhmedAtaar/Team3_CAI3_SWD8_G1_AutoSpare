@@ -39,10 +39,10 @@ class PushNotifications {
   }
 
   static Future<void> _initLocalNotifs() async {
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosInit = DarwinInitializationSettings();
+    final androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    final iosInit = DarwinInitializationSettings();
 
-    const initSettings = InitializationSettings(
+    final initSettings = InitializationSettings(
       android: androidInit,
       iOS: iosInit,
     );
@@ -52,7 +52,7 @@ class PushNotifications {
       onDidReceiveNotificationResponse: (NotificationResponse r) {},
     );
 
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    final AndroidNotificationChannel channel = AndroidNotificationChannel(
       'high_importance_channel',
       'اشعارات مهمة',
       description: 'تُستخدم لإشعارات طلبات السحب والطلبات الهامة.',
@@ -98,7 +98,7 @@ class PushNotifications {
     required String title,
     required String body,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'high_importance_channel',
       'اشعارات مهمة',
       channelDescription: 'طلبات السحب والإشعارات المهمة الأخرى',
@@ -106,9 +106,9 @@ class PushNotifications {
       priority: Priority.high,
     );
 
-    const iosDetails = DarwinNotificationDetails();
+    final iosDetails = DarwinNotificationDetails();
 
-    const notifDetails = NotificationDetails(
+    final notifDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui' as ui;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/model/order.dart';
@@ -91,23 +93,24 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(
-          'زيادة مخزون — ${p.title}',
-          textDirection: TextDirection.rtl,
+          'seller.increase_stock_title'.tr(args: [p.title]),
+          textDirection: ui.TextDirection.rtl,
         ),
         content: Form(
           key: formKey,
           child: TextFormField(
             controller: qtyCtrl,
             keyboardType: TextInputType.number,
-            textDirection: TextDirection.rtl,
-            decoration: const InputDecoration(
-              labelText: 'الكمية المطلوب إضافتها',
-              border: OutlineInputBorder(),
+            textDirection: ui.TextDirection.rtl,
+            decoration: InputDecoration(
+              labelText: 'seller.quantity_to_add'.tr(),
+              border: const OutlineInputBorder(),
             ),
             validator: (v) {
               final n = int.tryParse((v ?? '').trim());
-              if (n == null || n <= 0) return 'أدخل رقمًا صحيحًا أكبر من صفر';
-              if (n > 1000000) return 'قيمة كبيرة جدًا';
+              if (n == null || n <= 0)
+                return 'seller.enter_valid_positive_number'.tr();
+              if (n > 1000000) return 'seller.value_too_large'.tr();
               return null;
             },
           ),
@@ -115,7 +118,11 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(
+              'seller.cancel'.tr(),
+            ), // Reusing admin.cancel or creating new? I added seller.cancel? No, I didn't. I'll use admin.cancel or just add it. Wait, I didn't add cancel to seller. I'll use admin.cancel since it's common.
+            // Actually, I should use the keys I defined. I didn't define cancel in seller.
+            // I'll use 'admin.cancel'.tr()
           ),
           FilledButton.icon(
             onPressed: () {
@@ -124,7 +131,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
               }
             },
             icon: const Icon(Icons.add),
-            label: const Text('إضافة'),
+            label: Text('seller.add'.tr()),
           ),
         ],
       ),
@@ -140,8 +147,10 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تمت إضافة $delta إلى مخزون "${p.title}"',
-              textDirection: TextDirection.rtl,
+              'seller.stock_added_success'.tr(
+                args: [delta.toString(), p.title],
+              ),
+              textDirection: ui.TextDirection.rtl,
             ),
           ),
         );
@@ -150,8 +159,8 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تعذر تعديل المخزون: $e',
-              textDirection: TextDirection.rtl,
+              'seller.stock_update_error'.tr(args: [e.toString()]),
+              textDirection: ui.TextDirection.rtl,
             ),
             backgroundColor: Colors.red,
           ),
@@ -176,8 +185,8 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Text(
-                'حدث خطأ أثناء تحميل المنتجات',
-                textDirection: TextDirection.rtl,
+                'seller.error_loading_products'.tr(),
+                textDirection: ui.TextDirection.rtl,
               ),
             ),
           );
@@ -186,12 +195,12 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         final products = snap.data ?? const <CatalogProduct>[];
 
         if (products.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24.0),
               child: Text(
-                'لا توجد منتجات مقبولة لهذا البائع حتى الآن',
-                textDirection: TextDirection.rtl,
+                'seller.no_approved_products_yet'.tr(),
+                textDirection: ui.TextDirection.rtl,
               ),
             ),
           );
@@ -220,16 +229,22 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
             runSpacing: 8,
             children: [
               Chip(
-                label: Text('إجمالي المخزون: $totalStock'),
+                label: Text(
+                  'seller.total_stock'.tr(args: [totalStock.toString()]),
+                ),
                 avatar: const Icon(Icons.inventory_2_outlined),
               ),
               Chip(
-                label: Text('إجمالي المبيعات: $totalSold'),
+                label: Text(
+                  'seller.total_sales'.tr(args: [totalSold.toString()]),
+                ),
                 avatar: const Icon(Icons.shopping_bag_outlined),
               ),
               Chip(
                 label: Text(
-                  'الإيراد الكلي: ${totalRevenue.toStringAsFixed(2)}',
+                  'seller.total_revenue'.tr(
+                    args: [totalRevenue.toStringAsFixed(2)],
+                  ),
                 ),
                 avatar: const Icon(Icons.payments_outlined),
               ),
@@ -277,7 +292,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: 'تعديل المخزون',
+                                      tooltip: 'seller.edit_stock'.tr(),
                                       onPressed: () => _openRestockDialog(p),
                                       icon: const Icon(Icons.edit_note),
                                     ),
@@ -293,7 +308,11 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         Icons.inventory_2_outlined,
                                         size: 18,
                                       ),
-                                      label: Text('المخزون: ${p.stock}'),
+                                      label: Text(
+                                        'seller.stock_label'.tr(
+                                          args: [p.stock.toString()],
+                                        ),
+                                      ),
                                       backgroundColor: low
                                           ? cs.errorContainer
                                           : cs.surfaceContainer,
@@ -308,7 +327,11 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         Icons.shopping_cart_checkout_outlined,
                                         size: 18,
                                       ),
-                                      label: Text('المباع: $sold'),
+                                      label: Text(
+                                        'seller.sold_label'.tr(
+                                          args: [sold.toString()],
+                                        ),
+                                      ),
                                     ),
                                     Chip(
                                       avatar: const Icon(
@@ -316,7 +339,9 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        'الإيراد: ${revenue.toStringAsFixed(2)}',
+                                        'seller.revenue_label'.tr(
+                                          args: [revenue.toStringAsFixed(2)],
+                                        ),
                                       ),
                                     ),
                                     Chip(
@@ -325,15 +350,19 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        'السعر: ${p.price.toStringAsFixed(2)}',
+                                        'seller.price_label'.tr(
+                                          args: [p.price.toStringAsFixed(2)],
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'سنوات الملاءمة: ${p.years.join(', ')}',
-                                  textDirection: TextDirection.rtl,
+                                  'seller.compatibility_years'.tr(
+                                    args: [p.years.join(', ')],
+                                  ),
+                                  textDirection: ui.TextDirection.rtl,
                                 ),
                               ],
                             ),

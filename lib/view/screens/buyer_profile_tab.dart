@@ -82,7 +82,7 @@ class BuyerProfileTab extends StatelessWidget {
 class _BuyerTowRequestsCard extends StatelessWidget {
   final String userId;
 
-  const _BuyerTowRequestsCard({super.key, required this.userId});
+  const _BuyerTowRequestsCard({required this.userId});
 
   bool _canCancel(TowRequestStatus status) {
     switch (status) {
@@ -162,7 +162,6 @@ class _BuyerTowRequestsCard extends StatelessWidget {
       case TowRequestStatus.onTheWay:
         return cs.primary;
       case TowRequestStatus.pending:
-      default:
         return Colors.orange;
     }
   }
@@ -193,7 +192,6 @@ class _BuyerTowRequestsCard extends StatelessWidget {
 
             final original = snap.data ?? const <TowRequestDoc>[];
             final list = List<TowRequestDoc>.from(original);
-
 
             if (list.isNotEmpty) {
               final unseen = list.where((r) => !r.userSeen).toList();

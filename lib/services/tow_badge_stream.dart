@@ -9,43 +9,6 @@ Stream<int> towNotificationCountStreamForCurrentUser() {
   StreamSubscription? buyerSub;
   StreamSubscription? companySub;
 
-  void listenForUser() {
-    final u = UserStore().currentUser;
-
-    if (u == null) {
-      controller.add(0);
-      return;
-    }
-
-    final uid = u.id;
-    final cid = u.towCompanyId;
-
-    buyerSub = towRequestsRepo.watchUserRequests(uid).listen((list) {
-      final buyerUnseen = list.where((r) => !r.userSeen).length;
-
-      if (cid == null || cid.isEmpty) {
-        controller.add(buyerUnseen);
-      }
-    });
-
-    if (cid != null && cid.isNotEmpty) {
-      companySub = towRequestsRepo.watchCompanyRequests(cid).listen((
-        companyList,
-      ) {
-        final u2 = UserStore().currentUser;
-        if (u2 == null) {
-          controller.add(0);
-          return;
-        }
-
-        final userListNow = [];
-      });
-    }
-  }
-
-  buyerSub?.cancel();
-  companySub?.cancel();
-
   controller.onListen = () {
     final u = UserStore().currentUser;
     if (u == null) {

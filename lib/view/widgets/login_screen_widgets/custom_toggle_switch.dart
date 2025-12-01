@@ -1,4 +1,5 @@
 import 'package:auto_spare/view/themes/app_colors.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class CustomToggleSwitch extends StatelessWidget {
@@ -30,7 +31,14 @@ class CustomToggleSwitch extends StatelessWidget {
     );
 
     return GestureDetector(
-      onTap: () => onChanged(!isArabicSelected),
+      onTap: () {
+        if (isArabicSelected) {
+          context.setLocale(const Locale('en'));
+        } else {
+          context.setLocale(const Locale('ar'));
+        }
+        onChanged(!isArabicSelected);
+      },
       child: Container(
         width: switchWidth,
         height: switchHeight,

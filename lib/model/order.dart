@@ -1,20 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:easy_localization/easy_localization.dart';
+
 enum OrderStatus { processing, prepared, handedToCourier, delivered, cancelled }
 
 String orderStatusAr(OrderStatus s) {
   switch (s) {
     case OrderStatus.processing:
-      return 'قيد المعالجة';
+      return 'order_status.processing'.tr();
     case OrderStatus.prepared:
-      return 'تم التجهيز';
+      return 'order_status.prepared'.tr();
     case OrderStatus.handedToCourier:
-      return 'مع شركة الشحن';
+      return 'order_status.handed_to_courier'.tr();
     case OrderStatus.delivered:
-      return 'تم الاستلام';
+      return 'order_status.delivered'.tr();
     case OrderStatus.cancelled:
-      return 'أُلغي';
+      return 'order_status.cancelled'.tr();
   }
 }
 

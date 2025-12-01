@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 enum TowRequestStatus {
   pending,
@@ -12,17 +13,17 @@ enum TowRequestStatus {
 String towStatusAr(TowRequestStatus status) {
   switch (status) {
     case TowRequestStatus.pending:
-      return 'قيد المراجعة';
+      return 'tow_status.pending'.tr();
     case TowRequestStatus.accepted:
-      return 'مقبول';
+      return 'tow_status.accepted'.tr();
     case TowRequestStatus.onTheWay:
-      return 'في الطريق';
+      return 'tow_status.on_the_way'.tr();
     case TowRequestStatus.completed:
-      return 'تمت الخدمة';
+      return 'tow_status.completed'.tr();
     case TowRequestStatus.cancelled:
-      return 'ملغي';
+      return 'tow_status.cancelled'.tr();
     case TowRequestStatus.rejected:
-      return 'مرفوض';
+      return 'tow_status.rejected'.tr();
   }
 }
 

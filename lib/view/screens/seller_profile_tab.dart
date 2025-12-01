@@ -520,7 +520,7 @@ class SellerInventoryScreen extends StatelessWidget {
 class _RejectedList extends StatelessWidget {
   final List<CatalogProduct> list;
 
-  const _RejectedList({super.key, required this.list});
+  const _RejectedList({required this.list});
 
   @override
   Widget build(BuildContext context) {
