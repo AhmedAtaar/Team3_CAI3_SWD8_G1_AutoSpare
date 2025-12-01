@@ -1,5 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-
 import 'package:auto_spare/view/screens/home_screen.dart';
 import 'package:auto_spare/view/screens/categories_screen.dart';
 import 'package:auto_spare/view/screens/tow_screen.dart';
@@ -100,30 +100,30 @@ class GlobalBottomNav extends StatelessWidget {
             );
           },
           destinations: [
-            const NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'الرئيسية',
+            NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: 'nav.home'.tr(),
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view),
-              label: 'التصنيفات',
+            NavigationDestination(
+              icon: const Icon(Icons.grid_view_outlined),
+              selectedIcon: const Icon(Icons.grid_view),
+              label: 'nav.categories'.tr(),
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.local_shipping_outlined),
-              selectedIcon: Icon(Icons.local_shipping),
-              label: 'الونش',
+            NavigationDestination(
+              icon: const Icon(Icons.local_shipping_outlined),
+              selectedIcon: const Icon(Icons.local_shipping),
+              label: 'nav.tow'.tr(),
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.shopping_cart_outlined),
-              selectedIcon: Icon(Icons.shopping_cart),
-              label: 'السلة',
+            NavigationDestination(
+              icon: const Icon(Icons.shopping_cart_outlined),
+              selectedIcon: const Icon(Icons.shopping_cart),
+              label: 'nav.cart'.tr(),
             ),
             NavigationDestination(
               icon: profileIconWithBadge(count: count, selected: false),
               selectedIcon: profileIconWithBadge(count: count, selected: true),
-              label: 'حسابي',
+              label: 'nav.profile'.tr(),
             ),
           ],
         );

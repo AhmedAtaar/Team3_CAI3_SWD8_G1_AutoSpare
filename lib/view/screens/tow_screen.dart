@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../controller/navigation/navigation.dart';
 import 'package:auto_spare/services/user_store.dart';
 import 'package:auto_spare/services/tow_requests.dart';
@@ -1034,7 +1035,7 @@ class _TowScreenState extends State<TowScreen> {
     return AppNavigationScaffold(
       currentIndex: 2,
       title: 'خدمة سحب عاجلة',
-      body: Directionality(textDirection: TextDirection.rtl, child: content),
+      body: content,
     );
   }
 }

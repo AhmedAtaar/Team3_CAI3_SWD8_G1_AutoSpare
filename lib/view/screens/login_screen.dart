@@ -51,7 +51,7 @@ class LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('من فضلك صحّح البيانات.')));
+      ).showSnackBar(SnackBar(content: Text('login.correct_data'.tr())));
       return;
     }
 
@@ -63,14 +63,14 @@ class LoginScreenState extends State<LoginScreen> {
     if (u == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('بيانات الدخول غير صحيحة')));
+      ).showSnackBar(SnackBar(content: Text('login.invalid_credentials'.tr())));
       return;
     }
 
     if (u.role == AppUserRole.winch && !u.approved) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('حساب الونش غير مفعل بعد.')));
+      ).showSnackBar(SnackBar(content: Text('login.winch_not_approved'.tr())));
       return;
     }
 
@@ -104,7 +104,6 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Remove Directionality, EasyLocalization handles it
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -132,7 +131,6 @@ class LoginScreenState extends State<LoginScreen> {
                               isArabicSelected:
                                   context.locale.languageCode == 'ar',
                               onChanged: (v) {
-                                // State change handled in CustomToggleSwitch
                                 setState(() {});
                               },
                             ),

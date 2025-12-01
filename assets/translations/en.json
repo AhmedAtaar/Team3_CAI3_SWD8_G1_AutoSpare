@@ -1,4 +1,11 @@
 {
+    "nav": {
+        "home": "Home",
+        "categories": "Categories",
+        "tow": "Tow",
+        "cart": "Cart",
+        "profile": "Profile"
+    },
     "login": {
         "welcome_back": "Welcome Back",
         "sign_in_to_access": "Sign in to access the application",
@@ -169,5 +176,13 @@
     },
     "currency": {
         "egp": "EGP"
+    },
+    "common": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "confirm": "Confirm",
+        "error": "Error",
+        "success": "Success"
     }
 }

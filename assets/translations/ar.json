@@ -1,4 +1,11 @@
 {
+    "nav": {
+        "home": "الرئيسية",
+        "categories": "التصنيفات",
+        "tow": "الونش",
+        "cart": "السلة",
+        "profile": "حسابي"
+    },
     "login": {
         "welcome_back": "مرحبًا بعودتك",
         "sign_in_to_access": "سجل الدخول للوصول إلى التطبيق",
@@ -169,5 +176,13 @@
     },
     "currency": {
         "egp": "جنيه"
+    },
+    "common": {
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "delete": "حذف",
+        "confirm": "تأكيد",
+        "error": "خطأ",
+        "success": "تم بنجاح"
     }
 }
