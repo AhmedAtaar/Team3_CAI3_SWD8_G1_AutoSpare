@@ -34,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       case AppUserRole.seller:
         return UserRole.seller;
       case AppUserRole.buyer:
+      case AppUserRole.winch:
       default:
         return UserRole.buyer;
     }
@@ -70,20 +71,18 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (_) => false,
+      (_) => false,
     );
   }
 
   void _login() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   Widget _buildProfileIcon(int badgeCount, {required bool selected}) {
-    final baseIcon = Icon(
-      selected ? Icons.person : Icons.person_outline,
-    );
+    final baseIcon = Icon(selected ? Icons.person : Icons.person_outline);
 
     if (badgeCount <= 0) {
       return baseIcon;
@@ -102,10 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               color: Colors.red,
               shape: BoxShape.circle,
             ),
-            constraints: const BoxConstraints(
-              minWidth: 16,
-              minHeight: 16,
-            ),
+            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
             child: Center(
               child: Text(
                 badgeCount > 9 ? '9+' : '$badgeCount',
@@ -122,13 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _profileIconWithBadge({
-    required int count,
-    required bool selected,
-  }) {
-    final baseIcon = Icon(
-      selected ? Icons.person : Icons.person_outline,
-    );
+  Widget _profileIconWithBadge({required int count, required bool selected}) {
+    final baseIcon = Icon(selected ? Icons.person : Icons.person_outline);
 
     if (count <= 0) return baseIcon;
 
@@ -136,16 +127,8 @@ class _ProfileScreenState extends State<ProfileScreen>
       clipBehavior: Clip.none,
       children: [
         baseIcon,
-        Positioned(
-          right: -4,
-          top: -4,
-          child: const _AnimatedBadge(count: 0),
-        ),
-        Positioned(
-          right: -4,
-          top: -4,
-          child: _AnimatedBadge(count: count),
-        ),
+        const Positioned(right: -4, top: -4, child: _AnimatedBadge(count: 0)),
+        Positioned(right: -4, top: -4, child: _AnimatedBadge(count: count)),
       ],
     );
   }
@@ -196,10 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           label: 'السلة',
         ),
         NavigationDestination(
-          icon: _profileIconWithBadge(
-            count: badgeCount,
-            selected: false,
-          ),
+          icon: _profileIconWithBadge(count: badgeCount, selected: false),
           selectedIcon: _profileIconWithBadge(
             count: badgeCount,
             selected: true,
@@ -210,7 +190,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  String _accountRoleLabel(UserRole? r) {
+  String _accountRoleLabel(UserRole? r, AppUserRole dbRole) {
+    if (dbRole == AppUserRole.winch) {
+      return 'مقدم خدمة سحب السيارات';
+    }
+
     switch (r) {
       case UserRole.admin:
         return 'أدمن (مراجعة فقط)';
@@ -228,22 +212,37 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     final bool isAdminAccount = user.role == AppUserRole.admin;
     final bool isSellerAccount = user.role == AppUserRole.seller;
+    final bool isWinchAccount = user.role == AppUserRole.winch;
 
-    final bool isSellerNow =
-        isSellerAccount && UserSession.isSellerNow;
+    final bool isSellerNow = isSellerAccount && UserSession.isSellerNow;
 
     final bool canSwitchToBuyer =
         isSellerAccount && UserSession.canSwitchToBuyer;
     final bool canSwitchToSeller =
         isSellerAccount && UserSession.canSwitchToSeller;
 
-    final accountRole = _accountRoleLabel(UserSession.authRole);
+    final accountRole = _accountRoleLabel(UserSession.authRole, user.role);
     final name = UserSession.username ?? 'User';
 
     final bool isPureBuyer =
         !isAdminAccount &&
-            !isSellerAccount &&
-            UserSession.authRole == UserRole.buyer;
+        !isSellerAccount &&
+        !isWinchAccount &&
+        UserSession.authRole == UserRole.buyer;
+
+    late final String modeText;
+    late final IconData modeIcon;
+
+    if (isAdminAccount) {
+      modeText = 'لوحة إدارة';
+      modeIcon = Icons.admin_panel_settings_outlined;
+    } else if (isWinchAccount) {
+      modeText = 'مقدم خدمة سحب السيارات • يمكنه الشراء من المتجر';
+      modeIcon = Icons.local_shipping_outlined;
+    } else {
+      modeText = 'الوضع: ${isSellerNow ? 'بائع' : 'مشتري'}';
+      modeIcon = isSellerNow ? Icons.storefront : Icons.shopping_bag_outlined;
+    }
 
     return Container(
       width: double.infinity,
@@ -279,20 +278,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               spacing: 8,
               runSpacing: 8,
               children: [
-                Chip(
-                  label: Text(
-                    isAdminAccount
-                        ? 'لوحة إدارة'
-                        : 'الوضع: ${isSellerNow ? 'بائع' : 'مشتري'}',
-                  ),
-                  avatar: Icon(
-                    isAdminAccount
-                        ? Icons.admin_panel_settings_outlined
-                        : (isSellerNow
-                        ? Icons.storefront
-                        : Icons.shopping_bag_outlined),
-                  ),
-                ),
+                Chip(label: Text(modeText), avatar: Icon(modeIcon)),
                 Chip(
                   label: Text('دور الحساب: $accountRole'),
                   avatar: const Icon(Icons.verified_user_outlined),
@@ -300,8 +286,10 @@ class _ProfileScreenState extends State<ProfileScreen>
               ],
             ),
           ),
+
           if (!isAdminAccount &&
               isSellerAccount &&
+              !isWinchAccount &&
               (canSwitchToBuyer || canSwitchToSeller)) ...[
             const SizedBox(height: 8),
             Row(
@@ -343,14 +331,22 @@ class _ProfileScreenState extends State<ProfileScreen>
               ],
             ),
           ],
+
+          if (isWinchAccount) ...[
+            const SizedBox(height: 6),
+            Text(
+              'هذا الحساب مسجّل كمقدّم خدمة سحب سيارات، '
+              'ويمكنك أيضاً شراء قطع الغيار من المتجر بنفس هذا الحساب.',
+              style: TextStyle(fontSize: 12, color: cs.outline),
+              textAlign: TextAlign.right,
+            ),
+          ],
+
           if (isPureBuyer) ...[
             const SizedBox(height: 6),
             Text(
               'هذا الحساب مسجّل كمشتري فقط.',
-              style: TextStyle(
-                fontSize: 12,
-                color: cs.outline,
-              ),
+              style: TextStyle(fontSize: 12, color: cs.outline),
             ),
           ],
         ],
@@ -370,13 +366,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         );
       });
 
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final bool isAdminRole = user.role == AppUserRole.admin;
     final bool isSellerRole = user.role == AppUserRole.seller;
+    final bool isWinchRole = user.role == AppUserRole.winch;
 
     final bool isAdmin = isAdminRole;
     final bool isSeller = isSellerRole && UserSession.isSellerNow;
@@ -384,8 +379,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final Widget mainTab = isAdmin
         ? const AdminProfileTab()
         : (isSeller
-        ? const SellerProfileTab()
-        : BuyerProfileTab(userId: user.id));
+              ? const SellerProfileTab()
+              : BuyerProfileTab(userId: user.id));
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -394,10 +389,10 @@ class _ProfileScreenState extends State<ProfileScreen>
           title: const Text('الملف الشخصي'),
           centerTitle: true,
           actions: [
-            if (UserStore().currentUser?.towCompanyId != null)
+            if (user.towCompanyId != null && isWinchRole)
               StreamBuilder<List<TowRequestDoc>>(
                 stream: towRequestsRepo.watchCompanyRequests(
-                  UserStore().currentUser!.towCompanyId!,
+                  user.towCompanyId!,
                 ),
                 builder: (_, snap) {
                   final list = snap.data ?? const <TowRequestDoc>[];
@@ -407,52 +402,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Future.microtask(() async {
                       for (final r in unseen) {
                         try {
-                          await towRequestsRepo
-                              .markCompanySeen(requestId: r.id);
+                          await towRequestsRepo.markCompanySeen(
+                            requestId: r.id,
+                          );
                         } catch (_) {}
                       }
                     });
                   }
 
-                  final unread =
-                      list.where((r) => !r.companySeen).length;
+                  final unread = list.where((r) => !r.companySeen).length;
 
                   return IconButton(
-                    tooltip: 'لوحة مزود الونش',
-                    icon: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.build_circle_outlined),
-                        if (unread > 0)
-                          Positioned(
-                            right: -4,
-                            top: -4,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  unread > 9 ? '9+' : '$unread',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                    tooltip: 'إدارة طلبات الونش (لوحة مقدم الخدمة)',
                     onPressed: () {
-                      final cid = UserStore().currentUser!.towCompanyId!;
+                      final cid = user.towCompanyId!;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -460,6 +423,48 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       );
                     },
+                    icon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(Icons.local_shipping_outlined),
+                            if (unread > 0)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      unread > 9 ? '9+' : '$unread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'طلبات الونش',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
@@ -479,13 +484,10 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {
-
-            final isLandscape =
-                constraints.maxWidth > constraints.maxHeight;
+            final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
             double tabHeight;
             if (isLandscape) {
-
               tabHeight = constraints.maxHeight - 16 - 190;
             } else {
               tabHeight = constraints.maxHeight - 16 - 160;
@@ -499,10 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 children: [
                   _roleBanner(context, user),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: tabHeight,
-                    child: mainTab,
-                  ),
+                  SizedBox(height: tabHeight, child: mainTab),
                 ],
               ),
             );

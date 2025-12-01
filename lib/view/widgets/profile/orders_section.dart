@@ -240,10 +240,22 @@ class _OrdersSectionState extends State<OrdersSection> {
         child: StreamBuilder<List<OrderDoc>>(
           stream: stream,
           builder: (context, snap) {
-            final rawList = snap.data ?? const <OrderDoc>[];
+            if (snap.connectionState == ConnectionState.waiting &&
+                !snap.hasData) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            final base = snap.data ?? const <OrderDoc>[];
+            final rawList = List<OrderDoc>.from(base);
 
             if (mode == OrdersSectionMode.buyer) {
               List<OrderDoc> list = rawList;
+
               if (_buyerStatusFilter != null) {
                 list = rawList
                     .where((o) => o.status == _buyerStatusFilter)

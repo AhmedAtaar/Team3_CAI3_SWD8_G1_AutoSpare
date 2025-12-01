@@ -64,10 +64,33 @@ class TowOperatorPanel extends StatelessWidget {
       child: AnimatedBuilder(
         animation: dir,
         builder: (_, __) {
-          final c = dir.all.firstWhere(
-            (x) => x.id == companyId,
-            orElse: () => throw Exception('Company not found: $companyId'),
-          );
+          final companies = dir.all;
+
+          if (companies.isEmpty) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final index = companies.indexWhere((x) => x.id == companyId);
+
+          if (index == -1) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('لوحة الونش')),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'تعذّر العثور على شركة الونش المرتبطة بهذا الحساب.\n'
+                    'قد تكون الشركة محذوفة أو لم يتم إعدادها بشكل صحيح.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final c = companies[index];
 
           return DefaultTabController(
             length: 2,
@@ -181,9 +204,7 @@ class TowOperatorPanel extends StatelessWidget {
                       child: StreamBuilder<List<TowRequestDoc>>(
                         stream: towRequestsRepo.watchCompanyRequests(c.id),
                         builder: (context, snap) {
-                          final raw = snap.data ?? const <TowRequestDoc>[];
-                          final all = List<TowRequestDoc>.from(raw);
-
+                          final all = snap.data ?? const <TowRequestDoc>[];
 
                           if (all.isNotEmpty) {
                             final unseen = all

@@ -127,7 +127,14 @@ class TowAccountsAdminTab extends StatelessWidget {
       child: StreamBuilder<List<AppUser>>(
         stream: usersRepo.watchWinchUsers(),
         builder: (context, snap) {
-          final towUsers = snap.data ?? const <AppUser>[];
+          if (snap.connectionState == ConnectionState.waiting &&
+              !snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final base = snap.data ?? const <AppUser>[];
+          final towUsers = List<AppUser>.from(base)
+            ..sort((a, b) => a.name.compareTo(b.name));
 
           if (towUsers.isEmpty) {
             return const Center(
