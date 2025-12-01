@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:auto_spare/model/product.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
-
+import 'package:auto_spare/view/widgets/navigation/global_bottom_nav.dart';
 import 'product_details_screen.dart';
 import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/core/app_fees.dart';
@@ -136,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
         ),
+        bottomNavigationBar: const GlobalBottomNav(currentIndex: 0),
       ),
     );
   }
