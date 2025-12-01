@@ -6,7 +6,6 @@ import 'package:auto_spare/view/screens/home_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_buttons.dart';
 import 'package:auto_spare/view/widgets/login_screen_widgets/custom_form_field.dart';
-import 'package:auto_spare/view/widgets/login_screen_widgets/custom_toggle_switch.dart';
 import 'package:flutter/material.dart';
 import 'sign_up_screen.dart';
 
@@ -20,7 +19,7 @@ class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _rememberMe = false;
+  // bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _isArabicSelected = true;
 
@@ -125,16 +124,17 @@ class LoginScreenState extends State<LoginScreen> {
                           color: AppColors.primaryGreen,
                         ),
                         child: Stack(
+                          // TODO: Add toggle switch for Localization
                           children: [
-                            Positioned(
-                              top: 40,
-                              left: 20,
-                              child: CustomToggleSwitch(
-                                isArabicSelected: _isArabicSelected,
-                                onChanged: (v) =>
-                                    setState(() => _isArabicSelected = v),
-                              ),
-                            ),
+                            // Positioned(
+                            //   top: 40,
+                            //   left: 20,
+                            //   child: CustomToggleSwitch(
+                            //     isArabicSelected: _isArabicSelected,
+                            //     onChanged: (v) =>
+                            //         setState(() => _isArabicSelected = v),
+                            //   ),
+                            // ),
                             Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -201,19 +201,18 @@ class LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-
-                              Row(
-                                children: [
-                                  Checkbox(
-                                    value: _rememberMe,
-                                    onChanged: (v) => setState(
-                                      () => _rememberMe = v ?? false,
-                                    ),
-                                  ),
-                                  const Text("تذكرني"),
-                                ],
-                              ),
-
+                              // TODO: Remember Me
+                              // Row(
+                              //   children: [
+                              //     Checkbox(
+                              //       value: _rememberMe,
+                              //       onChanged: (v) => setState(
+                              //         () => _rememberMe = v ?? false,
+                              //       ),
+                              //     ),
+                              //     const Text("تذكرني"),
+                              //   ],
+                              // ),
                               const SizedBox(height: 16),
                               CustomElevatedButton(
                                 text: "تسجيل الدخول",
@@ -237,12 +236,12 @@ class LoginScreenState extends State<LoginScreen> {
                               const OrDivider(),
                               const SizedBox(height: 16),
 
-                              CustomOutlinedButton(
-                                text: "الدخول باستخدام Google",
-                                onPressed: () {},
-                              ),
-                              const SizedBox(height: 12),
-
+                              // TODO: Google Sign In
+                              // CustomOutlinedButton(
+                              //   text: "الدخول باستخدام Google",
+                              //   onPressed: () {},
+                              // ),
+                              // const SizedBox(height: 12),
                               CustomOutlinedButton(
                                 text: "الدخول كزائر",
                                 onPressed: _continueAsGuest,
