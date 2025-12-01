@@ -18,6 +18,7 @@ The app supports four user roles:
 - Search by name, model, or product
 - Advanced filtering by price, date, and category
 - Full Arabic RTL support
+- **Upcoming**: English/Arabic Localization
 
 ---
 
@@ -26,7 +27,7 @@ The app supports four user roles:
 - Add to cart & checkout
 - Track the full order lifecycle
 - Rate sellers and products ⭐⭐⭐⭐⭐
-- Request tow truck service when needed
+- Request tow truck service if needed
 
 ---
 
@@ -36,7 +37,7 @@ The app supports four user roles:
 - Manage inventory
 - View and fulfill customer orders
 - Upload images and documents
-- Access product and seller reviews
+- Access product and buyer reviews
 
 ---
 
@@ -45,6 +46,7 @@ The app supports four user roles:
 - Approve/reject seller accounts
 - Approve/reject tow companies
 - Manage all system orders
+- View system profits
 - Track overall system activity
 
 ---
@@ -78,10 +80,10 @@ The app supports four user roles:
 - Firestore
 - Storage
 
-### 🔹 Local Mock Repository
 ### 🔹 Material Design 3
 ### 🔹 StreamBuilder / ChangeNotifier
 ### 🔹 Navigation 2.0
+### 🔹 Upcoming: EasyLocalization
 
 ---
 
@@ -156,7 +158,7 @@ Displayed on product pages and order details.
 ---
 
 ## 🤝 Team Members
-Team3_CAI3_SWD8_G1
+    **Team3_CAI3_SWD8_G1**
 1. Ahmed Tharwat Ahmed
 2. Ahmed Mostafa Almazon
 3. Ziad Mohamed Rafat
