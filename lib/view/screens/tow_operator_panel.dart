@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:auto_spare/services/tow_directory.dart';
 import 'package:auto_spare/services/tow_requests.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
+import 'package:auto_spare/core/tow_status_localized.dart';
 
 Future<void> _openGoogleMaps(
   BuildContext context, {
   required double lat,
   required double lng,
 }) async {
+  final loc = AppLocalizations.of(context);
+
   final uri = Uri.parse(
     'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
   );
@@ -15,7 +19,7 @@ Future<void> _openGoogleMaps(
   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('تعذّر فتح الخريطة')));
+    ).showSnackBar(SnackBar(content: Text(loc.towMapOpenErrorSnack)));
   }
 }
 
@@ -25,7 +29,6 @@ bool _isActiveStatus(TowRequestStatus s) {
     case TowRequestStatus.accepted:
     case TowRequestStatus.onTheWay:
       return true;
-
     case TowRequestStatus.completed:
     case TowRequestStatus.cancelled:
     case TowRequestStatus.rejected:
@@ -58,27 +61,50 @@ class TowOperatorPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dir = TowDirectory();
+    final loc = AppLocalizations.of(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AnimatedBuilder(
         animation: dir,
         builder: (_, __) {
-          final c = dir.all.firstWhere(
-            (x) => x.id == companyId,
-            orElse: () => throw Exception('Company not found: $companyId'),
-          );
+          final companies = dir.all;
+
+          if (companies.isEmpty) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          final index = companies.indexWhere((x) => x.id == companyId);
+
+          if (index == -1) {
+            return Scaffold(
+              appBar: AppBar(title: Text(loc.towOperatorAppBarTitle)),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    loc.towOperatorCompanyNotFoundMessage,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final c = companies[index];
 
           return DefaultTabController(
             length: 2,
             child: Scaffold(
               appBar: AppBar(
-                title: Text('لوحة ${c.name}'),
+                title: Text(loc.towOperatorAppBarTitleWithName(c.name)),
                 actions: [
                   IconButton(
                     tooltip: c.isOnline
-                        ? 'إيقاف استقبال الطلبات'
-                        : 'تفعيل استقبال الطلبات',
+                        ? loc.towOperatorToggleOnlineTooltipOn
+                        : loc.towOperatorToggleOnlineTooltipOff,
                     onPressed: () => dir.toggleOnline(c.id),
                     icon: Icon(
                       Icons.power_settings_new,
@@ -86,10 +112,10 @@ class TowOperatorPanel extends StatelessWidget {
                     ),
                   ),
                 ],
-                bottom: const TabBar(
+                bottom: TabBar(
                   tabs: [
-                    Tab(text: 'طلبات جارية'),
-                    Tab(text: 'منتهية'),
+                    Tab(text: loc.towOperatorTabActive),
+                    Tab(text: loc.towOperatorTabHistory),
                   ],
                 ),
               ),
@@ -118,7 +144,9 @@ class TowOperatorPanel extends StatelessWidget {
                           children: [
                             const SizedBox(height: 4),
                             Text(
-                              'الإحداثيات: (${c.lat.toStringAsFixed(5)}, ${c.lng.toStringAsFixed(5)})',
+                              '${loc.towOperatorCoordsPrefix} '
+                              '(${c.lat.toStringAsFixed(5)}, '
+                              '${c.lng.toStringAsFixed(5)})',
                               textAlign: TextAlign.right,
                               style: const TextStyle(fontSize: 12),
                             ),
@@ -138,8 +166,8 @@ class TowOperatorPanel extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   c.isOnline
-                                      ? 'متصل • يستقبل طلبات'
-                                      : 'غير متصل',
+                                      ? loc.towOperatorStatusOnlineLabel
+                                      : loc.towOperatorStatusOfflineLabel,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: c.isOnline
@@ -156,8 +184,8 @@ class TowOperatorPanel extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     SwitchListTile(
-                      title: const Text('متاح الآن (Online)'),
-                      subtitle: const Text('يمكن للعملاء رؤية شركتك والحجز'),
+                      title: Text(loc.towOperatorOnlineSwitchTitle),
+                      subtitle: Text(loc.towOperatorOnlineSwitchSubtitle),
                       value: c.isOnline,
                       onChanged: (v) => dir.setOnline(c.id, v),
                     ),
@@ -170,8 +198,8 @@ class TowOperatorPanel extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: Colors.amber),
                         ),
-                        child: const Text(
-                          'أنت خارج الخدمة حاليًا. فعّل الحالة لتظهر لعملائك القريبين.',
+                        child: Text(
+                          loc.towOperatorOfflineWarning,
                           textAlign: TextAlign.right,
                         ),
                       ),
@@ -181,9 +209,7 @@ class TowOperatorPanel extends StatelessWidget {
                       child: StreamBuilder<List<TowRequestDoc>>(
                         stream: towRequestsRepo.watchCompanyRequests(c.id),
                         builder: (context, snap) {
-                          final raw = snap.data ?? const <TowRequestDoc>[];
-                          final all = List<TowRequestDoc>.from(raw);
-
+                          final all = snap.data ?? const <TowRequestDoc>[];
 
                           if (all.isNotEmpty) {
                             final unseen = all
@@ -208,8 +234,11 @@ class TowOperatorPanel extends StatelessWidget {
                               .toList();
 
                           if (all.isEmpty) {
-                            return const Center(
-                              child: Text('لا توجد طلبات حتى الآن'),
+                            return Center(
+                              child: Text(
+                                loc.towOperatorNoRequestsYet,
+                                textAlign: TextAlign.center,
+                              ),
                             );
                           }
 
@@ -217,11 +246,11 @@ class TowOperatorPanel extends StatelessWidget {
                             children: [
                               _RequestsList(
                                 requests: active,
-                                emptyText: 'لا توجد طلبات جارية حاليًا',
+                                emptyText: loc.towOperatorActiveEmpty,
                               ),
                               _RequestsList(
                                 requests: history,
-                                emptyText: 'لا توجد طلبات منتهية حتى الآن',
+                                emptyText: loc.towOperatorHistoryEmpty,
                               ),
                             ],
                           );
@@ -234,7 +263,9 @@ class TowOperatorPanel extends StatelessWidget {
                       onPressed: () => dir.toggleOnline(c.id),
                       icon: const Icon(Icons.toggle_on),
                       label: Text(
-                        c.isOnline ? 'تحويل إلى غير متاح' : 'تحويل إلى متاح',
+                        c.isOnline
+                            ? loc.towOperatorToggleButtonToOffline
+                            : loc.towOperatorToggleButtonToOnline,
                       ),
                     ),
                   ],
@@ -256,6 +287,8 @@ class _RequestsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     if (requests.isEmpty) {
       return Center(child: Text(emptyText, textAlign: TextAlign.center));
     }
@@ -279,7 +312,9 @@ class _RequestsList extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      r.vehicle.isNotEmpty ? r.vehicle : 'مركبة بدون وصف',
+                      r.vehicle.isNotEmpty
+                          ? r.vehicle
+                          : loc.towOperatorRequestVehicleFallback,
                       textAlign: TextAlign.right,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
@@ -287,7 +322,8 @@ class _RequestsList extends StatelessWidget {
                   const SizedBox(width: 8),
                   Chip(
                     label: Text(
-                      towStatusAr(r.status) + (isNew ? ' • جديد' : ''),
+                      towStatusText(context, r.status) +
+                          (isNew ? loc.towOperatorRequestStatusNewSuffix : ''),
                       style: TextStyle(color: statusClr, fontSize: 12),
                     ),
                     backgroundColor: statusClr.withOpacity(0.08),
@@ -304,10 +340,16 @@ class _RequestsList extends StatelessWidget {
                 children: [
                   const SizedBox(height: 4),
                   Text(
-                    'من: (${r.fromLat.toStringAsFixed(4)}, ${r.fromLng.toStringAsFixed(4)})\n'
-                    'إلى: ${r.destLat != null ? '(${r.destLat!.toStringAsFixed(4)}, ${r.destLng!.toStringAsFixed(4)})' : 'غير محدد'}\n'
-                    'إجمالي الخدمة: ${r.totalCost.toStringAsFixed(0)} جنيه\n'
-                    'الهاتف: ${r.contactPhone}',
+                    '${loc.towOperatorRequestFromPrefix} '
+                    '(${r.fromLat.toStringAsFixed(4)}, '
+                    '${r.fromLng.toStringAsFixed(4)})\n'
+                    '${loc.towOperatorRequestToPrefix} '
+                    '${r.destLat != null ? '(${r.destLat!.toStringAsFixed(4)}, ${r.destLng!.toStringAsFixed(4)})' : loc.towOperatorRequestToUnknown}\n'
+                    '${loc.towOperatorRequestTotalPrefix} '
+                    '${r.totalCost.toStringAsFixed(0)} '
+                    '${loc.currencyEgp}\n'
+                    '${loc.towOperatorRequestPhonePrefix} '
+                    '${r.contactPhone}',
                     textAlign: TextAlign.right,
                   ),
                   const SizedBox(height: 6),
@@ -325,7 +367,7 @@ class _RequestsList extends StatelessWidget {
                           );
                         },
                         icon: const Icon(Icons.place_outlined, size: 16),
-                        label: const Text('موقع العميل'),
+                        label: Text(loc.towOperatorRequestClientLocationButton),
                       ),
                       if (r.destLat != null && r.destLng != null)
                         TextButton.icon(
@@ -337,7 +379,9 @@ class _RequestsList extends StatelessWidget {
                             );
                           },
                           icon: const Icon(Icons.flag_outlined, size: 16),
-                          label: const Text('مكان التسليم'),
+                          label: Text(
+                            loc.towOperatorRequestDestinationLocationButton,
+                          ),
                         ),
                     ],
                   ),
@@ -367,11 +411,23 @@ class _RequestsList extends StatelessWidget {
                     next: next,
                   );
                 },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'accept', child: Text('قبول الطلب')),
-                  PopupMenuItem(value: 'onway', child: Text('في الطريق')),
-                  PopupMenuItem(value: 'done', child: Text('تمت الخدمة')),
-                  PopupMenuItem(value: 'cancel', child: Text('إلغاء')),
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'accept',
+                    child: Text(loc.towOperatorMenuAccept),
+                  ),
+                  PopupMenuItem(
+                    value: 'onway',
+                    child: Text(loc.towOperatorMenuOnWay),
+                  ),
+                  PopupMenuItem(
+                    value: 'done',
+                    child: Text(loc.towOperatorMenuDone),
+                  ),
+                  PopupMenuItem(
+                    value: 'cancel',
+                    child: Text(loc.towOperatorMenuCancel),
+                  ),
                 ],
                 child: const Icon(Icons.more_vert),
               ),

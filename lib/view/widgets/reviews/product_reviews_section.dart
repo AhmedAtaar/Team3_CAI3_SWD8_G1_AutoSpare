@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:auto_spare/services/reviews.dart';
 import 'package:auto_spare/model/review.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class ProductReviewsSection extends StatelessWidget {
   final String productId;
@@ -17,6 +18,7 @@ class ProductReviewsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final df = DateFormat('yyyy/MM/dd – HH:mm');
+    final loc = AppLocalizations.of(context);
 
     final prodSummary$ = reviewsRepo.watchProductSummary(productId);
     final sellerSummary$ = reviewsRepo.watchSellerSummary(sellerId);
@@ -88,7 +90,7 @@ class ProductReviewsSection extends StatelessWidget {
               children: [
                 const Icon(Icons.rate_review_outlined),
                 const SizedBox(width: 8),
-                const Text('التقييمات'),
+                Text(loc.productReviewsTitle),
                 const Spacer(),
                 StreamBuilder<({double avg, int count})>(
                   stream: prodSummary$,
@@ -119,10 +121,10 @@ class ProductReviewsSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
-                    children: const [
-                      Icon(Icons.inventory_2_outlined),
-                      SizedBox(width: 6),
-                      Text('مراجعات المنتج'),
+                    children: [
+                      const Icon(Icons.inventory_2_outlined),
+                      const SizedBox(width: 6),
+                      Text(loc.productReviewsProductTitle),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -131,10 +133,10 @@ class ProductReviewsSection extends StatelessWidget {
                     builder: (_, snap) {
                       final list = snap.data ?? const <ProductReview>[];
                       if (list.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
-                            'لا توجد مراجعات للمنتج بعد',
+                            loc.productReviewsNoProductReviewsMessage,
                             textAlign: TextAlign.right,
                           ),
                         );
@@ -147,7 +149,8 @@ class ProductReviewsSection extends StatelessWidget {
                         itemBuilder: (_, i) {
                           final r = list[i];
                           return reviewTile(
-                            titleRight: 'المشتري: ${r.buyerId}',
+                            titleRight:
+                                '${loc.productReviewsBuyerPrefix} ${r.buyerId}',
                             starsCount: r.stars,
                             text: r.text,
                             createdAt: r.createdAt,
@@ -173,10 +176,10 @@ class ProductReviewsSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Row(
-                    children: const [
-                      Icon(Icons.storefront),
-                      SizedBox(width: 6),
-                      Text('مراجعات البائع'),
+                    children: [
+                      const Icon(Icons.storefront),
+                      const SizedBox(width: 6),
+                      Text(loc.productReviewsSellerTitle),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -185,10 +188,10 @@ class ProductReviewsSection extends StatelessWidget {
                     builder: (_, snap) {
                       final list = snap.data ?? const <SellerReview>[];
                       if (list.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8.0),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
-                            'لا توجد مراجعات للبائع بعد',
+                            loc.productReviewsNoSellerReviewsMessage,
                             textAlign: TextAlign.right,
                           ),
                         );
@@ -201,7 +204,8 @@ class ProductReviewsSection extends StatelessWidget {
                         itemBuilder: (_, i) {
                           final r = list[i];
                           return reviewTile(
-                            titleRight: 'المشتري: ${r.buyerId}',
+                            titleRight:
+                                '${loc.productReviewsBuyerPrefix} ${r.buyerId}',
                             starsCount: r.stars,
                             text: r.text,
                             createdAt: r.createdAt,

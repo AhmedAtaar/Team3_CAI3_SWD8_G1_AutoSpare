@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import 'package:auto_spare/view/screens/home_screen.dart';
@@ -7,6 +8,7 @@ import 'package:auto_spare/view/screens/cart_screen.dart';
 import 'package:auto_spare/view/screens/profile_screen.dart';
 
 import 'package:auto_spare/services/cart_service.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AppNavigationScaffold extends StatelessWidget {
   final int currentIndex;
@@ -22,8 +24,10 @@ class AppNavigationScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(title: Text(title), centerTitle: true),
         body: body,
@@ -40,6 +44,7 @@ class GlobalBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = CartService();
+    final loc = AppLocalizations.of(context);
 
     return AnimatedBuilder(
       animation: cart,
@@ -52,12 +57,12 @@ class GlobalBottomNav extends StatelessWidget {
           );
 
           if (cartCount <= 0) {
-            return NavigationDestination(icon: icon, label: 'السلة');
+            return NavigationDestination(icon: icon, label: loc.bottomNavCart);
           }
 
           return NavigationDestination(
             icon: Badge(label: Text('$cartCount'), child: icon),
-            label: 'السلة',
+            label: loc.bottomNavCart,
           );
         }
 
@@ -68,26 +73,26 @@ class GlobalBottomNav extends StatelessWidget {
             goToIndex(context, i);
           },
           destinations: [
-            const NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'الرئيسية',
+            NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: loc.bottomNavHome,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view),
-              label: 'التصنيفات',
+            NavigationDestination(
+              icon: const Icon(Icons.grid_view_outlined),
+              selectedIcon: const Icon(Icons.grid_view),
+              label: loc.bottomNavCategories,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.local_shipping_outlined),
-              selectedIcon: Icon(Icons.local_shipping),
-              label: 'الونش',
+            NavigationDestination(
+              icon: const Icon(Icons.local_shipping_outlined),
+              selectedIcon: const Icon(Icons.local_shipping),
+              label: loc.bottomNavTow,
             ),
             _cartDestination(selected: currentIndex == 3),
-            const NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: 'حسابي',
+            NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: loc.bottomNavAccount,
             ),
           ],
         );

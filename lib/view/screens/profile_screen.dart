@@ -16,6 +16,7 @@ import 'package:auto_spare/services/tow_requests.dart';
 import 'admin_profile_tab.dart';
 import 'seller_profile_tab.dart';
 import 'buyer_profile_tab.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -34,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       case AppUserRole.seller:
         return UserRole.seller;
       case AppUserRole.buyer:
+      case AppUserRole.winch:
       default:
         return UserRole.buyer;
     }
@@ -62,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
   }
 
-  void _logout() {
+  void _logout(AppLocalizations loc) {
     UserStore().currentUser = null;
     UserSession.signOut();
 
@@ -70,65 +72,18 @@ class _ProfileScreenState extends State<ProfileScreen>
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (_) => false,
+      (_) => false,
     );
   }
 
   void _login() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
-  Widget _buildProfileIcon(int badgeCount, {required bool selected}) {
-    final baseIcon = Icon(
-      selected ? Icons.person : Icons.person_outline,
-    );
-
-    if (badgeCount <= 0) {
-      return baseIcon;
-    }
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        baseIcon,
-        Positioned(
-          right: -4,
-          top: -4,
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            constraints: const BoxConstraints(
-              minWidth: 16,
-              minHeight: 16,
-            ),
-            child: Center(
-              child: Text(
-                badgeCount > 9 ? '9+' : '$badgeCount',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _profileIconWithBadge({
-    required int count,
-    required bool selected,
-  }) {
-    final baseIcon = Icon(
-      selected ? Icons.person : Icons.person_outline,
-    );
+  Widget _profileIconWithBadge({required int count, required bool selected}) {
+    final baseIcon = Icon(selected ? Icons.person : Icons.person_outline);
 
     if (count <= 0) return baseIcon;
 
@@ -136,21 +91,13 @@ class _ProfileScreenState extends State<ProfileScreen>
       clipBehavior: Clip.none,
       children: [
         baseIcon,
-        Positioned(
-          right: -4,
-          top: -4,
-          child: const _AnimatedBadge(count: 0),
-        ),
-        Positioned(
-          right: -4,
-          top: -4,
-          child: _AnimatedBadge(count: count),
-        ),
+        const Positioned(right: -4, top: -4, child: _AnimatedBadge(count: 0)),
+        Positioned(right: -4, top: -4, child: _AnimatedBadge(count: count)),
       ],
     );
   }
 
-  Widget _buildBottomBar(int badgeCount) {
+  Widget _buildBottomBar(int badgeCount, AppLocalizations loc) {
     return NavigationBar(
       selectedIndex: _bottomIndex,
       onDestinationSelected: (i) {
@@ -175,75 +122,96 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
       },
       destinations: [
-        const NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'الرئيسية',
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.grid_view_outlined),
-          selectedIcon: Icon(Icons.grid_view),
-          label: 'التصنيفات',
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.local_shipping_outlined),
-          selectedIcon: Icon(Icons.local_shipping),
-          label: 'الونش',
-        ),
-        const NavigationDestination(
-          icon: Icon(Icons.shopping_cart_outlined),
-          selectedIcon: Icon(Icons.shopping_cart),
-          label: 'السلة',
+        NavigationDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: loc.nav_home,
         ),
         NavigationDestination(
-          icon: _profileIconWithBadge(
-            count: badgeCount,
-            selected: false,
-          ),
+          icon: const Icon(Icons.grid_view_outlined),
+          selectedIcon: const Icon(Icons.grid_view),
+          label: loc.nav_categories,
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.local_shipping_outlined),
+          selectedIcon: const Icon(Icons.local_shipping),
+          label: loc.nav_tow,
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.shopping_cart_outlined),
+          selectedIcon: const Icon(Icons.shopping_cart),
+          label: loc.nav_cart,
+        ),
+        NavigationDestination(
+          icon: _profileIconWithBadge(count: badgeCount, selected: false),
           selectedIcon: _profileIconWithBadge(
             count: badgeCount,
             selected: true,
           ),
-          label: 'حسابي',
+          label: loc.nav_profile,
         ),
       ],
     );
   }
 
-  String _accountRoleLabel(UserRole? r) {
+  String _accountRoleLabel(
+    AppLocalizations loc,
+    UserRole? r,
+    AppUserRole dbRole,
+  ) {
+    if (dbRole == AppUserRole.winch) {
+      return loc.profile_role_label_winch;
+    }
+
     switch (r) {
       case UserRole.admin:
-        return 'أدمن (مراجعة فقط)';
+        return loc.profile_role_label_admin;
       case UserRole.seller:
-        return 'بائع';
+        return loc.profile_role_label_seller;
       case UserRole.buyer:
-        return 'مشتري';
+        return loc.profile_role_label_buyer;
       default:
-        return 'غير معروف';
+        return loc.profile_role_label_unknown;
     }
   }
 
-  Widget _roleBanner(BuildContext context, AppUser user) {
+  Widget _roleBanner(BuildContext context, AppUser user, AppLocalizations loc) {
     final cs = Theme.of(context).colorScheme;
 
     final bool isAdminAccount = user.role == AppUserRole.admin;
     final bool isSellerAccount = user.role == AppUserRole.seller;
+    final bool isWinchAccount = user.role == AppUserRole.winch;
 
-    final bool isSellerNow =
-        isSellerAccount && UserSession.isSellerNow;
+    final bool isSellerNow = isSellerAccount && UserSession.isSellerNow;
 
     final bool canSwitchToBuyer =
         isSellerAccount && UserSession.canSwitchToBuyer;
     final bool canSwitchToSeller =
         isSellerAccount && UserSession.canSwitchToSeller;
 
-    final accountRole = _accountRoleLabel(UserSession.authRole);
+    final accountRole = _accountRoleLabel(loc, UserSession.authRole, user.role);
     final name = UserSession.username ?? 'User';
 
     final bool isPureBuyer =
         !isAdminAccount &&
-            !isSellerAccount &&
-            UserSession.authRole == UserRole.buyer;
+        !isSellerAccount &&
+        !isWinchAccount &&
+        UserSession.authRole == UserRole.buyer;
+
+    late final String modeText;
+    late final IconData modeIcon;
+
+    if (isAdminAccount) {
+      modeText = loc.profile_mode_admin_label;
+      modeIcon = Icons.admin_panel_settings_outlined;
+    } else if (isWinchAccount) {
+      modeText = loc.profile_mode_winch_label;
+      modeIcon = Icons.local_shipping_outlined;
+    } else {
+      modeText =
+          '${loc.profile_mode_prefix} ${isSellerNow ? loc.profile_mode_seller_label : loc.profile_mode_buyer_label}';
+      modeIcon = isSellerNow ? Icons.storefront : Icons.shopping_bag_outlined;
+    }
 
     return Container(
       width: double.infinity,
@@ -262,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'مرحباً $name',
+                  '${loc.profile_greeting_prefix} $name',
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
@@ -279,29 +247,20 @@ class _ProfileScreenState extends State<ProfileScreen>
               spacing: 8,
               runSpacing: 8,
               children: [
+                Chip(label: Text(modeText), avatar: Icon(modeIcon)),
                 Chip(
                   label: Text(
-                    isAdminAccount
-                        ? 'لوحة إدارة'
-                        : 'الوضع: ${isSellerNow ? 'بائع' : 'مشتري'}',
+                    '${loc.profile_role_chip_label_prefix} $accountRole',
                   ),
-                  avatar: Icon(
-                    isAdminAccount
-                        ? Icons.admin_panel_settings_outlined
-                        : (isSellerNow
-                        ? Icons.storefront
-                        : Icons.shopping_bag_outlined),
-                  ),
-                ),
-                Chip(
-                  label: Text('دور الحساب: $accountRole'),
                   avatar: const Icon(Icons.verified_user_outlined),
                 ),
               ],
             ),
           ),
+
           if (!isAdminAccount &&
               isSellerAccount &&
+              !isWinchAccount &&
               (canSwitchToBuyer || canSwitchToSeller)) ...[
             const SizedBox(height: 8),
             Row(
@@ -313,13 +272,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                         UserSession.switchToBuyer();
                         setState(() {});
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم التبديل إلى وضع مشتري'),
+                          SnackBar(
+                            content: Text(
+                              loc.profile_switched_to_buyer_message,
+                            ),
                           ),
                         );
                       },
                       icon: const Icon(Icons.swap_horiz),
-                      label: const Text('التبديل إلى مشتري'),
+                      label: Text(loc.profile_switch_to_buyer_button),
                     ),
                   ),
                 if (canSwitchToBuyer && canSwitchToSeller)
@@ -331,26 +292,35 @@ class _ProfileScreenState extends State<ProfileScreen>
                         UserSession.switchToSeller();
                         setState(() {});
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم الرجوع إلى وضع بائع'),
+                          SnackBar(
+                            content: Text(
+                              loc.profile_switched_to_seller_message,
+                            ),
                           ),
                         );
                       },
                       icon: const Icon(Icons.storefront),
-                      label: const Text('الرجوع إلى بائع'),
+                      label: Text(loc.profile_switch_to_seller_button),
                     ),
                   ),
               ],
             ),
           ],
+
+          if (isWinchAccount) ...[
+            const SizedBox(height: 6),
+            Text(
+              loc.profile_winch_hint_text,
+              style: TextStyle(fontSize: 12, color: cs.outline),
+              textAlign: TextAlign.right,
+            ),
+          ],
+
           if (isPureBuyer) ...[
             const SizedBox(height: 6),
             Text(
-              'هذا الحساب مسجّل كمشتري فقط.',
-              style: TextStyle(
-                fontSize: 12,
-                color: cs.outline,
-              ),
+              loc.profile_pure_buyer_hint_text,
+              style: TextStyle(fontSize: 12, color: cs.outline),
             ),
           ],
         ],
@@ -360,6 +330,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final userStore = UserStore();
     final user = userStore.currentUser;
 
@@ -370,13 +343,12 @@ class _ProfileScreenState extends State<ProfileScreen>
         );
       });
 
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final bool isAdminRole = user.role == AppUserRole.admin;
     final bool isSellerRole = user.role == AppUserRole.seller;
+    final bool isWinchRole = user.role == AppUserRole.winch;
 
     final bool isAdmin = isAdminRole;
     final bool isSeller = isSellerRole && UserSession.isSellerNow;
@@ -384,20 +356,20 @@ class _ProfileScreenState extends State<ProfileScreen>
     final Widget mainTab = isAdmin
         ? const AdminProfileTab()
         : (isSeller
-        ? const SellerProfileTab()
-        : BuyerProfileTab(userId: user.id));
+              ? const SellerProfileTab()
+              : BuyerProfileTab(userId: user.id));
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('الملف الشخصي'),
+          title: Text(loc.profile_app_bar_title),
           centerTitle: true,
           actions: [
-            if (UserStore().currentUser?.towCompanyId != null)
+            if (user.towCompanyId != null && isWinchRole)
               StreamBuilder<List<TowRequestDoc>>(
                 stream: towRequestsRepo.watchCompanyRequests(
-                  UserStore().currentUser!.towCompanyId!,
+                  user.towCompanyId!,
                 ),
                 builder: (_, snap) {
                   final list = snap.data ?? const <TowRequestDoc>[];
@@ -407,52 +379,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Future.microtask(() async {
                       for (final r in unseen) {
                         try {
-                          await towRequestsRepo
-                              .markCompanySeen(requestId: r.id);
+                          await towRequestsRepo.markCompanySeen(
+                            requestId: r.id,
+                          );
                         } catch (_) {}
                       }
                     });
                   }
 
-                  final unread =
-                      list.where((r) => !r.companySeen).length;
+                  final unread = list.where((r) => !r.companySeen).length;
 
                   return IconButton(
-                    tooltip: 'لوحة مزود الونش',
-                    icon: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.build_circle_outlined),
-                        if (unread > 0)
-                          Positioned(
-                            right: -4,
-                            top: -4,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  unread > 9 ? '9+' : '$unread',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
+                    tooltip: loc.profile_winch_requests_button_tooltip,
                     onPressed: () {
-                      final cid = UserStore().currentUser!.towCompanyId!;
+                      final cid = user.towCompanyId!;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -460,18 +400,60 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                       );
                     },
+                    icon: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(Icons.local_shipping_outlined),
+                            if (unread > 0)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      unread > 9 ? '9+' : '$unread',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          loc.profile_winch_requests_button_label,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
             if (UserSession.loggedIn)
               IconButton(
-                tooltip: 'تسجيل الخروج',
+                tooltip: loc.profile_logout_tooltip,
                 icon: const Icon(Icons.logout),
-                onPressed: _logout,
+                onPressed: () => _logout(loc),
               )
             else
               IconButton(
-                tooltip: 'تسجيل الدخول',
+                tooltip: loc.profile_login_tooltip,
                 icon: const Icon(Icons.login),
                 onPressed: _login,
               ),
@@ -479,13 +461,10 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {
-
-            final isLandscape =
-                constraints.maxWidth > constraints.maxHeight;
+            final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
             double tabHeight;
             if (isLandscape) {
-
               tabHeight = constraints.maxHeight - 16 - 190;
             } else {
               tabHeight = constraints.maxHeight - 16 - 160;
@@ -497,12 +476,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _roleBanner(context, user),
+                  _roleBanner(context, user, loc),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: tabHeight,
-                    child: mainTab,
-                  ),
+                  SizedBox(height: tabHeight, child: mainTab),
                 ],
               ),
             );
@@ -512,7 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           stream: towNotificationCountStreamForCurrentUser(),
           builder: (_, snap) {
             final count = snap.data ?? 0;
-            return _buildBottomBar(count);
+            return _buildBottomBar(count, loc);
           },
         ),
       ),

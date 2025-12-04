@@ -7,6 +7,7 @@ import 'package:auto_spare/view/screens/cart_screen.dart';
 import 'package:auto_spare/view/screens/profile_screen.dart';
 
 import 'package:auto_spare/services/tow_badge_stream.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class _AnimatedBadge extends StatelessWidget {
   final int count;
@@ -64,6 +65,8 @@ class GlobalBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return StreamBuilder<int>(
       stream: towNotificationCountStreamForCurrentUser(),
       builder: (_, snap) {
@@ -100,30 +103,30 @@ class GlobalBottomNav extends StatelessWidget {
             );
           },
           destinations: [
-            const NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'الرئيسية',
+            NavigationDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: loc.bottomNavHome,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view),
-              label: 'التصنيفات',
+            NavigationDestination(
+              icon: const Icon(Icons.grid_view_outlined),
+              selectedIcon: const Icon(Icons.grid_view),
+              label: loc.bottomNavCategories,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.local_shipping_outlined),
-              selectedIcon: Icon(Icons.local_shipping),
-              label: 'الونش',
+            NavigationDestination(
+              icon: const Icon(Icons.local_shipping_outlined),
+              selectedIcon: const Icon(Icons.local_shipping),
+              label: loc.bottomNavTow,
             ),
-            const NavigationDestination(
-              icon: Icon(Icons.shopping_cart_outlined),
-              selectedIcon: Icon(Icons.shopping_cart),
-              label: 'السلة',
+            NavigationDestination(
+              icon: const Icon(Icons.shopping_cart_outlined),
+              selectedIcon: const Icon(Icons.shopping_cart),
+              label: loc.bottomNavCart,
             ),
             NavigationDestination(
               icon: profileIconWithBadge(count: count, selected: false),
               selectedIcon: profileIconWithBadge(count: count, selected: true),
-              label: 'حسابي',
+              label: loc.bottomNavAccount,
             ),
           ],
         );

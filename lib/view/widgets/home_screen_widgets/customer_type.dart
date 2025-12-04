@@ -15,12 +15,15 @@ class SegmentButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     final bg = selected
         ? theme.colorScheme.primary
-        : theme.colorScheme.surfaceVariant.withOpacity(.35);
+        : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35);
+
     final border = selected
         ? theme.colorScheme.primary
         : theme.colorScheme.outlineVariant;
+
     final fg = selected
         ? theme.colorScheme.onPrimary
         : theme.colorScheme.onSurface;

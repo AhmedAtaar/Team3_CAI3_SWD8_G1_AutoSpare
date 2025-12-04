@@ -1,6 +1,7 @@
 import 'package:auto_spare/services/cart_service.dart';
 import 'package:flutter/material.dart';
 import '../../themes/app_colors.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class CartItemCard extends StatelessWidget {
   final CartItem item;
@@ -18,6 +19,7 @@ class CartItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = theme.colorScheme.outlineVariant;
+    final loc = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -85,7 +87,7 @@ class CartItemCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${item.price.toStringAsFixed(2)} جنيه',
+                        '${item.price.toStringAsFixed(2)} ${loc.currencyEgp}',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.primaryGreen,
@@ -97,7 +99,7 @@ class CartItemCard extends StatelessWidget {
                 IconButton(
                   onPressed: onRemove,
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: 'حذف العنصر',
+                  tooltip: loc.cartItemDeleteTooltip,
                 ),
               ],
             ),

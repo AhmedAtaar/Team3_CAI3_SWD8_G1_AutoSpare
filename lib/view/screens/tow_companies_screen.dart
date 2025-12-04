@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:auto_spare/services/tow_directory.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 double _distanceKm({
   required double fromLat,
@@ -24,6 +25,7 @@ class TowCompaniesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dir = TowDirectory();
+    final loc = AppLocalizations.of(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -51,11 +53,11 @@ class TowCompaniesScreen extends StatelessWidget {
 
           return Scaffold(
             appBar: AppBar(
-              title: const Text('شركات السحب القريبة'),
+              title: Text(loc.towCompaniesAppBarTitle),
               centerTitle: true,
             ),
             body: sorted.isEmpty
-                ? const Center(child: Text('لا توجد شركات متاحة حالياً'))
+                ? Center(child: Text(loc.towCompaniesEmptyMessage))
                 : ListView.separated(
                     padding: const EdgeInsets.all(12),
                     itemCount: sorted.length,
@@ -74,7 +76,6 @@ class TowCompaniesScreen extends StatelessWidget {
                           title: Row(
                             children: [
                               Expanded(child: Text('${c.name} • ${c.area}')),
-
                               Chip(
                                 avatar: Icon(
                                   c.isOnline
@@ -85,14 +86,26 @@ class TowCompaniesScreen extends StatelessWidget {
                                       ? Colors.green
                                       : Colors.grey,
                                 ),
-                                label: Text(c.isOnline ? 'متاح' : 'غير متاح'),
+                                label: Text(
+                                  c.isOnline
+                                      ? loc.towCompaniesStatusAvailable
+                                      : loc.towCompaniesStatusUnavailable,
+                                ),
                               ),
                             ],
                           ),
                           subtitle: Text(
-                            'المسافة التقريبية: ${d.toStringAsFixed(1)} كم\n'
-                            'سعر الخدمة: ${c.baseCost.toStringAsFixed(0)} جنيه • سعر الكيلو: ${c.pricePerKm.toStringAsFixed(0)} جنيه\n'
-                            '(${c.lat.toStringAsFixed(5)}, ${c.lng.toStringAsFixed(5)})',
+                            '${loc.towCompaniesDistancePrefix} '
+                            '${d.toStringAsFixed(1)} ${loc.towCompaniesKmSuffix}\n'
+                            '${loc.towCompaniesBaseCostPrefix} '
+                            '${c.baseCost.toStringAsFixed(0)} '
+                            '${loc.currencyEgp} • '
+                            '${loc.towCompaniesPricePerKmPrefix} '
+                            '${c.pricePerKm.toStringAsFixed(0)} '
+                            '${loc.currencyEgp}\n'
+                            '${loc.towCompaniesCoordsPrefix} '
+                            '(${c.lat.toStringAsFixed(5)}, '
+                            '${c.lng.toStringAsFixed(5)})',
                           ),
                           trailing: const Icon(Icons.chevron_left),
                           onTap: () => Navigator.pop(context, c),

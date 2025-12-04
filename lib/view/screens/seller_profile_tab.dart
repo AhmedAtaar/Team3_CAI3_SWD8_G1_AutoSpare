@@ -8,6 +8,7 @@ import 'package:auto_spare/view/screens/seller_orders_screen.dart';
 import 'package:auto_spare/core/app_fees.dart';
 import 'package:auto_spare/view/screens/seller_coupons_screen.dart';
 import 'package:auto_spare/view/screens/seller_dashboard_screen.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class SellerProfileTab extends StatefulWidget {
   const SellerProfileTab({super.key});
@@ -18,6 +19,8 @@ class SellerProfileTab extends StatefulWidget {
 
 class _SellerProfileTabState extends State<SellerProfileTab> {
   Future<void> _openNewProductSheet() async {
+    final loc = AppLocalizations.of(context);
+
     final formKey = GlobalKey<FormState>();
     final titleCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
@@ -50,9 +53,9 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'إضافة منتج جديد',
-                          style: TextStyle(
+                        Text(
+                          loc.sellerProfileNewProductSheetTitle,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
@@ -60,28 +63,30 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: titleCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'اسم المنتج (مثال: فانوس أمامي)',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductTitleLabel,
+                            border: const OutlineInputBorder(),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? loc.sellerProfileFieldRequiredError
+                              : null,
                         ),
                         const SizedBox(height: 10),
                         TextFormField(
                           controller: priceCtrl,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'السعر',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductPriceLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           validator: (v) {
                             if (v == null || v.trim().isEmpty) {
-                              return 'مطلوب';
+                              return loc.sellerProfileFieldRequiredError;
                             }
                             final d = double.tryParse(v);
                             if (d == null || d <= 0) {
-                              return 'سعر غير صالح';
+                              return loc
+                                  .sellerProfileNewProductPriceInvalidError;
                             }
                             return null;
                           },
@@ -90,20 +95,20 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         TextFormField(
                           controller: descCtrl,
                           maxLines: 3,
-                          decoration: const InputDecoration(
-                            labelText:
-                                'الوصف (مثال: يصلح لأعوام 2023-2025 نفس الشكل)',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductDescLabel,
+                            border: const OutlineInputBorder(),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? loc.sellerProfileFieldRequiredError
+                              : null,
                         ),
                         const SizedBox(height: 10),
                         DropdownButtonFormField<CarBrand>(
                           value: brand,
-                          decoration: const InputDecoration(
-                            labelText: 'البراند',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductBrandLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           items: CarBrand.values
                               .map(
@@ -124,9 +129,9 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         const SizedBox(height: 10),
                         DropdownButtonFormField<String>(
                           value: model,
-                          decoration: const InputDecoration(
-                            labelText: 'الموديل',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductModelLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           items: kModelsByBrand[brand]!
                               .map(
@@ -139,8 +144,8 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                           onChanged: (m) => setSheet(() => model = m ?? model),
                         ),
                         const SizedBox(height: 10),
-                        const Text(
-                          'السنوات المناسبة',
+                        Text(
+                          loc.sellerProfileNewProductYearsLabel,
                           textDirection: TextDirection.rtl,
                         ),
                         const SizedBox(height: 6),
@@ -167,14 +172,15 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         TextFormField(
                           controller: stockCtrl,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'المخزون المتاح',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductStockLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           validator: (v) {
                             final n = int.tryParse(v ?? '');
                             if (n == null || n < 0) {
-                              return 'قيمة غير صالحة';
+                              return loc
+                                  .sellerProfileNewProductStockInvalidError;
                             }
                             return null;
                           },
@@ -182,10 +188,10 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         const SizedBox(height: 10),
                         TextFormField(
                           controller: imageCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'رابط الصورة (اختياري)',
-                            hintText: 'https://...',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: loc.sellerProfileNewProductImageLabel,
+                            hintText: loc.sellerProfileNewProductImageHint,
+                            border: const OutlineInputBorder(),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -196,8 +202,10 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                             }
                             if (selectedYears.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('اختر سنة واحدة على الأقل'),
+                                SnackBar(
+                                  content: Text(
+                                    loc.sellerProfileNewProductSelectYearSnack,
+                                  ),
                                 ),
                               );
                               return;
@@ -230,27 +238,31 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                               if (!mounted) return;
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('تم إرسال المنتج للمراجعة'),
+                                SnackBar(
+                                  content: Text(
+                                    loc.sellerProfileNewProductSubmittedSnack,
+                                  ),
                                 ),
                               );
                             } catch (e) {
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('حصل خطأ أثناء حفظ المنتج: $e'),
+                                  content: Text(
+                                    '${loc.sellerProfileNewProductSaveErrorPrefix} $e',
+                                  ),
                                 ),
                               );
                             }
                           },
                           icon: const Icon(Icons.upload_file),
-                          label: const Text('إرسال للمراجعة'),
+                          label: Text(loc.sellerProfileNewProductSubmitButton),
                         ),
                         const SizedBox(height: 8),
                         const Divider(),
                         const SizedBox(height: 8),
                         Text(
-                          'معلومة هامة:',
+                          loc.sellerProfileNewProductInfoTitle,
                           textDirection: TextDirection.rtl,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
@@ -259,9 +271,9 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'السعر الذي تقوم بإدخاله هنا هو سعر البائع قبل عمولة التطبيق.\n'
-                          'سيتم إضافة عمولة للتطبيق بنسبة '
-                          '${(kAppFeePercent * 100).toStringAsFixed(0)}% تلقائياً عند عرض المنتج للمشتري وفي السلة.',
+                          loc.sellerProfileNewProductInfoBody(
+                            (kAppFeePercent * 100).toStringAsFixed(0),
+                          ),
                           textDirection: TextDirection.rtl,
                           style: const TextStyle(fontSize: 12),
                         ),
@@ -278,12 +290,14 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
   }
 
   Widget _sellerList(List<CatalogProduct> list) {
+    final loc = AppLocalizations.of(context);
+
     if (list.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Text(
-            'لا توجد منتجات في هذا التبويب حالياً',
+            loc.sellerProfileNoProductsInTabMessage,
             textAlign: TextAlign.center,
           ),
         ),
@@ -295,6 +309,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final p = list[i];
+        final cs = Theme.of(context).colorScheme;
         return Card(
           child: ListTile(
             leading: CircleAvatar(
@@ -305,22 +320,27 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'الماركة: ${kBrandName[p.brand]} • الموديل: ${p.model}',
+                  '${loc.sellerProfileProductBrandPrefix} '
+                  '${kBrandName[p.brand]} • '
+                  '${loc.sellerProfileProductModelPrefix} ${p.model}',
                   textAlign: TextAlign.right,
                 ),
                 Text(
-                  'السعر: ${p.price.toStringAsFixed(2)} جنيه • المخزون: ${p.stock}',
+                  '${loc.sellerProfileProductPricePrefix} '
+                  '${p.price.toStringAsFixed(2)} ${loc.currencyEgp} • '
+                  '${loc.sellerProfileProductStockPrefix} ${p.stock}',
                   textAlign: TextAlign.right,
                 ),
               ],
             ),
             trailing: Chip(
+              backgroundColor: cs.surfaceVariant,
               label: Text(
                 p.status == ProductStatus.approved
-                    ? 'مقبول'
+                    ? loc.sellerProfileProductStatusApprovedLabel
                     : (p.status == ProductStatus.pending
-                          ? 'قيد المراجعة'
-                          : 'مرفوض'),
+                          ? loc.sellerProfileProductStatusPendingLabel
+                          : loc.sellerProfileProductStatusRejectedLabel),
               ),
             ),
           ),
@@ -333,6 +353,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final loc = AppLocalizations.of(context);
 
     final sellerId = UserSession.username ?? 'Seller';
 
@@ -350,7 +371,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
             FilledButton.icon(
               onPressed: _openNewProductSheet,
               icon: const Icon(Icons.add),
-              label: const Text('إضافة منتج'),
+              label: Text(loc.sellerProfileAddProductButton),
             ),
           ],
         ),
@@ -366,13 +387,13 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
               ),
               child: Column(
                 children: [
-                  const TabBar(
+                  TabBar(
                     isScrollable: true,
-                    labelStyle: TextStyle(fontSize: 12),
+                    labelStyle: const TextStyle(fontSize: 12),
                     tabs: [
-                      Tab(text: 'قيد المراجعة'),
-                      Tab(text: 'المقبولة'),
-                      Tab(text: 'المرفوضة'),
+                      Tab(text: loc.sellerProfileTabPending),
+                      Tab(text: loc.sellerProfileTabApproved),
+                      Tab(text: loc.sellerProfileTabRejected),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -388,9 +409,9 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                         }
 
                         if (snap.hasError) {
-                          return const Center(
+                          return Center(
                             child: Text(
-                              'حدث خطأ أثناء تحميل المنتجات',
+                              loc.sellerProfileErrorLoadingProducts,
                               textAlign: TextAlign.right,
                             ),
                           );
@@ -438,7 +459,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                   );
                 },
                 icon: const Icon(Icons.insights_outlined),
-                label: const Text('لوحة التحكم و الأرباح'),
+                label: Text(loc.sellerProfileDashboardButtonLabel),
               ),
             ),
             const SizedBox(width: 8),
@@ -453,7 +474,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                   );
                 },
                 icon: const Icon(Icons.receipt_long_outlined),
-                label: const Text('طلبات العملاء'),
+                label: Text(loc.sellerProfileOrdersButtonLabel),
               ),
             ),
           ],
@@ -473,7 +494,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                   );
                 },
                 icon: const Icon(Icons.inventory_2_outlined),
-                label: const Text('إدارة المخزون'),
+                label: Text(loc.sellerProfileInventoryButtonLabel),
               ),
             ),
             const SizedBox(width: 8),
@@ -488,7 +509,7 @@ class _SellerProfileTabState extends State<SellerProfileTab> {
                   );
                 },
                 icon: const Icon(Icons.discount_outlined),
-                label: const Text('أكواد الخصم'),
+                label: Text(loc.sellerProfileCouponsButtonLabel),
               ),
             ),
           ],
@@ -504,10 +525,14 @@ class SellerInventoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sellerId = UserSession.username ?? 'Seller';
+    final loc = AppLocalizations.of(context);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('إدارة المخزون'), centerTitle: true),
+        appBar: AppBar(
+          title: Text(loc.sellerProfileInventoryScreenTitle),
+          centerTitle: true,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SellerInventoryTab(sellerId: sellerId),
@@ -524,12 +549,14 @@ class _RejectedList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     if (list.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Text(
-            'لا توجد منتجات مرفوضة حالياً',
+            loc.sellerProfileRejectedEmptyMessage,
             textAlign: TextAlign.center,
           ),
         ),
@@ -549,18 +576,22 @@ class _RejectedList extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'الماركة: ${kBrandName[p.brand]} • الموديل: ${p.model}',
+                  '${loc.sellerProfileProductBrandPrefix} '
+                  '${kBrandName[p.brand]} • '
+                  '${loc.sellerProfileProductModelPrefix} ${p.model}',
                   textAlign: TextAlign.right,
                 ),
                 Text(
-                  'السعر: ${p.price.toStringAsFixed(2)} جنيه',
+                  '${loc.sellerProfileRejectedPricePrefix} '
+                  '${p.price.toStringAsFixed(2)} ${loc.currencyEgp}',
                   textAlign: TextAlign.right,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   p.rejectionReason == null || p.rejectionReason!.trim().isEmpty
-                      ? 'سبب الرفض غير محدد'
-                      : 'سبب الرفض: ${p.rejectionReason}',
+                      ? loc.sellerProfileRejectedReasonUnknown
+                      : '${loc.sellerProfileRejectedReasonPrefix} '
+                            '${p.rejectionReason}',
                   textAlign: TextAlign.right,
                   style: const TextStyle(color: Colors.red),
                 ),

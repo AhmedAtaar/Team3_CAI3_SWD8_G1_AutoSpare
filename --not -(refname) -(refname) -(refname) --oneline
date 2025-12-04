@@ -1,0 +1,23 @@
+[33m2748e85[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mbugs[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/admin[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m, [m[1;32madmin[m[33m)[m UI
+[33mab147cf[m Firebase & Firestore completion
+[33m5b3989d[m Firebase authentication
+[33m1ed6387[m[33m ([m[1;31morigin/order[m[33m)[m Profile: track orders/reviews, manage stock, toggle online/offline, admin order status control
+[33m486814d[m sign up for tow companies
+[33m4b12847[m Categories UI
+[33m6d5d06c[m Profile: seler/buyer. Cart: stick managing.
+[33m3a963f2[m Orders
+[33mc3b001e[m[33m ([m[1;31morigin/develop[m[33m, [m[1;31morigin/cart_screen_ui[m[33m)[m Cart Screen UI
+[33m9c8ffcf[m[33m ([m[1;31morigin/tow_screen_ui[m[33m)[m Removed unused imports, managed bottom nav icons, commented messages_screen (for now)
+[33md4a0038[m tow_screen.dart , tow_companies_screen.dart, map_picker_screen.dart , important add in pubspec.yaml   flutter_map: ^6.1.0   latlong2: ^0.9.1   geocoding: ^2.1.0
+[33mf569118[m Merge pull request #4 from AhmedAtaar/login_screen_ui
+[33mf847501[m[33m ([m[1;31morigin/login_screen_ui[m[33m)[m Login Screen UI
+[33md81c727[m Login Screen UI V1
+[33mde2a086[m Merge pull request #3 from AhmedAtaar/folder_structure
+[33mb80d6b7[m[33m ([m[1;31morigin/folder_structure[m[33m)[m Reorganized folder structure
+[33m55b1873[m Merge pull request #1 from AhmedAtaar/app_icon
+[33mf1d051d[m[33m ([m[1;31morigin/app_icon[m[33m)[m App Icon
+[33m1867e40[m develop branch
+[33me6f43ff[m Initial commit - Flutter AutoSpare project with Home, Categories, Messages, Cart, Profile pages
+[33mdd40cbf[m feat: add HomeScreen UI and setup main.dart
+[33me8222d9[m Initialize Flutter project with Codespaces
+[33m067c79b[m Initial commit

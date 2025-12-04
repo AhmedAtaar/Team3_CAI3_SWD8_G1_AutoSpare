@@ -9,23 +9,6 @@ enum TowRequestStatus {
   rejected,
 }
 
-String towStatusAr(TowRequestStatus status) {
-  switch (status) {
-    case TowRequestStatus.pending:
-      return 'قيد المراجعة';
-    case TowRequestStatus.accepted:
-      return 'مقبول';
-    case TowRequestStatus.onTheWay:
-      return 'في الطريق';
-    case TowRequestStatus.completed:
-      return 'تمت الخدمة';
-    case TowRequestStatus.cancelled:
-      return 'ملغي';
-    case TowRequestStatus.rejected:
-      return 'مرفوض';
-  }
-}
-
 class TowRequestDoc {
   final String id;
 

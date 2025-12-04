@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/services/user_session.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -18,16 +19,22 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
 
   String _fmtMoney(double v) {
     final f = NumberFormat('#,##0.00', 'en');
-    return '${f.format(v)} ج';
+    return f.format(v);
   }
 
-  String _fmtRange(DateTimeRange? r) {
-    if (r == null) return 'كل الوقت';
+  String _fmtRange(DateTimeRange? r, AppLocalizations loc) {
+    if (r == null) {
+      return loc.sellerDashboardAllTime;
+    }
     final df = DateFormat('yyyy/MM/dd');
-    return 'من ${df.format(r.start)} إلى ${df.format(r.end)}';
+    final from = df.format(r.start);
+    final to = df.format(r.end);
+    return '${loc.sellerDashboardRangeFromPrefix} $from '
+        '${loc.sellerDashboardRangeToPrefix} $to';
   }
 
   Future<void> _pickRange() async {
+    final loc = AppLocalizations.of(context);
     final now = DateTime.now();
     final initial =
         _range ??
@@ -38,9 +45,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       firstDate: DateTime(now.year - 2),
       lastDate: DateTime(now.year + 1),
       initialDateRange: initial,
-      helpText: 'اختر الفترة لعرض أرباحك',
-      cancelText: 'إلغاء',
-      confirmText: 'تم',
+      helpText: loc.sellerDashboardDateRangeHelp,
+      cancelText: loc.sellerDashboardDateRangeCancel,
+      confirmText: loc.sellerDashboardDateRangeConfirm,
     );
 
     if (picked != null) {
@@ -55,6 +62,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
     final sellerId = UserSession.username ?? '';
 
     if (sellerId.isEmpty) {
@@ -62,12 +70,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         textDirection: ui.TextDirection.rtl,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('لوحة تحكم البائع'),
+            title: Text(loc.sellerDashboardTitle),
             centerTitle: true,
           ),
-          body: const Center(
+          body: Center(
             child: Text(
-              'لا يمكن تحديد هوية البائع لهذا الحساب',
+              loc.sellerDashboardUnknownSellerMessage,
               textAlign: TextAlign.center,
             ),
           ),
@@ -82,7 +90,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         appBar: AppBar(
           elevation: 0,
           centerTitle: true,
-          title: const Text('لوحة تحكم البائع'),
+          title: Text(loc.sellerDashboardTitle),
         ),
         body: StreamBuilder<List<OrderDoc>>(
           stream: ordersRepo.watchSellerOrders(sellerId),
@@ -93,9 +101,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             }
 
             if (snap.hasError) {
-              return const Center(
+              return Center(
                 child: Text(
-                  'حدث خطأ أثناء تحميل الطلبات',
+                  loc.sellerDashboardErrorLoadingOrders,
                   textAlign: TextAlign.center,
                 ),
               );
@@ -108,9 +116,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                 .toList();
 
             if (delivered.isEmpty) {
-              return const Center(
+              return Center(
                 child: Text(
-                  'لا توجد طلبات مكتملة حتى الآن',
+                  loc.sellerDashboardNoCompletedOrders,
                   textAlign: TextAlign.center,
                 ),
               );
@@ -168,7 +176,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   children: [
                     _SellerHeader(
                       totalNetAll: totalNetAll,
-                      currentRangeText: _fmtRange(_range),
+                      currentRangeText: _fmtRange(_range, loc),
                       onPickRange: _pickRange,
                       onClearRange: _clearRange,
                     ),
@@ -176,7 +184,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          'لا توجد طلبات في الفترة المختارة.\nحاول تغيير فترة التاريخ.',
+                          loc.sellerDashboardNoOrdersInRange,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -246,13 +254,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     children: [
                       _SellerHeader(
                         totalNetAll: totalNetAll,
-                        currentRangeText: _fmtRange(_range),
+                        currentRangeText: _fmtRange(_range, loc),
                         onPickRange: _pickRange,
                         onClearRange: _clearRange,
                       ),
-
                       const SizedBox(height: 20),
-
                       Wrap(
                         spacing: 12,
                         runSpacing: 12,
@@ -261,8 +267,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           SizedBox(
                             width: cw,
                             child: _SellerStatCard(
-                              title: 'عدد الطلبات المكتملة (في الفترة)',
-                              value: '$totalOrders طلب',
+                              title: loc.sellerDashboardStatOrdersInPeriodTitle,
+                              value: '$totalOrders',
                               icon: Icons.shopping_bag_outlined,
                               iconColor: cs.primary,
                             ),
@@ -270,8 +276,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           SizedBox(
                             width: cw,
                             child: _SellerStatCard(
-                              title: 'إجمالي القطع المباعة',
-                              value: '$totalQty قطعة',
+                              title: loc.sellerDashboardStatItemsSoldTitle,
+                              value: '$totalQty',
                               icon: Icons.inventory_2_outlined,
                               iconColor: Colors.blue,
                             ),
@@ -279,9 +285,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           SizedBox(
                             width: cw,
                             child: _SellerStatCard(
-                              title: 'قيمة المنتجات (قبل الخصم)',
-                              value: _fmtMoney(totalBaseAmount),
-                              subtitle: 'حسب السعر الذي أدخلته في المنتجات فقط',
+                              title: loc.sellerDashboardStatItemsTotalTitle,
+                              value:
+                                  '${_fmtMoney(totalBaseAmount)} ${loc.currencyEgp}',
+                              subtitle:
+                                  loc.sellerDashboardStatItemsTotalSubtitle,
                               icon: Icons.attach_money_outlined,
                               iconColor: Colors.teal,
                             ),
@@ -289,9 +297,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           SizedBox(
                             width: cw,
                             child: _SellerStatCard(
-                              title: 'إجمالي الخصومات على منتجاتك',
-                              value: _fmtMoney(totalDiscount),
-                              subtitle: 'تشمل الخصومات والكوبونات في الفترة',
+                              title: loc.sellerDashboardStatDiscountTotalTitle,
+                              value:
+                                  '${_fmtMoney(totalDiscount)} ${loc.currencyEgp}',
+                              subtitle:
+                                  loc.sellerDashboardStatDiscountTotalSubtitle,
                               icon: Icons.local_offer_outlined,
                               iconColor: Colors.pink,
                             ),
@@ -299,21 +309,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           SizedBox(
                             width: cw,
                             child: _SellerStatCard(
-                              title: 'صافي أرباحك بعد الخصم (في الفترة)',
-                              value: _fmtMoney(totalNet),
+                              title: loc.sellerDashboardStatNetInPeriodTitle,
+                              value:
+                                  '${_fmtMoney(totalNet)} ${loc.currencyEgp}',
                               subtitle:
-                                  'لا يشمل عمولة التطبيق ٥٪ (هذه محسوبة على المشتري)',
+                                  loc.sellerDashboardStatNetInPeriodSubtitle,
                               icon: Icons.trending_up_outlined,
                               iconColor: Colors.deepPurple,
                             ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 28),
-
                       Text(
-                        'توزيع صافي أرباحك حسب الأيام',
+                        loc.sellerDashboardChartSectionTitle,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                         textAlign: TextAlign.right,
@@ -322,14 +331,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       _SellerEarningsBarChart(
                         values: dailyValues,
                         days: sortedDays,
-                        moneyFormatter: _fmtMoney,
                       ),
-
                       const SizedBox(height: 24),
-
                       if (couponDiscounts.isNotEmpty) ...[
                         Text(
-                          'تأثير أكواد الخصم على أرباحك (في الفترة)',
+                          loc.sellerDashboardCouponsSectionTitle,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                           textAlign: TextAlign.right,
@@ -339,7 +345,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
-                              color: cs.outlineVariant.withOpacity(.4),
+                              color: cs.outlineVariant.withValues(alpha: .4),
                               width: 0.6,
                             ),
                           ),
@@ -349,19 +355,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Text(
-                                  'إجمالي الخصم الناتج عن الكوبونات على منتجاتك في الفترة المحددة:',
+                                  loc.sellerDashboardCouponsTotalLabel,
                                   textAlign: TextAlign.right,
                                   style: Theme.of(context).textTheme.bodyMedium
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  _fmtMoney(
-                                    couponDiscounts.values.fold(
-                                      0.0,
-                                      (p, v) => p + v,
-                                    ),
-                                  ),
+                                  '${_fmtMoney(couponDiscounts.values.fold(0.0, (p, v) => p + v))} ${loc.currencyEgp}',
                                   textAlign: TextAlign.right,
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(fontWeight: FontWeight.bold),
@@ -375,11 +376,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                       .map(
                                         (e) => Chip(
                                           label: Text(
-                                            'كوبون ${e.key} – خصم ${_fmtMoney(e.value)}',
+                                            '${e.key} – '
+                                            '${_fmtMoney(e.value)} ${loc.currencyEgp}',
                                             textAlign: TextAlign.right,
                                           ),
                                           backgroundColor: cs.primary
-                                              .withOpacity(.06),
+                                              .withValues(alpha: .06),
                                         ),
                                       )
                                       .toList(),
@@ -393,25 +395,25 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                             side: BorderSide(
-                              color: cs.outlineVariant.withOpacity(.4),
+                              color: cs.outlineVariant.withValues(alpha: .4),
                               width: 0.6,
                             ),
                           ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
                             child: Text(
-                              'لم يتم استخدام أي أكواد خصم على منتجاتك في الفترة المحددة.',
+                              loc.sellerDashboardCouponsEmptyMessage,
                               textAlign: TextAlign.center,
                             ),
                           ),
                         ),
                       ],
-
                       const SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          'آخر تحديث: ${DateFormat('yyyy/MM/dd – HH:mm').format(DateTime.now())}',
+                          '${loc.adminEarningsLastUpdatedPrefix} '
+                          '${DateFormat('yyyy/MM/dd – HH:mm').format(DateTime.now())}',
                           style: Theme.of(
                             context,
                           ).textTheme.bodySmall?.copyWith(color: cs.outline),
@@ -446,6 +448,7 @@ class _SellerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -453,10 +456,13 @@ class _SellerHeader extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.centerRight,
           end: Alignment.centerLeft,
-          colors: [cs.primary.withOpacity(.14), cs.primary.withOpacity(.03)],
+          colors: [
+            cs.primary.withValues(alpha: .14),
+            cs.primary.withValues(alpha: .03),
+          ],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: cs.primary.withOpacity(.12)),
+        border: Border.all(color: cs.primary.withValues(alpha: .12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -468,7 +474,7 @@ class _SellerHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'ملخص أرباح متجرك',
+                      loc.sellerDashboardSummaryTitle,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -476,7 +482,7 @@ class _SellerHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'كل الأرقام في الأسفل محسوبة على أساس السعر الأصلي الذي تقوم بإدخاله في المنتجات قبل زيادة عمولة التطبيق ٥٪.',
+                      loc.sellerDashboardSummaryDesc,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
@@ -492,18 +498,19 @@ class _SellerHeader extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: cs.primary.withOpacity(.15),
+                  color: cs.primary.withValues(alpha: .15),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'صافي أرباحك (كل الوقت)',
-                      style: TextStyle(fontSize: 11),
+                    Text(
+                      loc.sellerDashboardTotalNetAllTimeLabel,
+                      style: const TextStyle(fontSize: 11),
                     ),
                     Text(
-                      NumberFormat('#,##0.00', 'en').format(totalNetAll) + ' ج',
+                      '${NumberFormat('#,##0.00', 'en').format(totalNetAll)} '
+                      '${loc.currencyEgp}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -530,12 +537,12 @@ class _SellerHeader extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onPickRange,
                 icon: const Icon(Icons.date_range),
-                label: const Text('تغيير الفترة'),
+                label: Text(loc.sellerDashboardChangePeriodButton),
               ),
               const SizedBox(width: 8),
               TextButton(
                 onPressed: onClearRange,
-                child: const Text('كل الوقت'),
+                child: Text(loc.sellerDashboardAllTimeButton),
               ),
             ],
           ),
@@ -551,7 +558,6 @@ class _SellerStatCard extends StatelessWidget {
   final String? subtitle;
   final IconData icon;
   final Color iconColor;
-  final bool dense;
 
   const _SellerStatCard({
     required this.title,
@@ -559,16 +565,7 @@ class _SellerStatCard extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     this.subtitle,
-    this.dense = false,
   });
-
-  const _SellerStatCard.small({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.iconColor,
-    this.subtitle,
-  }) : dense = true;
 
   @override
   Widget build(BuildContext context) {
@@ -578,23 +575,24 @@ class _SellerStatCard extends StatelessWidget {
       elevation: 1.5,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cs.outlineVariant.withOpacity(.4), width: 0.6),
+        side: BorderSide(
+          color: cs.outlineVariant.withValues(alpha: .4),
+          width: 0.6,
+        ),
       ),
       child: Padding(
-        padding: EdgeInsets.all(dense ? 10 : 14),
+        padding: const EdgeInsets.all(14),
         child: Row(
-          crossAxisAlignment: dense
-              ? CrossAxisAlignment.center
-              : CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: dense ? 34 : 40,
-              height: dense ? 34 : 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(.12),
+                color: iconColor.withValues(alpha: .12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: dense ? 20 : 24, color: iconColor),
+              child: Icon(icon, size: 24, color: iconColor),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -614,7 +612,7 @@ class _SellerStatCard extends StatelessWidget {
                     textAlign: TextAlign.right,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: dense ? 16 : 18,
+                      fontSize: 18,
                     ),
                   ),
                   if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
@@ -640,32 +638,26 @@ class _SellerStatCard extends StatelessWidget {
 class _SellerEarningsBarChart extends StatelessWidget {
   final List<double> values;
   final List<DateTime> days;
-  final String Function(double) moneyFormatter;
 
-  const _SellerEarningsBarChart({
-    required this.values,
-    required this.days,
-    required this.moneyFormatter,
-  });
+  const _SellerEarningsBarChart({required this.values, required this.days});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     if (values.isEmpty || values.every((v) => v == 0.0)) {
       return Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: cs.outlineVariant.withOpacity(.4),
+            color: cs.outlineVariant.withValues(alpha: .4),
             width: 0.6,
           ),
         ),
-        child: const SizedBox(
+        child: SizedBox(
           height: 160,
-          child: Center(
-            child: Text('لا توجد بيانات كافية للرسم في الفترة المحددة'),
-          ),
+          child: Center(child: Text(loc.sellerDashboardChartNoData)),
         ),
       );
     }
@@ -673,7 +665,10 @@ class _SellerEarningsBarChart extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: cs.outlineVariant.withOpacity(.4), width: 0.6),
+        side: BorderSide(
+          color: cs.outlineVariant.withValues(alpha: .4),
+          width: 0.6,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
@@ -681,7 +676,7 @@ class _SellerEarningsBarChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'صافي أرباحك موزعة على الأيام',
+              loc.sellerDashboardChartTitle,
               textAlign: TextAlign.right,
               style: Theme.of(
                 context,
@@ -694,7 +689,7 @@ class _SellerEarningsBarChart extends StatelessWidget {
                 painter: _SellerBarChartPainter(
                   values: values,
                   barColor: cs.primary,
-                  axisColor: cs.outlineVariant.withOpacity(.7),
+                  axisColor: cs.outlineVariant.withValues(alpha: .7),
                 ),
               ),
             ),

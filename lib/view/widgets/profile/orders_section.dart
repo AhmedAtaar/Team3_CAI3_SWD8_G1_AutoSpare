@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:auto_spare/core/order_status_localized.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders.dart';
@@ -69,23 +71,23 @@ class _OrdersSectionState extends State<OrdersSection> {
           children: [
             chip(label: 'الكل', value: null),
             chip(
-              label: orderStatusAr(OrderStatus.processing),
+              label: orderStatusText(context, OrderStatus.processing),
               value: OrderStatus.processing,
             ),
             chip(
-              label: orderStatusAr(OrderStatus.prepared),
+              label: orderStatusText(context, OrderStatus.prepared),
               value: OrderStatus.prepared,
             ),
             chip(
-              label: orderStatusAr(OrderStatus.handedToCourier),
+              label: orderStatusText(context, OrderStatus.handedToCourier),
               value: OrderStatus.handedToCourier,
             ),
             chip(
-              label: orderStatusAr(OrderStatus.delivered),
+              label: orderStatusText(context, OrderStatus.delivered),
               value: OrderStatus.delivered,
             ),
             chip(
-              label: orderStatusAr(OrderStatus.cancelled),
+              label: orderStatusText(context, OrderStatus.cancelled),
               value: OrderStatus.cancelled,
             ),
           ],
@@ -240,10 +242,22 @@ class _OrdersSectionState extends State<OrdersSection> {
         child: StreamBuilder<List<OrderDoc>>(
           stream: stream,
           builder: (context, snap) {
-            final rawList = snap.data ?? const <OrderDoc>[];
+            if (snap.connectionState == ConnectionState.waiting &&
+                !snap.hasData) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            final base = snap.data ?? const <OrderDoc>[];
+            final rawList = List<OrderDoc>.from(base);
 
             if (mode == OrdersSectionMode.buyer) {
               List<OrderDoc> list = rawList;
+
               if (_buyerStatusFilter != null) {
                 list = rawList
                     .where((o) => o.status == _buyerStatusFilter)
@@ -372,12 +386,13 @@ class _OrdersSectionState extends State<OrdersSection> {
                                 ),
                               ),
                               Chip(
-                                label: Text(orderStatusAr(o.status)),
+                                label: Text(orderStatusText(context, o.status)),
                                 avatar: const Icon(
                                   Icons.flag_outlined,
                                   size: 18,
                                 ),
                               ),
+
                               if (isLatest)
                                 const Chip(
                                   label: Text(
@@ -713,13 +728,14 @@ class _OrdersSectionState extends State<OrdersSection> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              orderStatusAr(o.status),
+                              orderStatusText(context, o.status),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: _statusColor(context, o.status),
                               ),
                             ),
+
                             const SizedBox(height: 4),
                             Text(
                               df.format(o.stamps.createdAt),

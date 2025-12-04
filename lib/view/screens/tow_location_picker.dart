@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
 
+import 'package:auto_spare/l10n/app_localizations.dart';
+
 class TowPickedLocation {
   final double lat;
   final double lng;
@@ -28,27 +30,31 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
   }
 
   Future<void> _useMyLocation() async {
+    final loc = AppLocalizations.of(context);
+
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('فعّل خدمات الموقع أولًا')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.towLocationPickerServiceDisabledSnack)),
+      );
       return;
     }
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم رفض إذن الموقع')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.towLocationPickerPermissionDeniedSnack)),
+        );
         return;
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('إذن الموقع مرفوض دائمًا')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.towLocationPickerPermissionDeniedForeverSnack),
+        ),
+      );
       return;
     }
     final pos = await Geolocator.getCurrentPosition(
@@ -82,12 +88,14 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
   }
 
   void _save() {
+    final loc = AppLocalizations.of(context);
+
     final la = double.tryParse(_lat.text.trim());
     final ln = double.tryParse(_lng.text.trim());
     if (la == null || ln == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('أدخل إحداثيات صحيحة')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.towLocationPickerInvalidCoordsSnack)),
+      );
       return;
     }
     Navigator.pop(context, TowPickedLocation(la, ln));
@@ -98,10 +106,12 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('اختيار اللوكيشن')),
+        appBar: AppBar(title: Text(loc.towLocationPickerAppBarTitle)),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -112,7 +122,7 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _useMyLocation,
                       icon: const Icon(Icons.my_location),
-                      label: const Text('استخدام موقعي الآن'),
+                      label: Text(loc.towLocationPickerUseMyLocationButton),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -120,7 +130,7 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _openMap,
                       icon: const Icon(Icons.map_outlined),
-                      label: const Text('اختيار من الخريطة'),
+                      label: Text(loc.towLocationPickerChooseFromMapButton),
                     ),
                   ),
                 ],
@@ -132,7 +142,7 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
                     child: TextField(
                       controller: _lat,
                       keyboardType: TextInputType.number,
-                      decoration: _dec('Latitude'),
+                      decoration: _dec(loc.towLocationPickerLatitudeLabel),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -140,7 +150,7 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
                     child: TextField(
                       controller: _lng,
                       keyboardType: TextInputType.number,
-                      decoration: _dec('Longitude'),
+                      decoration: _dec(loc.towLocationPickerLongitudeLabel),
                     ),
                   ),
                 ],
@@ -151,11 +161,11 @@ class _TowLocationPickerScreenState extends State<TowLocationPickerScreen> {
                 child: FilledButton.icon(
                   onPressed: _save,
                   icon: const Icon(Icons.check),
-                  label: const Text('حفظ'),
+                  label: Text(loc.towLocationPickerSaveButton),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text('اختر موقعك الحالي أو افتح الخريطة لتحديد النقطة.'),
+              Text(loc.towLocationPickerHintText, textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -209,6 +219,8 @@ class _TowMapPickerFlutterMapState extends State<_TowMapPickerFlutterMap> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+
     final marker = Marker(
       point: _picked,
       width: 40,
@@ -220,7 +232,7 @@ class _TowMapPickerFlutterMapState extends State<_TowMapPickerFlutterMap> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('اختيار من الخريطة'),
+          title: Text(loc.towMapPickerAppBarTitle),
           actions: [
             IconButton(
               onPressed: _gotoMyLocation,
@@ -229,7 +241,10 @@ class _TowMapPickerFlutterMapState extends State<_TowMapPickerFlutterMap> {
             TextButton.icon(
               onPressed: _done,
               icon: const Icon(Icons.check, color: Colors.white),
-              label: const Text('تم', style: TextStyle(color: Colors.white)),
+              label: Text(
+                loc.towMapPickerDoneActionLabel,
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -259,7 +274,8 @@ class _TowMapPickerFlutterMapState extends State<_TowMapPickerFlutterMap> {
               children: [
                 Expanded(
                   child: Text(
-                    '(${_picked.latitude.toStringAsFixed(6)}, ${_picked.longitude.toStringAsFixed(6)})',
+                    '(${_picked.latitude.toStringAsFixed(6)}, '
+                    '${_picked.longitude.toStringAsFixed(6)})',
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -267,7 +283,7 @@ class _TowMapPickerFlutterMapState extends State<_TowMapPickerFlutterMap> {
                 FilledButton.icon(
                   onPressed: _done,
                   icon: const Icon(Icons.save),
-                  label: const Text('اختيار هذه النقطة'),
+                  label: Text(loc.towMapPickerDoneButtonLabel),
                 ),
               ],
             ),

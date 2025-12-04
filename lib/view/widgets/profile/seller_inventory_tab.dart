@@ -4,6 +4,7 @@ import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/services/products.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class SellerInventoryTab extends StatefulWidget {
   final String sellerId;
@@ -84,6 +85,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
   }
 
   Future<void> _openRestockDialog(CatalogProduct p) async {
+    final loc = AppLocalizations.of(context);
     final formKey = GlobalKey<FormState>();
     final qtyCtrl = TextEditingController(text: '10');
 
@@ -91,7 +93,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(
-          'زيادة مخزون — ${p.title}',
+          '${loc.sellerInventoryRestockDialogTitlePrefix} — ${p.title}',
           textDirection: TextDirection.rtl,
         ),
         content: Form(
@@ -100,14 +102,18 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
             controller: qtyCtrl,
             keyboardType: TextInputType.number,
             textDirection: TextDirection.rtl,
-            decoration: const InputDecoration(
-              labelText: 'الكمية المطلوب إضافتها',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: loc.sellerInventoryRestockQuantityLabel,
+              border: const OutlineInputBorder(),
             ),
             validator: (v) {
               final n = int.tryParse((v ?? '').trim());
-              if (n == null || n <= 0) return 'أدخل رقمًا صحيحًا أكبر من صفر';
-              if (n > 1000000) return 'قيمة كبيرة جدًا';
+              if (n == null || n <= 0) {
+                return loc.sellerInventoryRestockQuantityInvalidError;
+              }
+              if (n > 1000000) {
+                return loc.sellerInventoryRestockQuantityTooBigError;
+              }
               return null;
             },
           ),
@@ -115,7 +121,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(loc.commonCancel),
           ),
           FilledButton.icon(
             onPressed: () {
@@ -124,7 +130,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
               }
             },
             icon: const Icon(Icons.add),
-            label: const Text('إضافة'),
+            label: Text(loc.sellerInventoryRestockAddButton),
           ),
         ],
       ),
@@ -140,7 +146,8 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تمت إضافة $delta إلى مخزون "${p.title}"',
+              '${loc.sellerInventoryRestockSuccessPrefix} $delta '
+              '${loc.sellerInventoryRestockSuccessInfix} "${p.title}"',
               textDirection: TextDirection.rtl,
             ),
           ),
@@ -150,7 +157,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'تعذر تعديل المخزون: $e',
+              '${loc.sellerInventoryRestockErrorPrefix} $e',
               textDirection: TextDirection.rtl,
             ),
             backgroundColor: Colors.red,
@@ -163,6 +170,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return StreamBuilder<List<CatalogProduct>>(
       stream: productsRepo.watchAllSellerProducts(widget.sellerId),
@@ -176,7 +184,7 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Text(
-                'حدث خطأ أثناء تحميل المنتجات',
+                loc.sellerInventoryErrorLoading,
                 textDirection: TextDirection.rtl,
               ),
             ),
@@ -186,11 +194,11 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
         final products = snap.data ?? const <CatalogProduct>[];
 
         if (products.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24.0),
               child: Text(
-                'لا توجد منتجات مقبولة لهذا البائع حتى الآن',
+                loc.sellerInventoryEmptyForSeller,
                 textDirection: TextDirection.rtl,
               ),
             ),
@@ -220,16 +228,19 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
             runSpacing: 8,
             children: [
               Chip(
-                label: Text('إجمالي المخزون: $totalStock'),
+                label: Text(
+                  '${loc.sellerInventoryTotalStockPrefix} $totalStock',
+                ),
                 avatar: const Icon(Icons.inventory_2_outlined),
               ),
               Chip(
-                label: Text('إجمالي المبيعات: $totalSold'),
+                label: Text('${loc.sellerInventoryTotalSoldPrefix} $totalSold'),
                 avatar: const Icon(Icons.shopping_bag_outlined),
               ),
               Chip(
                 label: Text(
-                  'الإيراد الكلي: ${totalRevenue.toStringAsFixed(2)}',
+                  '${loc.sellerInventoryTotalRevenuePrefix} '
+                  '${totalRevenue.toStringAsFixed(2)}',
                 ),
                 avatar: const Icon(Icons.payments_outlined),
               ),
@@ -277,7 +288,8 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                       ),
                                     ),
                                     IconButton(
-                                      tooltip: 'تعديل المخزون',
+                                      tooltip:
+                                          loc.sellerInventoryEditStockTooltip,
                                       onPressed: () => _openRestockDialog(p),
                                       icon: const Icon(Icons.edit_note),
                                     ),
@@ -293,7 +305,9 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         Icons.inventory_2_outlined,
                                         size: 18,
                                       ),
-                                      label: Text('المخزون: ${p.stock}'),
+                                      label: Text(
+                                        '${loc.sellerInventoryStockPrefix} ${p.stock}',
+                                      ),
                                       backgroundColor: low
                                           ? cs.errorContainer
                                           : cs.surfaceContainer,
@@ -308,7 +322,9 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         Icons.shopping_cart_checkout_outlined,
                                         size: 18,
                                       ),
-                                      label: Text('المباع: $sold'),
+                                      label: Text(
+                                        '${loc.sellerInventorySoldPrefix} $sold',
+                                      ),
                                     ),
                                     Chip(
                                       avatar: const Icon(
@@ -316,7 +332,8 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        'الإيراد: ${revenue.toStringAsFixed(2)}',
+                                        '${loc.sellerInventoryRevenuePrefix} '
+                                        '${revenue.toStringAsFixed(2)}',
                                       ),
                                     ),
                                     Chip(
@@ -325,14 +342,16 @@ class _SellerInventoryTabState extends State<SellerInventoryTab> {
                                         size: 18,
                                       ),
                                       label: Text(
-                                        'السعر: ${p.price.toStringAsFixed(2)}',
+                                        '${loc.sellerInventoryPricePrefix} '
+                                        '${p.price.toStringAsFixed(2)}',
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'سنوات الملاءمة: ${p.years.join(', ')}',
+                                  '${loc.sellerInventoryYearsPrefix} '
+                                  '${p.years.join(', ')}',
                                   textDirection: TextDirection.rtl,
                                 ),
                               ],

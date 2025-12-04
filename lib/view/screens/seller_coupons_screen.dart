@@ -1,11 +1,10 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'dart:ui' as ui;
 import 'package:auto_spare/services/user_session.dart';
 import 'package:auto_spare/services/coupons_repo.dart';
 import 'package:auto_spare/model/discount_coupon.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class SellerCouponsScreen extends StatelessWidget {
   const SellerCouponsScreen({super.key});
@@ -13,13 +12,19 @@ class SellerCouponsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final sellerId = UserSession.username ?? 'Seller';
     final df = DateFormat('yyyy-MM-dd HH:mm');
 
     return Directionality(
-      textDirection: ui.TextDirection.rtl,
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child: Scaffold(
-        appBar: AppBar(title: const Text('أكواد الخصم'), centerTitle: true),
+        appBar: AppBar(
+          title: Text(loc.seller_coupons_title),
+          centerTitle: true,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -27,17 +32,19 @@ class SellerCouponsScreen extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'قم بإنشاء وإدارة أكواد الخصم الخاصة بمتجرك.',
+                  loc.seller_coupons_help_text,
                   style: TextStyle(color: cs.outline, fontSize: 12),
+                  textAlign: TextAlign.right,
                 ),
               ),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: () => _openCreateCouponDialog(context, sellerId),
+                  onPressed: () =>
+                      _openCreateCouponDialog(context, sellerId, loc),
                   icon: const Icon(Icons.add),
-                  label: const Text('إنشاء كود خصم جديد'),
+                  label: Text(loc.seller_coupons_create_button),
                 ),
               ),
               const SizedBox(height: 12),
@@ -52,9 +59,9 @@ class SellerCouponsScreen extends StatelessWidget {
 
                     final list = snap.data ?? const <DiscountCoupon>[];
                     if (list.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
-                          'لا توجد أكواد خصم حالياً',
+                          loc.seller_coupons_empty_message,
                           textAlign: TextAlign.center,
                         ),
                       );
@@ -68,8 +75,10 @@ class SellerCouponsScreen extends StatelessWidget {
                         final isExpired = c.isExpired;
                         final isActive = c.active && !isExpired;
                         final statusText = isExpired
-                            ? 'منتهي'
-                            : (c.active ? 'مفعّل' : 'موقوف');
+                            ? loc.seller_coupons_status_expired
+                            : (c.active
+                                  ? loc.seller_coupons_status_active
+                                  : loc.seller_coupons_status_inactive);
 
                         final statusColor = isActive
                             ? Colors.green.withOpacity(.12)
@@ -103,13 +112,15 @@ class SellerCouponsScreen extends StatelessWidget {
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
-                                            'نسبة الخصم: ${c.discountPercent.toStringAsFixed(0)}٪',
+                                            '${loc.seller_coupons_discount_percent_prefix} '
+                                            '${c.discountPercent.toStringAsFixed(0)}٪',
                                             textAlign: TextAlign.right,
                                           ),
                                           const SizedBox(height: 2),
                                           if (c.expiresAt != null)
                                             Text(
-                                              'ينتهي في: ${df.format(c.expiresAt!)}',
+                                              '${loc.seller_coupons_expires_at_prefix} '
+                                              '${df.format(c.expiresAt!)}',
                                               textAlign: TextAlign.right,
                                               style: TextStyle(
                                                 fontSize: 12,
@@ -118,7 +129,7 @@ class SellerCouponsScreen extends StatelessWidget {
                                             )
                                           else
                                             Text(
-                                              'بدون تاريخ انتهاء',
+                                              loc.seller_coupons_no_expiry,
                                               textAlign: TextAlign.right,
                                               style: TextStyle(
                                                 fontSize: 12,
@@ -150,8 +161,8 @@ class SellerCouponsScreen extends StatelessWidget {
                                   children: [
                                     IconButton(
                                       tooltip: c.active
-                                          ? 'إيقاف الكود'
-                                          : 'تفعيل الكود',
+                                          ? loc.seller_coupons_toggle_tooltip_deactivate
+                                          : loc.seller_coupons_toggle_tooltip_activate,
                                       icon: Icon(
                                         c.active
                                             ? Icons.pause_circle_outline
@@ -169,7 +180,8 @@ class SellerCouponsScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     IconButton(
-                                      tooltip: 'حذف الكود',
+                                      tooltip:
+                                          loc.seller_coupons_delete_tooltip,
                                       icon: const Icon(
                                         Icons.delete_outline,
                                         color: Colors.red,
@@ -178,9 +190,11 @@ class SellerCouponsScreen extends StatelessWidget {
                                         final ok = await showDialog<bool>(
                                           context: context,
                                           builder: (_) => AlertDialog(
-                                            title: const Text('حذف الكود'),
+                                            title: Text(
+                                              loc.seller_coupons_delete_dialog_title,
+                                            ),
                                             content: Text(
-                                              'هل أنت متأكد من حذف الكود ${c.code}؟',
+                                              '${loc.seller_coupons_delete_dialog_message_prefix} ${c.code}؟',
                                             ),
                                             actions: [
                                               TextButton(
@@ -188,14 +202,18 @@ class SellerCouponsScreen extends StatelessWidget {
                                                   context,
                                                   false,
                                                 ),
-                                                child: const Text('إلغاء'),
+                                                child: Text(
+                                                  loc.seller_coupons_delete_dialog_cancel_button,
+                                                ),
                                               ),
                                               FilledButton(
                                                 onPressed: () => Navigator.pop(
                                                   context,
                                                   true,
                                                 ),
-                                                child: const Text('حذف'),
+                                                child: Text(
+                                                  loc.seller_coupons_delete_dialog_confirm_button,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -226,6 +244,7 @@ class SellerCouponsScreen extends StatelessWidget {
   Future<void> _openCreateCouponDialog(
     BuildContext context,
     String sellerId,
+    AppLocalizations loc,
   ) async {
     final formKey = GlobalKey<FormState>();
     final codeCtrl = TextEditingController();
@@ -235,7 +254,7 @@ class SellerCouponsScreen extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('إنشاء كود خصم'),
+        title: Text(loc.seller_coupons_create_dialog_title),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
@@ -245,16 +264,16 @@ class SellerCouponsScreen extends StatelessWidget {
                 TextFormField(
                   controller: codeCtrl,
                   textAlign: TextAlign.right,
-                  decoration: const InputDecoration(
-                    labelText: 'الكود (مثال: SAVE10)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.seller_coupons_code_label,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'مطلوب';
+                      return loc.seller_coupons_code_required_error;
                     }
                     if (v.contains(' ')) {
-                      return 'الكود لا يجب أن يحتوي مسافات';
+                      return loc.seller_coupons_code_no_spaces_error;
                     }
                     return null;
                   },
@@ -264,17 +283,17 @@ class SellerCouponsScreen extends StatelessWidget {
                   controller: percentCtrl,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.right,
-                  decoration: const InputDecoration(
-                    labelText: 'نسبة الخصم %',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.seller_coupons_percent_label,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'مطلوب';
+                      return loc.seller_coupons_percent_required_error;
                     }
                     final d = double.tryParse(v);
                     if (d == null || d <= 0 || d > 100) {
-                      return 'أدخل نسبة بين 1 و 100';
+                      return loc.seller_coupons_percent_invalid_error;
                     }
                     return null;
                   },
@@ -284,10 +303,10 @@ class SellerCouponsScreen extends StatelessWidget {
                   controller: daysCtrl,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.right,
-                  decoration: const InputDecoration(
-                    labelText: 'مدة الصلاحية بالأيام (اختياري)',
-                    hintText: 'اتركه فارغ بدون انتهاء',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.seller_coupons_days_label,
+                    hintText: loc.seller_coupons_days_hint,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
               ],
@@ -297,14 +316,14 @@ class SellerCouponsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(loc.seller_coupons_form_cancel_button),
           ),
           FilledButton(
             onPressed: () {
               if (!formKey.currentState!.validate()) return;
               Navigator.pop(context, true);
             },
-            child: const Text('حفظ'),
+            child: Text(loc.seller_coupons_form_save_button),
           ),
         ],
       ),
@@ -330,9 +349,11 @@ class SellerCouponsScreen extends StatelessWidget {
     );
 
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تم إنشاء الكود $code بنجاح')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${loc.seller_coupons_created_snackbar_prefix} $code'),
+        ),
+      );
     }
   }
 }
