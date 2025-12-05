@@ -15,8 +15,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-
-        // ✅ مهم عشان flutter_local_notifications + firebase_messaging
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -26,7 +24,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.auto_spare"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -44,6 +42,5 @@ flutter {
 }
 
 dependencies {
-    // ✅ مكتبة desugaring اللي كانت طالبةها flutter_local_notifications
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

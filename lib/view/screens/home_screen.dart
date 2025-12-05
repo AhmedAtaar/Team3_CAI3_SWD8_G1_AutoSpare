@@ -1,19 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
 import 'package:auto_spare/model/product.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
-
-import 'categories_screen.dart';
-import 'cart_screen.dart';
-import 'profile_screen.dart';
-import 'tow_screen.dart';
 import 'product_details_screen.dart';
 import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/view/widgets/navigation/global_bottom_nav.dart';
 import 'package:auto_spare/core/app_fees.dart';
-
 import 'package:auto_spare/l10n/app_localizations.dart';
 import 'package:auto_spare/main.dart';
 
@@ -28,7 +21,6 @@ enum _SortBy { newest, oldest, priceLow, priceHigh, stockHigh }
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
-  int _bottomIndex = 0;
 
   _SortBy _sortBy = _SortBy.newest;
 

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:auto_spare/l10n/app_localizations.dart';
 

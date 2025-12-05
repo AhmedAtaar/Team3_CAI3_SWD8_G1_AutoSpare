@@ -2,9 +2,5 @@ arb-dir: lib/l10n
 template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
-
-# اختياري لكن مفيد لو حابب تتابع الرسائل اللي مش مترجمة
 untranslated-messages-file: lib/l10n/untranslated_messages.txt
-
-# يخلي getters مش nullable (يفضل يكون false عشان الكود يكون أبسط)
 nullable-getter: false
