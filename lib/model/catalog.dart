@@ -1,5 +1,5 @@
-import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 enum CarBrand { nissan, toyota, hyundai, kia, bmw, mercedes }
 
@@ -56,7 +56,6 @@ class CatalogProduct {
     this.imageUrl,
     this.status = ProductStatus.approved,
     this.rejectionReason,
-
     this.description = '',
   });
 
@@ -117,12 +116,17 @@ class Catalog {
     return null;
   }
 
-  String? canFulfillItems(List<({String id, String name, int qty})> items) {
+  String? canFulfillItems(
+    AppLocalizations loc,
+    List<({String id, String name, int qty})> items,
+  ) {
     for (final it in items) {
       final p = findById(it.id);
-      if (p == null) return 'العنصر "${it.name}" غير موجود في الكتالوج.';
+      if (p == null) {
+        return loc.catalogCanFulfillItemNotFound(it.name);
+      }
       if (p.stock < it.qty) {
-        return 'المخزون الحالي من "${it.name}" هو ${p.stock} فقط.';
+        return loc.catalogCanFulfillInsufficientStock(it.name, p.stock);
       }
     }
     return null;

@@ -3,8 +3,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:auto_spare/core/order_status_localized.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders_repository.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminOrdersTab extends StatefulWidget {
   final OrdersRepository repo;
@@ -18,7 +20,7 @@ enum _SortKey { createdDesc, createdAsc, totalDesc, totalAsc }
 
 class _AdminOrdersTabState extends State<AdminOrdersTab> {
   final _searchCtrl = TextEditingController();
-  Set<OrderStatus> _statuses = {};
+  final Set<OrderStatus> _statuses = <OrderStatus>{};
   DateTimeRange? _range;
 
   _SortKey _sort = _SortKey.createdDesc;
@@ -45,6 +47,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
 
   Future<void> _pickRange() async {
     final now = DateTime.now();
+    final loc = AppLocalizations.of(context);
+
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(now.year - 3, 1, 1),
@@ -59,8 +63,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
             ).subtract(const Duration(days: 30)),
             end: DateTime(now.year, now.month, now.day),
           ),
-      helpText: 'اختيار مدة زمنية',
-      saveText: 'اختيار',
+      helpText: loc.adminOrdersRangePickerHelp,
+      saveText: loc.adminOrdersRangePickerSave,
       builder: (ctx, child) =>
           Directionality(textDirection: ui.TextDirection.rtl, child: child!),
     );
@@ -156,7 +160,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
     }
     return FilterChip(
       selected: selected,
-      label: Text(orderStatusAr(s)),
+      label: Text(orderStatusText(context, s)),
       avatar: Icon(icon, size: 18),
       onSelected: (_) {
         setState(() {
@@ -177,6 +181,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
+    final matLoc = MaterialLocalizations.of(context);
 
     return Directionality(
       textDirection: ui.TextDirection.rtl,
@@ -188,7 +194,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  'حدث خطأ أثناء تحميل الطلبات:\n${snap.error}',
+                  '${loc.adminOrdersErrorLoadingPrefix}\n${snap.error}',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -204,9 +210,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
           if (pages > 0 && _page >= pages) _page = pages - 1;
 
           final start = pages == 0 ? 0 : _page * _pageSize;
-          final end = pages == 0
-              ? 0
-              : ((start + _pageSize).clamp(0, total) as int);
+          final end = pages == 0 ? 0 : (start + _pageSize).clamp(0, total);
 
           final pageList = (filtered.isEmpty || start >= end)
               ? <OrderDoc>[]
@@ -240,13 +244,14 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                             onChanged: (_) => setState(() => _page = 0),
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.search),
-                              hintText: 'بحث: كود/مشتري/بائع/منتج…',
+                              hintText: loc.adminOrdersSearchHint,
                               border: const OutlineInputBorder(),
                               isDense: true,
                               suffixIcon: _searchCtrl.text.isEmpty
                                   ? null
                                   : IconButton(
-                                      tooltip: 'مسح',
+                                      tooltip:
+                                          loc.adminOrdersClearSearchTooltip,
                                       onPressed: () {
                                         _searchCtrl.clear();
                                         setState(() => _page = 0);
@@ -261,42 +266,44 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                           icon: const Icon(Icons.calendar_month),
                           label: Text(
                             _range == null
-                                ? 'المدة: الكل'
-                                : '${DateFormat('yyyy/MM/dd').format(_range!.start)} → ${DateFormat('yyyy/MM/dd').format(_range!.end)}',
+                                ? loc.adminOrdersRangeAllLabel
+                                : '${DateFormat('yyyy/MM/dd').format(_range!.start)} → '
+                                      '${DateFormat('yyyy/MM/dd').format(_range!.end)}',
                           ),
                         ),
                         if (_range != null)
                           IconButton(
-                            tooltip: 'إزالة المدة',
+                            tooltip:
+                                loc.adminOrdersPaginationRemoveRangeTooltip,
                             onPressed: () => setState(() => _range = null),
                             icon: const Icon(Icons.close),
                           ),
                         DropdownButton<_SortKey>(
                           value: _sort,
                           onChanged: (v) => setState(() => _sort = v ?? _sort),
-                          items: const [
+                          items: [
                             DropdownMenuItem(
                               value: _SortKey.createdDesc,
-                              child: Text('الأحدث أولاً'),
+                              child: Text(loc.adminOrdersSortCreatedDesc),
                             ),
                             DropdownMenuItem(
                               value: _SortKey.createdAsc,
-                              child: Text('الأقدم أولاً'),
+                              child: Text(loc.adminOrdersSortCreatedAsc),
                             ),
                             DropdownMenuItem(
                               value: _SortKey.totalDesc,
-                              child: Text('المبلغ: الأعلى ↓'),
+                              child: Text(loc.adminOrdersSortTotalDesc),
                             ),
                             DropdownMenuItem(
                               value: _SortKey.totalAsc,
-                              child: Text('المبلغ: الأقل ↑'),
+                              child: Text(loc.adminOrdersSortTotalAsc),
                             ),
                           ],
                         ),
                         OutlinedButton.icon(
                           onPressed: _resetFilters,
                           icon: const Icon(Icons.refresh),
-                          label: const Text('إعادة الضبط'),
+                          label: Text(loc.adminOrdersResetFiltersButton),
                         ),
                         const SizedBox(width: 12),
                         Wrap(
@@ -315,7 +322,9 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                     const SizedBox(height: 10),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: Text('عدد الطلبات المطابقة: $total'),
+                      child: Text(
+                        '${loc.adminOrdersMatchingCountPrefix} $total',
+                      ),
                     ),
                   ],
                 ),
@@ -323,7 +332,7 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               const SizedBox(height: 10),
               Expanded(
                 child: pageList.isEmpty
-                    ? const Center(child: Text('لا توجد طلبات مطابقة'))
+                    ? Center(child: Text(loc.adminOrdersNoMatchingMessage))
                     : ListView.separated(
                         itemCount: pageList.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -351,7 +360,9 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                     ),
                                   ),
                                   Chip(
-                                    label: Text(orderStatusAr(o.status)),
+                                    label: Text(
+                                      orderStatusText(context, o.status),
+                                    ),
                                     avatar: const Icon(
                                       Icons.flag_outlined,
                                       size: 18,
@@ -360,7 +371,10 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                 ],
                               ),
                               subtitle: Text(
-                                'العميل: ${o.buyerId} • عناصر: $itemsCount • الإجمالي: ${o.grandTotal.toStringAsFixed(2)}',
+                                '${loc.adminOrdersBuyerPrefix} ${o.buyerId} • '
+                                '${loc.adminOrdersItemsCountPrefix} $itemsCount • '
+                                '${loc.adminOrdersGrandTotalPrefix} '
+                                '${o.grandTotal.toStringAsFixed(2)}',
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 textAlign: TextAlign.right,
@@ -390,33 +404,36 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                         spacing: 6,
                                         runSpacing: 6,
                                         children: [
-                                          _stamp('أُنشئ', o.stamps.createdAt),
+                                          _stamp(
+                                            loc.sellerOrderTimelineCreated,
+                                            o.stamps.createdAt,
+                                          ),
                                           if (o.stamps.preparedAt != null)
                                             _stamp(
-                                              'تم التجهيز',
+                                              loc.sellerOrderTimelinePrepared,
                                               o.stamps.preparedAt!,
                                             ),
                                           if (o.stamps.handedToCourierAt !=
                                               null)
                                             _stamp(
-                                              'مع الشحن',
+                                              loc.sellerOrderTimelineWithCourier,
                                               o.stamps.handedToCourierAt!,
                                             ),
                                           if (o.stamps.deliveredAt != null)
                                             _stamp(
-                                              'تم الاستلام',
+                                              loc.sellerOrderTimelineDelivered,
                                               o.stamps.deliveredAt!,
                                             ),
                                           if (o.stamps.cancelledAt != null)
                                             _stamp(
-                                              'أُلغي',
+                                              loc.sellerOrderTimelineCancelled,
                                               o.stamps.cancelledAt!,
                                             ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        'العنوان الجغرافي: '
+                                        '${loc.adminOrdersGeoAddressPrefix} '
                                         '${o.lat == null ? '—' : o.lat!.toStringAsFixed(5)}, '
                                         '${o.lng == null ? '' : o.lng!.toStringAsFixed(5)}',
                                       ),
@@ -446,7 +463,8 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
                                                 '${it.titleSnap} × ${it.qty}',
                                               ),
                                               subtitle: Text(
-                                                'البائع: ${it.sellerId} • السعر: ${it.price.toStringAsFixed(2)}',
+                                                'البائع: ${it.sellerId} • السعر: '
+                                                '${it.price.toStringAsFixed(2)}',
                                               ),
                                               trailing: Text(
                                                 (it.price * it.qty)
@@ -467,32 +485,35 @@ class _AdminOrdersTabState extends State<AdminOrdersTab> {
               ),
               Row(
                 children: [
-                  Text('الإجمالي: $total'),
+                  Text('${loc.adminOrdersTotalFooterPrefix} $total'),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'الأولى',
+                    tooltip: matLoc.firstPageTooltip,
                     onPressed: (_page > 0)
                         ? () => setState(() => _page = 0)
                         : null,
                     icon: const Icon(Icons.first_page),
                   ),
                   IconButton(
-                    tooltip: 'السابق',
+                    tooltip: matLoc.previousPageTooltip,
                     onPressed: (_page > 0)
                         ? () => setState(() => _page -= 1)
                         : null,
                     icon: const Icon(Icons.chevron_right),
                   ),
-                  Text('صفحة ${pages == 0 ? 0 : (_page + 1)} / $pages'),
+                  Text(
+                    '${loc.adminOrdersPageLabel} '
+                    '${pages == 0 ? 0 : (_page + 1)} / $pages',
+                  ),
                   IconButton(
-                    tooltip: 'التالي',
+                    tooltip: matLoc.nextPageTooltip,
                     onPressed: (pages > 0 && (_page + 1) < pages)
                         ? () => setState(() => _page += 1)
                         : null,
                     icon: const Icon(Icons.chevron_left),
                   ),
                   IconButton(
-                    tooltip: 'الأخيرة',
+                    tooltip: matLoc.lastPageTooltip,
                     onPressed: (pages > 0 && (_page + 1) < pages)
                         ? () => setState(() => _page = pages - 1)
                         : null,

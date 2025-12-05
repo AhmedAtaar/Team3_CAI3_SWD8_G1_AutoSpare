@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
+
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminWinchTab extends StatelessWidget {
   const AdminWinchTab({super.key});
@@ -8,6 +10,7 @@ class AdminWinchTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -17,8 +20,11 @@ class AdminWinchTab extends StatelessWidget {
           final list = snap.data ?? const <AppUser>[];
 
           if (list.isEmpty) {
-            return const Center(
-              child: Text('لا توجد حسابات أوناش مسجلة حتى الآن'),
+            return Center(
+              child: Text(
+                loc.adminWinchAccountsEmpty,
+                textAlign: TextAlign.center,
+              ),
             );
           }
 
@@ -30,6 +36,10 @@ class AdminWinchTab extends StatelessWidget {
               final u = list[i];
 
               final docs = u.docUrls ?? const <String>[];
+
+              final statusText = u.approved
+                  ? loc.adminWinchTabStatusApproved
+                  : loc.adminWinchTabStatusPending;
 
               return Card(
                 elevation: 0,
@@ -44,15 +54,18 @@ class AdminWinchTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'الونش: ${u.name} (${u.id})',
+                        '${loc.adminWinchTabWinchTitlePrefix} ${u.name} (${u.id})',
                         textAlign: TextAlign.right,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
-                      Text('الهاتف: ${u.phone}', textAlign: TextAlign.right),
+                      Text(
+                        '${loc.adminWinchAccountsPhonePrefix} ${u.phone}',
+                        textAlign: TextAlign.right,
+                      ),
                       const SizedBox(height: 4),
                       Text(
-                        'الحالة: ${u.approved ? 'مقبول' : 'في انتظار المراجعة'}',
+                        '${loc.adminWinchTabStatusPrefix} $statusText',
                         textAlign: TextAlign.right,
                         style: TextStyle(
                           color: u.approved ? Colors.green : Colors.orange,
@@ -61,16 +74,16 @@ class AdminWinchTab extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'عدد الأوناش المسموح: ${u.maxWinches}',
+                        '${loc.adminWinchTabMaxWinchesPrefix} ${u.maxWinches}',
                         textAlign: TextAlign.right,
                       ),
 
                       if (docs.isNotEmpty) ...[
                         const SizedBox(height: 8),
-                        const Text(
-                          'المستندات:',
+                        Text(
+                          loc.adminWinchTabDocsTitle,
                           textAlign: TextAlign.right,
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         for (final d in docs)
                           Text(
@@ -87,7 +100,7 @@ class AdminWinchTab extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: PopupMenuButton<String>(
-                          tooltip: 'إجراءات',
+                          tooltip: loc.adminWinchTabMenuTooltip,
                           onSelected: (val) async {
                             if (val == 'approve') {
                               final capacity = await _askCapacity(
@@ -104,7 +117,9 @@ class AdminWinchTab extends StatelessWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'تم قبول حساب الونش وتحديد عدد الأوناش = $capacity',
+                                        loc.adminWinchTabApproveSuccess(
+                                          capacity,
+                                        ),
                                         textAlign: TextAlign.right,
                                       ),
                                     ),
@@ -113,10 +128,10 @@ class AdminWinchTab extends StatelessWidget {
                               }
                             }
                           },
-                          itemBuilder: (_) => const [
+                          itemBuilder: (_) => [
                             PopupMenuItem(
                               value: 'approve',
-                              child: Text('قبول وتحديد عدد الأوناش'),
+                              child: Text(loc.adminWinchTabMenuApproveLabel),
                             ),
                           ],
                           child: const Icon(Icons.more_vert),
@@ -135,24 +150,25 @@ class AdminWinchTab extends StatelessWidget {
 }
 
 Future<int?> _askCapacity(BuildContext context, int current) async {
+  final loc = AppLocalizations.of(context);
   final ctrl = TextEditingController(text: current > 0 ? '$current' : '1');
 
   return showDialog<int>(
     context: context,
     builder: (_) => AlertDialog(
-      title: const Text('حدد عدد الأوناش في الخدمة'),
+      title: Text(loc.adminWinchTabCapacityDialogTitle),
       content: TextField(
         controller: ctrl,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'عدد الأوناش',
+        decoration: InputDecoration(
+          border: const OutlineInputBorder(),
+          labelText: loc.adminWinchTabCapacityFieldLabel,
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('إلغاء'),
+          child: Text(loc.commonCancel),
         ),
         FilledButton(
           onPressed: () {
@@ -162,7 +178,7 @@ Future<int?> _askCapacity(BuildContext context, int current) async {
             }
             Navigator.pop(context, n);
           },
-          child: const Text('حفظ'),
+          child: Text(loc.adminWinchTabDialogSave),
         ),
       ],
     ),

@@ -5,6 +5,7 @@ import 'cart_screen.dart';
 import 'package:auto_spare/core/app_fees.dart';
 import 'package:auto_spare/services/reviews.dart';
 import 'package:auto_spare/view/widgets/reviews/product_reviews_section.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 import '../../controller/navigation/navigation.dart';
 
@@ -15,6 +16,9 @@ class ProductDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final double finalPrice = applyAppFee(p.price);
 
     Widget image() {
@@ -72,7 +76,7 @@ class ProductDetailsScreen extends StatelessWidget {
 
       CartService().addCatalogProduct(productForCart);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تمت إضافة المنتج إلى السلة')),
+        SnackBar(content: Text(loc.product_details_added_to_cart_message)),
       );
     }
 
@@ -157,12 +161,16 @@ class ProductDetailsScreen extends StatelessWidget {
         ),
 
         const SizedBox(height: 6),
-        Text('الماركة: ${kBrandName[p.brand]}    •    الموديل: ${p.model}'),
-        Text('السنوات: ${p.years.join(', ')}'),
-        Text('المخزون المتاح: ${p.stock}'),
+        Text(
+          '${loc.product_details_brand_label_prefix} ${kBrandName[p.brand]}    •    '
+          '${loc.product_details_model_label_prefix} ${p.model}',
+        ),
+        Text('${loc.product_details_years_label_prefix} ${p.years.join(', ')}'),
+        Text('${loc.product_details_stock_label_prefix} ${p.stock}'),
         const SizedBox(height: 10),
         Text(
-          'السعر: ${finalPrice.toStringAsFixed(2)} جنيه',
+          '${loc.product_details_price_label_prefix} '
+          '${finalPrice.toStringAsFixed(2)} ${loc.currency_egp}',
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
 
@@ -174,7 +182,7 @@ class ProductDetailsScreen extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: p.stock > 0 ? addToCart : null,
                 icon: const Icon(Icons.shopping_cart_outlined),
-                label: const Text('أضف للسلة'),
+                label: Text(loc.product_details_add_to_cart_button),
               ),
             ),
             const SizedBox(width: 8),
@@ -182,7 +190,7 @@ class ProductDetailsScreen extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: p.stock > 0 ? buyNow : null,
                 icon: const Icon(Icons.flash_on_outlined),
-                label: const Text('شراء الآن'),
+                label: Text(loc.product_details_buy_now_button),
               ),
             ),
           ],
@@ -192,8 +200,9 @@ class ProductDetailsScreen extends StatelessWidget {
         Card(
           child: ListTile(
             leading: const Icon(Icons.sell_outlined),
-
-            title: Text('البائع: ${p.seller}'),
+            title: Text(
+              '${loc.product_details_seller_label_prefix} ${p.seller}',
+            ),
           ),
         ),
 
@@ -208,8 +217,11 @@ class ProductDetailsScreen extends StatelessWidget {
 
     return AppNavigationScaffold(
       currentIndex: 0,
-      title: 'تفاصيل المنتج',
-      body: body,
+      title: loc.product_details_title,
+      body: Directionality(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        child: body,
+      ),
     );
   }
 }

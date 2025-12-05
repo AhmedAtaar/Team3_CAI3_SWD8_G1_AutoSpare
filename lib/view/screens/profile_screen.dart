@@ -16,6 +16,7 @@ import 'package:auto_spare/services/tow_requests.dart';
 import 'admin_profile_tab.dart';
 import 'seller_profile_tab.dart';
 import 'buyer_profile_tab.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -63,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
   }
 
-  void _logout() {
+  void _logout(AppLocalizations loc) {
     UserStore().currentUser = null;
     UserSession.signOut();
 
@@ -81,43 +82,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
-  Widget _buildProfileIcon(int badgeCount, {required bool selected}) {
-    final baseIcon = Icon(selected ? Icons.person : Icons.person_outline);
-
-    if (badgeCount <= 0) {
-      return baseIcon;
-    }
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        baseIcon,
-        Positioned(
-          right: -4,
-          top: -4,
-          child: Container(
-            padding: const EdgeInsets.all(2),
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-            child: Center(
-              child: Text(
-                badgeCount > 9 ? '9+' : '$badgeCount',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _profileIconWithBadge({required int count, required bool selected}) {
     final baseIcon = Icon(selected ? Icons.person : Icons.person_outline);
 
@@ -133,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Widget _buildBottomBar(int badgeCount) {
+  Widget _buildBottomBar(int badgeCount, AppLocalizations loc) {
     return NavigationBar(
       selectedIndex: _bottomIndex,
       onDestinationSelected: (i) {
@@ -158,25 +122,25 @@ class _ProfileScreenState extends State<ProfileScreen>
         }
       },
       destinations: [
-        const NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home),
-          label: 'الرئيسية',
+        NavigationDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: loc.nav_home,
         ),
-        const NavigationDestination(
-          icon: Icon(Icons.grid_view_outlined),
-          selectedIcon: Icon(Icons.grid_view),
-          label: 'التصنيفات',
+        NavigationDestination(
+          icon: const Icon(Icons.grid_view_outlined),
+          selectedIcon: const Icon(Icons.grid_view),
+          label: loc.nav_categories,
         ),
-        const NavigationDestination(
-          icon: Icon(Icons.local_shipping_outlined),
-          selectedIcon: Icon(Icons.local_shipping),
-          label: 'الونش',
+        NavigationDestination(
+          icon: const Icon(Icons.local_shipping_outlined),
+          selectedIcon: const Icon(Icons.local_shipping),
+          label: loc.nav_tow,
         ),
-        const NavigationDestination(
-          icon: Icon(Icons.shopping_cart_outlined),
-          selectedIcon: Icon(Icons.shopping_cart),
-          label: 'السلة',
+        NavigationDestination(
+          icon: const Icon(Icons.shopping_cart_outlined),
+          selectedIcon: const Icon(Icons.shopping_cart),
+          label: loc.nav_cart,
         ),
         NavigationDestination(
           icon: _profileIconWithBadge(count: badgeCount, selected: false),
@@ -184,30 +148,34 @@ class _ProfileScreenState extends State<ProfileScreen>
             count: badgeCount,
             selected: true,
           ),
-          label: 'حسابي',
+          label: loc.nav_profile,
         ),
       ],
     );
   }
 
-  String _accountRoleLabel(UserRole? r, AppUserRole dbRole) {
+  String _accountRoleLabel(
+    AppLocalizations loc,
+    UserRole? r,
+    AppUserRole dbRole,
+  ) {
     if (dbRole == AppUserRole.winch) {
-      return 'مقدم خدمة سحب السيارات';
+      return loc.profile_role_label_winch;
     }
 
     switch (r) {
       case UserRole.admin:
-        return 'أدمن (مراجعة فقط)';
+        return loc.profile_role_label_admin;
       case UserRole.seller:
-        return 'بائع';
+        return loc.profile_role_label_seller;
       case UserRole.buyer:
-        return 'مشتري';
+        return loc.profile_role_label_buyer;
       default:
-        return 'غير معروف';
+        return loc.profile_role_label_unknown;
     }
   }
 
-  Widget _roleBanner(BuildContext context, AppUser user) {
+  Widget _roleBanner(BuildContext context, AppUser user, AppLocalizations loc) {
     final cs = Theme.of(context).colorScheme;
 
     final bool isAdminAccount = user.role == AppUserRole.admin;
@@ -221,7 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final bool canSwitchToSeller =
         isSellerAccount && UserSession.canSwitchToSeller;
 
-    final accountRole = _accountRoleLabel(UserSession.authRole, user.role);
+    final accountRole = _accountRoleLabel(loc, UserSession.authRole, user.role);
     final name = UserSession.username ?? 'User';
 
     final bool isPureBuyer =
@@ -234,13 +202,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     late final IconData modeIcon;
 
     if (isAdminAccount) {
-      modeText = 'لوحة إدارة';
+      modeText = loc.profile_mode_admin_label;
       modeIcon = Icons.admin_panel_settings_outlined;
     } else if (isWinchAccount) {
-      modeText = 'مقدم خدمة سحب السيارات • يمكنه الشراء من المتجر';
+      modeText = loc.profile_mode_winch_label;
       modeIcon = Icons.local_shipping_outlined;
     } else {
-      modeText = 'الوضع: ${isSellerNow ? 'بائع' : 'مشتري'}';
+      modeText =
+          '${loc.profile_mode_prefix} ${isSellerNow ? loc.profile_mode_seller_label : loc.profile_mode_buyer_label}';
       modeIcon = isSellerNow ? Icons.storefront : Icons.shopping_bag_outlined;
     }
 
@@ -261,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'مرحباً $name',
+                  '${loc.profile_greeting_prefix} $name',
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
@@ -280,7 +249,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 Chip(label: Text(modeText), avatar: Icon(modeIcon)),
                 Chip(
-                  label: Text('دور الحساب: $accountRole'),
+                  label: Text(
+                    '${loc.profile_role_chip_label_prefix} $accountRole',
+                  ),
                   avatar: const Icon(Icons.verified_user_outlined),
                 ),
               ],
@@ -301,13 +272,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                         UserSession.switchToBuyer();
                         setState(() {});
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم التبديل إلى وضع مشتري'),
+                          SnackBar(
+                            content: Text(
+                              loc.profile_switched_to_buyer_message,
+                            ),
                           ),
                         );
                       },
                       icon: const Icon(Icons.swap_horiz),
-                      label: const Text('التبديل إلى مشتري'),
+                      label: Text(loc.profile_switch_to_buyer_button),
                     ),
                   ),
                 if (canSwitchToBuyer && canSwitchToSeller)
@@ -319,13 +292,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                         UserSession.switchToSeller();
                         setState(() {});
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم الرجوع إلى وضع بائع'),
+                          SnackBar(
+                            content: Text(
+                              loc.profile_switched_to_seller_message,
+                            ),
                           ),
                         );
                       },
                       icon: const Icon(Icons.storefront),
-                      label: const Text('الرجوع إلى بائع'),
+                      label: Text(loc.profile_switch_to_seller_button),
                     ),
                   ),
               ],
@@ -335,8 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (isWinchAccount) ...[
             const SizedBox(height: 6),
             Text(
-              'هذا الحساب مسجّل كمقدّم خدمة سحب سيارات، '
-              'ويمكنك أيضاً شراء قطع الغيار من المتجر بنفس هذا الحساب.',
+              loc.profile_winch_hint_text,
               style: TextStyle(fontSize: 12, color: cs.outline),
               textAlign: TextAlign.right,
             ),
@@ -345,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           if (isPureBuyer) ...[
             const SizedBox(height: 6),
             Text(
-              'هذا الحساب مسجّل كمشتري فقط.',
+              loc.profile_pure_buyer_hint_text,
               style: TextStyle(fontSize: 12, color: cs.outline),
             ),
           ],
@@ -356,6 +330,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final userStore = UserStore();
     final user = userStore.currentUser;
 
@@ -383,10 +360,10 @@ class _ProfileScreenState extends State<ProfileScreen>
               : BuyerProfileTab(userId: user.id));
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('الملف الشخصي'),
+          title: Text(loc.profile_app_bar_title),
           centerTitle: true,
           actions: [
             if (user.towCompanyId != null && isWinchRole)
@@ -413,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   final unread = list.where((r) => !r.companySeen).length;
 
                   return IconButton(
-                    tooltip: 'إدارة طلبات الونش (لوحة مقدم الخدمة)',
+                    tooltip: loc.profile_winch_requests_button_tooltip,
                     onPressed: () {
                       final cid = user.towCompanyId!;
                       Navigator.push(
@@ -459,9 +436,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ],
                         ),
                         const SizedBox(width: 4),
-                        const Text(
-                          'طلبات الونش',
-                          style: TextStyle(fontSize: 12),
+                        Text(
+                          loc.profile_winch_requests_button_label,
+                          style: const TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
@@ -470,13 +447,13 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             if (UserSession.loggedIn)
               IconButton(
-                tooltip: 'تسجيل الخروج',
+                tooltip: loc.profile_logout_tooltip,
                 icon: const Icon(Icons.logout),
-                onPressed: _logout,
+                onPressed: () => _logout(loc),
               )
             else
               IconButton(
-                tooltip: 'تسجيل الدخول',
+                tooltip: loc.profile_login_tooltip,
                 icon: const Icon(Icons.login),
                 onPressed: _login,
               ),
@@ -499,7 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _roleBanner(context, user),
+                  _roleBanner(context, user, loc),
                   const SizedBox(height: 16),
                   SizedBox(height: tabHeight, child: mainTab),
                 ],
@@ -511,7 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           stream: towNotificationCountStreamForCurrentUser(),
           builder: (_, snap) {
             final count = snap.data ?? 0;
-            return _buildBottomBar(count);
+            return _buildBottomBar(count, loc);
           },
         ),
       ),

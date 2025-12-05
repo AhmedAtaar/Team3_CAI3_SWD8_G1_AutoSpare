@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/user_store.dart';
 import 'package:auto_spare/services/users_repository.dart';
 import 'package:auto_spare/services/products.dart';
 import 'package:auto_spare/services/orders.dart';
-import 'package:auto_spare/services/tow_requests.dart';
 import 'package:auto_spare/view/widgets/profile/admin_orders_tab.dart';
-import 'package:auto_spare/view/widgets/admin/admin_winch_tab.dart';
 import 'package:auto_spare/view/screens/admin_tow_orders_screen.dart';
 import 'package:auto_spare/view/screens/admin_earnings_screen.dart';
-
-import 'admin_users_accounts_screen.dart';
+import 'package:auto_spare/view/screens/admin_users_accounts_screen.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminProfileTab extends StatefulWidget {
   const AdminProfileTab({super.key});
@@ -24,11 +21,12 @@ class AdminProfileTab extends StatefulWidget {
 
 class _AdminProfileTabState extends State<AdminProfileTab> {
   Future<void> _openExternal(String url) async {
+    final loc = AppLocalizations.of(context);
     final uri = Uri.tryParse(url);
     if (uri == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('رابط غير صالح')));
+      ).showSnackBar(SnackBar(content: Text(loc.common_invalid_url)));
       return;
     }
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -37,6 +35,8 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
   }
 
   Future<void> _openImagePreview(String url, {String? title}) async {
+    final loc = AppLocalizations.of(context);
+
     await showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -64,10 +64,10 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                   child: Image.network(
                     url,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
+                    errorBuilder: (_, __, ___) => Center(
                       child: Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: Text('تعذر تحميل الصورة'),
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(loc.common_image_load_failed),
                       ),
                     ),
                   ),
@@ -81,7 +81,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                 TextButton.icon(
                   onPressed: () => _openExternal(url),
                   icon: const Icon(Icons.open_in_new),
-                  label: const Text('فتح في المتصفح'),
+                  label: Text(loc.common_open_in_browser),
                 ),
                 const SizedBox(height: 6),
               ],
@@ -97,6 +97,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
     required String? url,
     IconData icon = Icons.insert_drive_file_outlined,
   }) {
+    final loc = AppLocalizations.of(context);
     final has = (url != null && url.trim().isNotEmpty);
     return Padding(
       padding: const EdgeInsets.only(top: 4.0),
@@ -107,19 +108,18 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
           Expanded(
             child: Text(
               '$label: ${has ? url! : '—'}',
-              textDirection: TextDirection.rtl,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           if (has) ...[
             IconButton(
-              tooltip: 'معاينة',
+              tooltip: loc.common_preview,
               onPressed: () => _openImagePreview(url!, title: label),
               icon: const Icon(Icons.visibility_outlined),
             ),
             IconButton(
-              tooltip: 'فتح في المتصفح',
+              tooltip: loc.common_open_in_browser,
               onPressed: () => _openExternal(url!),
               icon: const Icon(Icons.open_in_new),
             ),
@@ -152,6 +152,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
     final pendingSellers = _pendingSellers();
 
     return DefaultTabController(
@@ -170,7 +171,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                 );
               },
               icon: const Icon(Icons.bar_chart_outlined),
-              label: const Text('لوحة أرباح التطبيق'),
+              label: Text(loc.admin_profile_earnings_button),
             ),
           ),
           const SizedBox(height: 8),
@@ -188,7 +189,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                     );
                   },
                   icon: const Icon(Icons.receipt_long_outlined),
-                  label: const Text('إدارة الطلبات'),
+                  label: Text(loc.admin_profile_manage_orders_button),
                 ),
               ),
               const SizedBox(width: 8),
@@ -203,7 +204,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                     );
                   },
                   icon: const Icon(Icons.local_shipping_outlined),
-                  label: const Text('إدارة طلبات الونش'),
+                  label: Text(loc.admin_profile_manage_tow_orders_button),
                 ),
               ),
             ],
@@ -222,7 +223,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                 );
               },
               icon: const Icon(Icons.people_alt_outlined),
-              label: const Text('حسابات المستخدمين'),
+              label: Text(loc.admin_profile_users_accounts_button),
             ),
           ),
           const SizedBox(height: 8),
@@ -231,10 +232,10 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
             isScrollable: true,
             labelColor: cs.primary,
             labelStyle: const TextStyle(fontSize: 12),
-            tabs: const [
-              Tab(text: 'مراجعة المنتجات'),
-              Tab(text: 'اعتماد البائعين'),
-              Tab(text: 'اعتماد شركات الأوناش'),
+            tabs: [
+              Tab(text: loc.admin_profile_tab_products_review),
+              Tab(text: loc.admin_profile_tab_sellers_approval),
+              Tab(text: loc.admin_profile_tab_tow_approval),
             ],
           ),
           const SizedBox(height: 8),
@@ -256,14 +257,10 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'طلبات تسجيل كبائع (Pending)',
-                            textDirection: TextDirection.rtl,
-                          ),
+                          Text(loc.admin_profile_pending_sellers_title),
                           const SizedBox(height: 6),
                           Text(
-                            'في الانتظار: ${pendingSellers.length}',
-                            textDirection: TextDirection.rtl,
+                            '${loc.admin_profile_pending_label_prefix} ${pendingSellers.length}',
                           ),
                         ],
                       ),
@@ -271,8 +268,8 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                     const SizedBox(height: 12),
                     Expanded(
                       child: pendingSellers.isEmpty
-                          ? const Center(
-                              child: Text('لا توجد طلبات بائعين قيد المراجعة'),
+                          ? Center(
+                              child: Text(loc.admin_profile_no_pending_sellers),
                             )
                           : ListView.separated(
                               itemCount: pendingSellers.length,
@@ -298,17 +295,13 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                                             children: [
                                               Text(
                                                 '${s.name} • ${s.storeName ?? '—'}',
-                                                textDirection:
-                                                    TextDirection.rtl,
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                'Email: ${s.email}\nPhone: ${s.phone}',
-                                                textDirection:
-                                                    TextDirection.rtl,
+                                                'Email: ${s.email}\n${loc.signup_phone_label} ${s.phone}',
                                               ),
                                               _docLink(
                                                 label: 'CR',
@@ -330,7 +323,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(
-                                              tooltip: 'رفض',
+                                              tooltip: loc.admin_common_reject,
                                               onPressed: () {
                                                 _rejectSeller(s);
                                                 setState(() {});
@@ -341,7 +334,7 @@ class _AdminProfileTabState extends State<AdminProfileTab> {
                                               ),
                                             ),
                                             IconButton(
-                                              tooltip: 'موافقة',
+                                              tooltip: loc.admin_common_approve,
                                               onPressed: () {
                                                 _approveSeller(s);
                                                 setState(() {});
@@ -377,6 +370,8 @@ class _PendingProductsAdminTab extends StatelessWidget {
   const _PendingProductsAdminTab({super.key});
 
   Future<void> _approveProduct(BuildContext context, CatalogProduct p) async {
+    final loc = AppLocalizations.of(context);
+
     final updated = CatalogProduct(
       id: p.id,
       title: p.title,
@@ -395,38 +390,44 @@ class _PendingProductsAdminTab extends StatelessWidget {
 
     try {
       await productsRepo.upsertProduct(updated);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تمت الموافقة على ${p.id}')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${loc.admin_products_approve_success_prefix} ${p.id}'),
+        ),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('فشل في التحديث: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${loc.admin_products_update_failed_prefix} $e'),
+        ),
+      );
     }
   }
 
   Future<void> _rejectProduct(BuildContext context, CatalogProduct p) async {
+    final loc = AppLocalizations.of(context);
     final reasonCtrl = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('رفض المنتج'),
+        title: Text(loc.admin_products_reject_dialog_title),
         content: TextField(
           controller: reasonCtrl,
-          decoration: const InputDecoration(
-            labelText: 'سبب الرفض',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: loc.admin_products_reject_reason_label,
+            border: const OutlineInputBorder(),
+            hintText: loc.admin_products_reject_reason_hint,
           ),
           maxLines: 3,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(loc.admin_common_cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('رفض'),
+            child: Text(loc.admin_common_reject),
           ),
         ],
       ),
@@ -435,7 +436,7 @@ class _PendingProductsAdminTab extends StatelessWidget {
     if (ok != true) return;
 
     final reason = reasonCtrl.text.trim().isEmpty
-        ? 'غير مُحدد'
+        ? loc.admin_products_reject_reason_default
         : reasonCtrl.text.trim();
 
     final updated = CatalogProduct(
@@ -457,12 +458,18 @@ class _PendingProductsAdminTab extends StatelessWidget {
     try {
       await productsRepo.upsertProduct(updated);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم رفض ${p.id} • السبب: $reason')),
+        SnackBar(
+          content: Text(
+            '${loc.admin_products_rejected_with_reason_prefix} ${p.id} • ${loc.admin_products_reject_reason_label}: $reason',
+          ),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('فشل في التحديث: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${loc.admin_products_update_failed_prefix} $e'),
+        ),
+      );
     }
   }
 
@@ -480,6 +487,7 @@ class _PendingProductsAdminTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return StreamBuilder<List<CatalogProduct>>(
       stream: productsRepo.watchAllProducts(),
@@ -489,7 +497,7 @@ class _PendingProductsAdminTab extends StatelessWidget {
         }
 
         if (snap.hasError) {
-          return const Center(child: Text('حدث خطأ أثناء تحميل المنتجات'));
+          return Center(child: Text(loc.admin_products_error_loading));
         }
 
         final all = snap.data ?? const <CatalogProduct>[];
@@ -510,14 +518,10 @@ class _PendingProductsAdminTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'لوحة مراجعة المنتجات',
-                    textDirection: TextDirection.rtl,
-                  ),
+                  Text(loc.admin_profile_products_panel_title),
                   const SizedBox(height: 6),
                   Text(
-                    'في الانتظار: ${pending.length}',
-                    textDirection: TextDirection.rtl,
+                    '${loc.admin_profile_pending_label_prefix} ${pending.length}',
                   ),
                 ],
               ),
@@ -525,7 +529,7 @@ class _PendingProductsAdminTab extends StatelessWidget {
             const SizedBox(height: 12),
             Expanded(
               child: pending.isEmpty
-                  ? const Center(child: Text('لا توجد عناصر قيد المراجعة'))
+                  ? Center(child: Text(loc.admin_profile_no_pending_products))
                   : ListView.separated(
                       itemCount: pending.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -546,17 +550,16 @@ class _PendingProductsAdminTab extends StatelessWidget {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            it.title,
-                                            textDirection: TextDirection.rtl,
-                                          ),
+                                          Text(it.title),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'رقم: ${it.id} • البائع: ${it.seller}\n'
-                                            'البراند: ${kBrandName[it.brand]} • الموديل: ${it.model}\n'
-                                            'السنوات: ${it.years.join(', ')} • المخزون: ${it.stock}\n'
+                                            '${loc.admin_products_label_id}: ${it.id} • '
+                                            '${loc.admin_products_label_seller}: ${it.seller}\n'
+                                            '${loc.admin_products_label_brand}: ${kBrandName[it.brand]} • '
+                                            '${loc.admin_products_label_model}: ${it.model}\n'
+                                            '${loc.admin_products_label_years}: ${it.years.join(', ')} • '
+                                            '${loc.admin_products_label_stock}: ${it.stock}\n'
                                             '${it.description}',
-                                            textDirection: TextDirection.rtl,
                                             softWrap: true,
                                           ),
                                         ],
@@ -575,9 +578,11 @@ class _PendingProductsAdminTab extends StatelessWidget {
                                           Icons.block,
                                           color: Colors.red,
                                         ),
-                                        label: const Text(
-                                          'رفض',
-                                          style: TextStyle(color: Colors.red),
+                                        label: Text(
+                                          loc.admin_common_reject,
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -587,7 +592,7 @@ class _PendingProductsAdminTab extends StatelessWidget {
                                         onPressed: () =>
                                             _approveProduct(context, it),
                                         icon: const Icon(Icons.check),
-                                        label: const Text('موافقة'),
+                                        label: Text(loc.admin_common_approve),
                                       ),
                                     ),
                                   ],
@@ -611,10 +616,13 @@ class AdminOrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        appBar: AppBar(title: const Text('إدارة الطلبات'), centerTitle: true),
+        appBar: AppBar(title: Text(loc.admin_orders_title), centerTitle: true),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: AdminOrdersTab(repo: ordersRepo),
@@ -628,11 +636,12 @@ class AdminTowRequestsTab extends StatelessWidget {
   const AdminTowRequestsTab({super.key});
 
   Future<void> _openExternal(BuildContext context, String url) async {
+    final loc = AppLocalizations.of(context);
     final uri = Uri.tryParse(url);
     if (uri == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('رابط غير صالح')));
+      ).showSnackBar(SnackBar(content: Text(loc.common_invalid_url)));
       return;
     }
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
@@ -645,6 +654,8 @@ class AdminTowRequestsTab extends StatelessWidget {
     String url, {
     String? title,
   }) async {
+    final loc = AppLocalizations.of(context);
+
     await showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -672,10 +683,10 @@ class AdminTowRequestsTab extends StatelessWidget {
                   child: Image.network(
                     url,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Center(
+                    errorBuilder: (_, __, ___) => Center(
                       child: Padding(
-                        padding: EdgeInsets.all(24.0),
-                        child: Text('تعذر تحميل الصورة'),
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(loc.common_image_load_failed),
                       ),
                     ),
                   ),
@@ -689,7 +700,7 @@ class AdminTowRequestsTab extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () => _openExternal(context, url),
                   icon: const Icon(Icons.open_in_new),
-                  label: const Text('فتح في المتصفح'),
+                  label: Text(loc.common_open_in_browser),
                 ),
                 const SizedBox(height: 6),
               ],
@@ -706,6 +717,7 @@ class AdminTowRequestsTab extends StatelessWidget {
     required String? url,
     IconData icon = Icons.insert_drive_file_outlined,
   }) {
+    final loc = AppLocalizations.of(context);
     final has = (url != null && url.trim().isNotEmpty);
     return Padding(
       padding: const EdgeInsets.only(top: 4.0),
@@ -716,19 +728,18 @@ class AdminTowRequestsTab extends StatelessWidget {
           Expanded(
             child: Text(
               '$label: ${has ? url! : '—'}',
-              textDirection: TextDirection.rtl,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           if (has) ...[
             IconButton(
-              tooltip: 'معاينة',
+              tooltip: loc.common_preview,
               onPressed: () => _openImagePreview(context, url!, title: label),
               icon: const Icon(Icons.visibility_outlined),
             ),
             IconButton(
-              tooltip: 'فتح في المتصفح',
+              tooltip: loc.common_open_in_browser,
               onPressed: () => _openExternal(context, url!),
               icon: const Icon(Icons.open_in_new),
             ),
@@ -741,6 +752,7 @@ class AdminTowRequestsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
     final pendingTow = UserStore().pendingTowCompanies();
 
     return Column(
@@ -756,14 +768,10 @@ class AdminTowRequestsTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'طلبات شركات الونش (Pending)',
-                textDirection: TextDirection.rtl,
-              ),
+              Text(loc.admin_tow_requests_pending_title),
               const SizedBox(height: 6),
               Text(
-                'في الانتظار: ${pendingTow.length}',
-                textDirection: TextDirection.rtl,
+                '${loc.admin_profile_pending_label_prefix} ${pendingTow.length}',
               ),
             ],
           ),
@@ -771,7 +779,7 @@ class AdminTowRequestsTab extends StatelessWidget {
         const SizedBox(height: 12),
         Expanded(
           child: pendingTow.isEmpty
-              ? const Center(child: Text('لا توجد طلبات قيد المراجعة'))
+              ? Center(child: Text(loc.admin_tow_requests_no_pending))
               : ListView.separated(
                   itemCount: pendingTow.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -799,40 +807,40 @@ class AdminTowRequestsTab extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'صاحب الحساب: ${a.contactName}\n'
+                                    '${loc.admin_tow_requests_account_owner_label} ${a.contactName}\n'
                                     'Email: ${a.contactEmail}\n'
-                                    'Phone: ${a.contactPhone}',
-                                    textDirection: TextDirection.rtl,
+                                    '${loc.signup_phone_label} ${a.contactPhone}',
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    'سعر الخدمة: ${a.baseCost.toStringAsFixed(0)}ج • '
-                                    'سعر الكيلو: ${a.pricePerKm.toStringAsFixed(0)}ج',
+                                    '${loc.admin_tow_requests_service_price_prefix} ${a.baseCost.toStringAsFixed(0)} ${AppLocalizations.of(context).currency_egp} • '
+                                    '${loc.admin_tow_requests_price_per_km_prefix} ${a.pricePerKm.toStringAsFixed(0)} ${AppLocalizations.of(context).currency_egp}',
                                   ),
                                   Text(
+                                    '${loc.admin_tow_requests_location_label} '
                                     '(${a.lat.toStringAsFixed(6)}, ${a.lng.toStringAsFixed(6)})',
                                   ),
                                   if ((a.commercialRegUrl?.isNotEmpty ??
                                           false) ||
                                       (a.taxCardUrl?.isNotEmpty ?? false)) ...[
                                     const SizedBox(height: 8),
-                                    const Text(
-                                      'المستندات المرفوعة:',
-                                      style: TextStyle(
+                                    Text(
+                                      loc.admin_profile_uploaded_docs_title,
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     if (a.commercialRegUrl?.isNotEmpty ?? false)
                                       _docLink(
                                         context: context,
-                                        label: 'رابط السجل التجاري',
+                                        label: loc.signup_tow_cr_url_label,
                                         url: a.commercialRegUrl!,
                                         icon: Icons.picture_as_pdf_outlined,
                                       ),
                                     if (a.taxCardUrl?.isNotEmpty ?? false)
                                       _docLink(
                                         context: context,
-                                        label: 'رابط البطاقة الضريبية',
+                                        label: loc.signup_tow_tax_url_label,
                                         url: a.taxCardUrl!,
                                         icon: Icons.picture_as_pdf_outlined,
                                       ),
@@ -840,7 +848,7 @@ class AdminTowRequestsTab extends StatelessWidget {
                                   if (a.rejectReason != null &&
                                       a.status == SellerStatus.rejected)
                                     Text(
-                                      'مرفوض: ${a.rejectReason}',
+                                      '${loc.admin_profile_rejected_with_reason_prefix} ${a.rejectReason}',
                                       style: const TextStyle(color: Colors.red),
                                     ),
                                 ],
@@ -851,31 +859,38 @@ class AdminTowRequestsTab extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  tooltip: 'رفض',
+                                  tooltip: loc.admin_common_reject,
                                   onPressed: () async {
                                     final ctrl = TextEditingController();
                                     final ok = await showDialog<bool>(
                                       context: context,
                                       builder: (_) => AlertDialog(
-                                        title: const Text('سبب الرفض'),
+                                        title: Text(
+                                          loc.admin_products_reject_reason_label,
+                                        ),
                                         content: TextField(
                                           controller: ctrl,
                                           maxLines: 3,
-                                          decoration: const InputDecoration(
-                                            border: OutlineInputBorder(),
-                                            hintText: 'سبب الرفض (اختياري)',
+                                          decoration: InputDecoration(
+                                            border: const OutlineInputBorder(),
+                                            hintText: loc
+                                                .admin_products_reject_reason_hint,
                                           ),
                                         ),
                                         actions: [
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, false),
-                                            child: const Text('إلغاء'),
+                                            child: Text(
+                                              loc.admin_common_cancel,
+                                            ),
                                           ),
                                           FilledButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, true),
-                                            child: const Text('رفض'),
+                                            child: Text(
+                                              loc.admin_common_reject,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -884,7 +899,7 @@ class AdminTowRequestsTab extends StatelessWidget {
                                       UserStore().rejectTow(
                                         a.id,
                                         ctrl.text.trim().isEmpty
-                                            ? 'غير محدد'
+                                            ? loc.admin_products_reject_reason_default
                                             : ctrl.text.trim(),
                                       );
                                       (context as Element).markNeedsBuild();
@@ -896,7 +911,7 @@ class AdminTowRequestsTab extends StatelessWidget {
                                   ),
                                 ),
                                 IconButton(
-                                  tooltip: 'موافقة',
+                                  tooltip: loc.admin_common_approve,
                                   onPressed: () async {
                                     await UserStore().approveTow(a.id);
                                     (context as Element).markNeedsBuild();

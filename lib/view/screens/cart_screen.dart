@@ -12,6 +12,7 @@ import '../themes/app_colors.dart';
 import 'map_picker_screen.dart';
 import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/services/coupons_repo.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -72,7 +73,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   double get _subtotal => _cart.subtotal;
-  double get _shipping => 15.0;
+
+  double get _shipping => 45.0;
 
   double get _grandTotal {
     final total = _subtotal + _shipping - _discount;
@@ -128,6 +130,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _updateQuantity(String itemId, bool increase) {
+    final loc = AppLocalizations.of(context);
     final item = _cart.items.firstWhere((e) => e.id == itemId);
     final next = item.quantity + (increase ? 1 : -1);
 
@@ -140,7 +143,7 @@ class _CartScreenState extends State<CartScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'لا يمكنك طلب أكثر من المتاح في المخزون (${item.maxQty})',
+            '${loc.cart_quantity_exceeds_stock_prefix} (${item.maxQty})',
             textDirection: TextDirection.rtl,
           ),
         ),
@@ -154,12 +157,13 @@ class _CartScreenState extends State<CartScreen> {
   void _removeItem(String itemId) => _cart.remove(itemId);
 
   Future<void> _handleApplyCoupon(String code) async {
+    final loc = AppLocalizations.of(context);
     final upper = code.trim().toUpperCase();
     if (upper.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'من فضلك أدخل كود الخصم',
+            loc.cart_coupon_enter_code_message,
             textDirection: TextDirection.rtl,
           ),
         ),
@@ -171,8 +175,11 @@ class _CartScreenState extends State<CartScreen> {
       final coupon = await couponsRepo.getByCode(upper);
       if (coupon == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('كود خصم غير صالح', textDirection: TextDirection.rtl),
+          SnackBar(
+            content: Text(
+              loc.cart_coupon_invalid_message,
+              textDirection: TextDirection.rtl,
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -185,9 +192,9 @@ class _CartScreenState extends State<CartScreen> {
 
       if (!coupon.isUsable) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'هذا الكود غير مفعّل أو منتهي الصلاحية',
+              loc.cart_coupon_not_usable_message,
               textDirection: TextDirection.rtl,
             ),
             backgroundColor: Colors.red,
@@ -206,9 +213,9 @@ class _CartScreenState extends State<CartScreen> {
 
       if (sellerItems.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'لا توجد منتجات في السلة من البائع صاحب هذا الكود',
+              loc.cart_coupon_seller_mismatch_message,
               textDirection: TextDirection.rtl,
             ),
             backgroundColor: Colors.red,
@@ -239,7 +246,7 @@ class _CartScreenState extends State<CartScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم تطبيق كود الخصم: $upper',
+            '${loc.cart_coupon_applied_prefix} $upper',
             textDirection: TextDirection.rtl,
           ),
           backgroundColor: AppColors.primaryGreen,
@@ -249,7 +256,7 @@ class _CartScreenState extends State<CartScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'حصل خطأ أثناء تطبيق الكود: $e',
+            '${loc.cart_coupon_apply_error_prefix} $e',
             textDirection: TextDirection.rtl,
           ),
           backgroundColor: Colors.red,
@@ -259,39 +266,40 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<void> _handleProceedToOrder() async {
+    final loc = AppLocalizations.of(context);
     if (_isSubmittingOrder) return;
 
     if (_cart.items.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('السلة فارغة')));
+      ).showSnackBar(SnackBar(content: Text(loc.cart_empty_message)));
       return;
     }
 
     final buyer = UserStore().currentUser;
     if (buyer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('من فضلك قم بتسجيل الدخول أولاً')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(loc.cart_login_required_message)));
       return;
     }
 
     if (_nameCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('من فضلك أدخل اسم العميل')));
+      ).showSnackBar(SnackBar(content: Text(loc.cart_enter_name_message)));
       return;
     }
     if (_addrCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('من فضلك أدخل العنوان')));
+      ).showSnackBar(SnackBar(content: Text(loc.cart_enter_address_message)));
       return;
     }
     if (_phoneCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('من فضلك أدخل رقم التليفون')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(loc.cart_enter_phone_message)));
       return;
     }
 
@@ -312,41 +320,49 @@ class _CartScreenState extends State<CartScreen> {
       builder: (_) => Directionality(
         textDirection: TextDirection.rtl,
         child: AlertDialog(
-          title: const Text('تأكيد الطلب'),
+          title: Text(loc.cart_confirm_dialog_title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('العميل: ${_nameCtrl.text}'),
-              Text('العنوان: ${_addrCtrl.text}'),
-              Text('رقم التليفون: ${_phoneCtrl.text}'),
+              Text('${loc.cart_confirm_customer_label} ${_nameCtrl.text}'),
+              Text('${loc.cart_confirm_address_label} ${_addrCtrl.text}'),
+              Text('${loc.cart_confirm_phone_label} ${_phoneCtrl.text}'),
               if (_deliveryCtrl.text.trim().isNotEmpty)
-                Text('موقع التسليم: ${_deliveryCtrl.text}'),
+                Text(
+                  '${loc.cart_confirm_delivery_location_label} ${_deliveryCtrl.text}',
+                ),
               const SizedBox(height: 8),
-              Text('عدد العناصر: ${_cart.totalItems}'),
-              Text('إجمالي المنتجات: ${_subtotal.toStringAsFixed(2)} ج'),
-              Text('الشحن: ${_shipping.toStringAsFixed(2)} ج'),
+              Text('${loc.cart_confirm_items_count_label} ${_cart.totalItems}'),
+              Text(
+                '${loc.cart_confirm_items_total_label} ${_subtotal.toStringAsFixed(2)} ${loc.currency_egp}',
+              ),
+              Text(
+                '${loc.cart_confirm_shipping_label} ${_shipping.toStringAsFixed(2)} ${loc.currency_egp}',
+              ),
               if (_discount > 0)
-                Text('الخصم: - ${_discount.toStringAsFixed(2)} ج'),
+                Text(
+                  '${loc.cart_confirm_discount_label} ${_discount.toStringAsFixed(2)} ${loc.currency_egp}',
+                ),
               const Divider(),
               Text(
-                'الإجمالي النهائي: ${_grandTotal.toStringAsFixed(2)} ج',
+                '${loc.cart_confirm_grand_total_label} ${_grandTotal.toStringAsFixed(2)} ${loc.currency_egp}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               if (_orderNote != null && _orderNote!.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text('ملاحظة: ${_orderNote!}'),
+                Text('${loc.cart_confirm_note_label} ${_orderNote!}'),
               ],
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('رجوع'),
+              child: Text(loc.admin_common_cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('تأكيد'),
+              child: Text(loc.cart_confirm_button),
             ),
           ],
         ),
@@ -376,7 +392,7 @@ class _CartScreenState extends State<CartScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم إنشاء الطلب ($code) • #$orderId',
+            '${loc.cart_order_created_prefix} ($code) • #$orderId',
             textDirection: TextDirection.rtl,
           ),
           backgroundColor: AppColors.primaryGreen,
@@ -404,6 +420,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   void _handleCancelOrder() {
+    final loc = AppLocalizations.of(context);
     _cart.clear();
     setState(() {
       _discount = 0.0;
@@ -411,9 +428,9 @@ class _CartScreenState extends State<CartScreen> {
       _orderNote = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'تم إلغاء جميع العناصر في السلة',
+          loc.cart_cancel_all_items_message,
           textDirection: TextDirection.rtl,
         ),
         backgroundColor: Colors.red,
@@ -421,39 +438,67 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final cartItems = _cart.items;
+  Widget _customerCard(AppLocalizations loc, ColorScheme cs, bool isArabic) {
+    final labelStyle = TextStyle(
+      fontWeight: FontWeight.w600,
+      color: cs.onSurface.withOpacity(.8),
+    );
 
-    Widget _customerCard() => Padding(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Card(
-        elevation: 0,
+        elevation: 8,
+        shadowColor: Colors.black.withOpacity(.18),
         color: cs.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: cs.outlineVariant),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: isArabic
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.person_outline),
-                  SizedBox(width: 8),
-                  Text('بيانات العميل'),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.person_outline, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    loc.cart_customer_section_title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(
+                    Icons.verified_user_outlined,
+                    size: 20,
+                    color: AppColors.primaryGreen,
+                  ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               TextField(
                 controller: _nameCtrl,
                 readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'الاسم',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: loc.cart_customer_name_label,
+                  labelStyle: labelStyle,
+                  prefixIcon: const Icon(Icons.badge_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -461,12 +506,18 @@ class _CartScreenState extends State<CartScreen> {
                 controller: _addrCtrl,
                 readOnly: !_editAddress,
                 decoration: InputDecoration(
-                  labelText: 'العنوان',
-                  border: const OutlineInputBorder(),
+                  labelText: loc.cart_customer_address_label,
+                  labelStyle: labelStyle,
+                  prefixIcon: const Icon(Icons.home_work_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   suffixIcon: IconButton(
                     onPressed: () =>
                         setState(() => _editAddress = !_editAddress),
-                    icon: Icon(_editAddress ? Icons.check : Icons.edit),
+                    icon: Icon(
+                      _editAddress ? Icons.check_circle : Icons.edit_outlined,
+                    ),
                   ),
                 ),
               ),
@@ -476,11 +527,17 @@ class _CartScreenState extends State<CartScreen> {
                 keyboardType: TextInputType.phone,
                 readOnly: !_editPhone,
                 decoration: InputDecoration(
-                  labelText: 'رقم التليفون',
-                  border: const OutlineInputBorder(),
+                  labelText: loc.cart_customer_phone_label,
+                  labelStyle: labelStyle,
+                  prefixIcon: const Icon(Icons.phone_iphone),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   suffixIcon: IconButton(
                     onPressed: () => setState(() => _editPhone = !_editPhone),
-                    icon: Icon(_editPhone ? Icons.check : Icons.edit),
+                    icon: Icon(
+                      _editPhone ? Icons.check_circle : Icons.edit_outlined,
+                    ),
                   ),
                 ),
               ),
@@ -488,9 +545,13 @@ class _CartScreenState extends State<CartScreen> {
               TextField(
                 controller: _altPhoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'رقم آخر للتواصل',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: loc.cart_customer_alt_phone_label,
+                  labelStyle: labelStyle,
+                  prefixIcon: const Icon(Icons.phone_enabled_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -498,34 +559,61 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ),
     );
+  }
 
-    Widget _deliveryCard() => Padding(
+  Widget _deliveryCard(AppLocalizations loc, ColorScheme cs, bool isArabic) {
+    final noteColor = cs.onSurface.withOpacity(.65);
+
+    final deliveryNote = loc.cart_delivery_fees_note;
+    final cashNote = loc.cart_delivery_payment_note;
+
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Card(
-        elevation: 0,
+        elevation: 8,
+        shadowColor: Colors.black.withOpacity(.18),
         color: cs.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: cs.outlineVariant),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: isArabic
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(Icons.place_outlined),
-                  SizedBox(width: 8),
-                  Text('موقع التسليم (اختياري)'),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryGreen.withOpacity(.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.place_outlined, size: 20),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    loc.cart_delivery_section_title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurface,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: _deliveryCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'العنوان أو الإحداثيات',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: loc.cart_delivery_input_label,
+                  prefixIcon: const Icon(Icons.location_on_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -535,7 +623,7 @@ class _CartScreenState extends State<CartScreen> {
                     child: FilledButton.icon(
                       onPressed: _useCurrentLocation,
                       icon: const Icon(Icons.my_location),
-                      label: const Text('موقعي الحالي'),
+                      label: Text(loc.cart_delivery_current_location_button),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -543,7 +631,33 @@ class _CartScreenState extends State<CartScreen> {
                     child: FilledButton.tonalIcon(
                       onPressed: _pickOnMap,
                       icon: const Icon(Icons.map_outlined),
-                      label: const Text('اختيار من الخريطة'),
+                      label: Text(loc.cart_delivery_pick_on_map_button),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.info_outline, size: 18, color: noteColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      deliveryNote,
+                      style: TextStyle(fontSize: 12, color: noteColor),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.payments_outlined, size: 18, color: noteColor),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      cashNote,
+                      style: TextStyle(fontSize: 12, color: noteColor),
                     ),
                   ),
                 ],
@@ -553,12 +667,134 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ),
     );
+  }
+
+  Widget _electronicPaymentSoonCard(BuildContext context, bool isArabic) {
+    final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
+
+    final title = loc.cart_electronic_payment_title;
+    final subtitle = loc.cart_electronic_payment_subtitle;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.96, end: 1.0),
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeInOut,
+        builder: (context, value, child) {
+          return Transform.scale(scale: value, child: child);
+        },
+        child: GestureDetector(
+          onTap: () {
+            final msg = loc.cart_electronic_payment_soon_message;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  msg,
+                  textDirection: isArabic
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                ),
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primaryGreen, cs.primary],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryGreen.withOpacity(.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.credit_card_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: isArabic
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(.86),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    loc.cart_electronic_payment_soon_chip,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final cartItems = _cart.items;
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return AppNavigationScaffold(
       currentIndex: 3,
-      title: 'عربة التسوق',
+      title: loc.cart_title,
       body: Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
         child: SingleChildScrollView(
           child: Column(
             children: [
@@ -571,7 +807,7 @@ class _CartScreenState extends State<CartScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 50.0),
                           child: Text(
-                            'عربة التسوق فارغة',
+                            loc.cart_empty_title,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(color: Colors.grey),
                             textDirection: TextDirection.rtl,
@@ -592,9 +828,11 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(height: 8),
               Divider(indent: 16, endIndent: 16, color: cs.outlineVariant),
               const SizedBox(height: 8),
-              _customerCard(),
+              _customerCard(loc, cs, isArabic),
               const SizedBox(height: 12),
-              _deliveryCard(),
+              _deliveryCard(loc, cs, isArabic),
+              const SizedBox(height: 12),
+              _electronicPaymentSoonCard(context, isArabic),
               const SizedBox(height: 12),
               OrderSummary(
                 subtotal: _subtotal,

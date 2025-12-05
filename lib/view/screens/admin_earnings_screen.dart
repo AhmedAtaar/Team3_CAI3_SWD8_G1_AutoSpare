@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/core/earnings_utils.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminEarningsScreen extends StatefulWidget {
   const AdminEarningsScreen({super.key});
@@ -15,9 +16,11 @@ class AdminEarningsScreen extends StatefulWidget {
 class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
   late DateTimeRange _range;
 
-  String _fmt(double v) {
-    final f = NumberFormat('#,##0.00', 'en');
-    return '${f.format(v)} ج';
+  String _fmt(BuildContext context, double v) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final f = NumberFormat('#,##0.00', locale);
+    final loc = AppLocalizations.of(context);
+    return '${f.format(v)} ${loc.currency_egp}';
   }
 
   @override
@@ -33,14 +36,16 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
 
   Future<void> _pickRange(BuildContext context) async {
     final now = DateTime.now();
+    final loc = AppLocalizations.of(context);
+
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(now.year - 2),
       lastDate: DateTime(now.year + 1),
       initialDateRange: _range,
-      helpText: 'اختر الفترة',
-      confirmText: 'تم',
-      cancelText: 'إلغاء',
+      helpText: loc.admin_earnings_date_range_help,
+      confirmText: loc.admin_earnings_date_range_confirm,
+      cancelText: loc.admin_earnings_date_range_cancel,
     );
 
     if (picked != null) {
@@ -73,13 +78,15 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
   @override
   Widget build(BuildContext context) {
     final df = DateFormat('yyyy/MM/dd');
+    final loc = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: cs.surface,
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
-        title: const Text('أرباح التطبيق'),
+        title: Text(loc.admin_earnings_title),
       ),
       body: StreamBuilder<List<OrderDoc>>(
         stream: ordersRepo.watchAllOrdersAdmin(),
@@ -90,9 +97,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
           }
 
           if (snap.hasError) {
-            return const Center(
+            return Center(
               child: Text(
-                'حدث خطأ أثناء تحميل الطلبات',
+                loc.admin_earnings_error_loading_orders,
                 textAlign: TextAlign.center,
               ),
             );
@@ -105,9 +112,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
               .toList();
 
           if (delivered.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'لا توجد طلبات مكتملة حتى الآن',
+                loc.admin_earnings_no_completed_orders,
                 textAlign: TextAlign.center,
               ),
             );
@@ -146,8 +153,6 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
               .map((d) => dailyFeeMap[d] ?? 0.0)
               .toList();
 
-          final cs = Theme.of(context).colorScheme;
-
           double cardWidth(double maxWidth) {
             if (maxWidth >= 1000) return (maxWidth - 48) / 3;
             if (maxWidth >= 650) return (maxWidth - 32) / 2;
@@ -171,10 +176,12 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                const Text(
-                                  'الفترة الحالية للعرض',
+                                Text(
+                                  loc.admin_earnings_current_period_label,
                                   textAlign: TextAlign.right,
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -193,7 +200,7 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                         FilledButton.icon(
                           onPressed: () => _pickRange(context),
                           icon: const Icon(Icons.date_range),
-                          label: const Text('تغيير الفترة'),
+                          label: Text(loc.admin_earnings_change_period_button),
                         ),
                       ],
                     ),
@@ -221,14 +228,14 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'ملخص الأرباح للفترة المختارة',
+                                  loc.admin_earnings_summary_title,
                                   style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(fontWeight: FontWeight.w700),
                                   textAlign: TextAlign.right,
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'كل الأرقام التالية محسوبة بناءً على الطلبات المكتملة داخل الفترة المحددة فقط.',
+                                  loc.admin_earnings_summary_desc,
                                   style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: cs.onSurfaceVariant),
                                   textAlign: TextAlign.right,
@@ -249,12 +256,12 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                const Text(
-                                  'إجمالي أرباح التطبيق',
-                                  style: TextStyle(fontSize: 11),
+                                Text(
+                                  loc.admin_earnings_total_app_fee_label,
+                                  style: const TextStyle(fontSize: 11),
                                 ),
                                 Text(
-                                  _fmt(totalAppFee),
+                                  _fmt(context, totalAppFee),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -278,10 +285,10 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             width: 0.6,
                           ),
                         ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(24.0),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
                           child: Text(
-                            'لا توجد طلبات مكتملة في الفترة المحددة.\nجرّب اختيار فترة أخرى.',
+                            loc.admin_earnings_no_completed_in_range,
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -295,8 +302,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                           SizedBox(
                             width: cw,
                             child: _StatCard(
-                              title: 'عدد الطلبات المكتملة',
-                              value: '$totalOrders طلب',
+                              title:
+                                  loc.admin_earnings_period_orders_count_title,
+                              value: '$totalOrders',
                               icon: Icons.shopping_bag_outlined,
                               iconColor: cs.primary,
                             ),
@@ -304,9 +312,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                           SizedBox(
                             width: cw,
                             child: _StatCard(
-                              title: 'إجمالي المدفوع (Grand Total)',
-                              value: _fmt(totalRevenue),
-                              subtitle: 'شاملة الشحن والخصم وعمولة التطبيق',
+                              title: loc.admin_earnings_period_total_paid_title,
+                              value: _fmt(context, totalRevenue),
+                              subtitle: loc.admin_earnings_total_paid_subtitle,
                               icon: Icons.payments_outlined,
                               iconColor: Colors.teal,
                             ),
@@ -314,9 +322,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                           SizedBox(
                             width: cw,
                             child: _StatCard(
-                              title: 'إجمالي قيمة المنتجات',
-                              value: _fmt(totalItemsAmount),
-                              subtitle: 'قبل الشحن والخصم',
+                              title: loc.admin_earnings_total_items_title,
+                              value: _fmt(context, totalItemsAmount),
+                              subtitle: loc.admin_earnings_total_items_subtitle,
                               icon: Icons.inventory_2_outlined,
                               iconColor: Colors.blue,
                             ),
@@ -324,8 +332,8 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                           SizedBox(
                             width: cw,
                             child: _StatCard(
-                              title: 'إجمالي الخصومات',
-                              value: _fmt(totalDiscount),
+                              title: loc.admin_earnings_total_discount_title,
+                              value: _fmt(context, totalDiscount),
                               icon: Icons.local_offer_outlined,
                               iconColor: Colors.pink,
                             ),
@@ -333,10 +341,11 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                           SizedBox(
                             width: cw,
                             child: _StatCard(
-                              title: 'إجمالي أرباح التطبيق (تقديري)',
-                              value: _fmt(totalAppFee),
+                              title:
+                                  loc.admin_earnings_total_app_fee_card_title,
+                              value: _fmt(context, totalAppFee),
                               subtitle:
-                                  'محسوبة من أسعار الطلبات النهائية بنسبة ٥٪',
+                                  loc.admin_earnings_total_app_fee_subtitle,
                               icon: Icons.trending_up_outlined,
                               iconColor: Colors.deepPurple,
                             ),
@@ -347,7 +356,7 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                       const SizedBox(height: 28),
 
                       Text(
-                        'أداء الأرباح في الفترة المختارة',
+                        loc.admin_earnings_chart_section_title,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                         textAlign: TextAlign.right,
@@ -372,8 +381,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             SizedBox(
                               width: cw,
                               child: _StatCard.small(
-                                title: 'عدد الطلبات في الفترة',
-                                value: '$totalOrders طلب',
+                                title: loc
+                                    .admin_earnings_period_orders_count_title,
+                                value: '$totalOrders',
                                 icon: Icons.receipt_long_outlined,
                                 iconColor: cs.primary,
                               ),
@@ -381,8 +391,9 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             SizedBox(
                               width: cw,
                               child: _StatCard.small(
-                                title: 'إجمالي المدفوع في الفترة',
-                                value: _fmt(totalRevenue),
+                                title:
+                                    loc.admin_earnings_period_total_paid_title,
+                                value: _fmt(context, totalRevenue),
                                 icon: Icons.payments_rounded,
                                 iconColor: Colors.teal,
                               ),
@@ -390,8 +401,8 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                             SizedBox(
                               width: cw,
                               child: _StatCard.small(
-                                title: 'أرباح التطبيق في الفترة',
-                                value: _fmt(totalAppFee),
+                                title: loc.admin_earnings_period_app_fee_title,
+                                value: _fmt(context, totalAppFee),
                                 icon: Icons.trending_up,
                                 iconColor: Colors.deepPurple,
                               ),
@@ -405,7 +416,8 @@ class _AdminEarningsScreenState extends State<AdminEarningsScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'آخر تحديث: ${DateFormat('yyyy/MM/dd – HH:mm').format(DateTime.now())}',
+                        '${loc.admin_earnings_last_updated_prefix} '
+                        '${DateFormat('yyyy/MM/dd – HH:mm').format(DateTime.now())}',
                         style: Theme.of(
                           context,
                         ).textTheme.bodySmall?.copyWith(color: cs.outline),
@@ -524,6 +536,7 @@ class _EarningsChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     if (values.isEmpty || values.every((v) => v == 0.0)) {
       return Padding(
@@ -536,10 +549,13 @@ class _EarningsChart extends StatelessWidget {
               width: 0.6,
             ),
           ),
-          child: const SizedBox(
+          child: SizedBox(
             height: 160,
             child: Center(
-              child: Text('لا توجد بيانات كافية للرسم في هذه الفترة'),
+              child: Text(
+                loc.admin_earnings_chart_no_data,
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ),
@@ -557,7 +573,7 @@ class _EarningsChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'منحنى أرباح التطبيق (حسب الفترة المختارة)',
+              loc.admin_earnings_chart_title,
               textAlign: TextAlign.right,
               style: Theme.of(
                 context,

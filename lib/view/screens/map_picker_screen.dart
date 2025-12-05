@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class MapPickResult {
   final String address;
@@ -120,6 +121,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   }
 
   Future<void> _fetchSuggestions(String q, {bool moveToFirst = false}) async {
+    final loc = AppLocalizations.of(context);
     q = q.trim();
     if (q.length < 3) {
       if (!mounted) return;
@@ -240,16 +242,15 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final hasQuery = _searchCtrl.text.trim().length >= 3;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('اختيار مكان الوصول'),
-          centerTitle: true,
-        ),
+        appBar: AppBar(title: Text(loc.map_picker_title), centerTitle: true),
         body: Stack(
           children: [
             FlutterMap(
@@ -303,7 +304,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                       onSubmitted: (_) => _searchByAddressSubmit(),
                       onChanged: _onQueryChanged,
                       decoration: InputDecoration(
-                        hintText: 'ابحث عن عنوان أو مكان...',
+                        hintText: loc.map_picker_search_hint,
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -399,11 +400,10 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                           BoxShadow(blurRadius: 4, color: Colors.black12),
                         ],
                       ),
-                      child: const Text(
-                        'لا توجد نتائج لهذا البحث حاليًا.\n'
-                        'جرّب تعديل العنوان أو التأكد من اتصال الإنترنت.',
+                      child: Text(
+                        loc.map_picker_no_results_message,
                         textAlign: TextAlign.right,
-                        style: TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ),
                 ],
@@ -419,7 +419,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
-                    _addr.isEmpty ? 'جارِ تحديد العنوان…' : _addr,
+                    _addr.isEmpty ? loc.map_picker_pending_address : _addr,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -434,7 +434,7 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
               child: FilledButton.icon(
                 onPressed: _confirm,
                 icon: const Icon(Icons.check),
-                label: const Text('اختيار هذا المكان'),
+                label: Text(loc.map_picker_confirm_button),
               ),
             ),
           ],

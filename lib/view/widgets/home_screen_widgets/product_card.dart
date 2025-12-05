@@ -1,5 +1,6 @@
 import 'package:auto_spare/model/product.dart';
 import 'package:flutter/material.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class ProductCard extends StatelessWidget {
   final Product item;
@@ -11,6 +12,12 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = theme.colorScheme.outlineVariant;
+    final loc = AppLocalizations.of(context);
+
+    final parsedPrice = double.tryParse(item.price);
+    final priceText = parsedPrice != null
+        ? parsedPrice.toStringAsFixed(2)
+        : item.price;
 
     Widget image() {
       if (item.imageUrl == null || item.imageUrl!.isEmpty) {
@@ -49,9 +56,8 @@ class ProductCard extends StatelessWidget {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withOpacity(
-                          .35,
-                        ),
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: .35),
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(18),
                         ),
@@ -83,7 +89,6 @@ class ProductCard extends StatelessWidget {
                   ],
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
                 child: Text(
@@ -96,14 +101,13 @@ class ProductCard extends StatelessWidget {
                   ),
                 ),
               ),
-
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                        '${item.price} جنيه',
+                        '$priceText ${loc.currencyEgp}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textDirection: TextDirection.rtl,
@@ -112,13 +116,11 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 4),
-
                     IconButton(
                       icon: const Icon(Icons.add_shopping_cart_outlined),
                       onPressed: () {},
-                      tooltip: 'أضف إلى السلة',
+                      tooltip: loc.productCardAddToCartTooltip,
                       iconSize: 22,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(

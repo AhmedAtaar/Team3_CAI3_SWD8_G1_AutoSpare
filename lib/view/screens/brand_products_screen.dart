@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:auto_spare/model/product.dart';
 import 'package:auto_spare/model/catalog.dart';
 import 'package:auto_spare/model/product.dart';
 import 'package:auto_spare/services/products.dart';
@@ -8,6 +9,7 @@ import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/controller/navigation/navigation.dart';
 import 'package:auto_spare/view/widgets/home_screen_widgets/product_card.dart';
 import 'package:auto_spare/core/app_fees.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class BrandProductsScreen extends StatefulWidget {
   final CarBrand brand;
@@ -65,8 +67,13 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
     final theme = Theme.of(context);
     final brandName = kBrandName[widget.brand] ?? widget.brand.name;
 
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final double bottomPadding = bottomInset > 0 ? bottomInset + 16 : 100;
+
+    final screenTitle = '${loc.brandProductsTitle} $brandName';
 
     Widget appLogoChip() {
       final chipBg = theme.colorScheme.primary.withOpacity(.10);
@@ -91,8 +98,8 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
       children: [
         Expanded(
           child: Text(
-            'منتجات $brandName',
-            textDirection: TextDirection.rtl,
+            screenTitle,
+            textAlign: isArabic ? TextAlign.right : TextAlign.left,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
@@ -117,9 +124,9 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
       children: [
         Expanded(
           child: TextField(
-            textAlign: TextAlign.right,
+            textAlign: isArabic ? TextAlign.right : TextAlign.left,
             decoration: InputDecoration(
-              hintText: 'ابحث داخل $brandName...',
+              hintText: loc.searchHint,
               prefixIcon: const Icon(
                 Icons.search,
                 color: AppColors.primaryGreen,
@@ -149,19 +156,22 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
             isExpanded: true,
             value: _sortBy,
             underline: const SizedBox.shrink(),
-            items: const [
-              DropdownMenuItem(value: _SortBy.newest, child: Text('الأحدث')),
+            items: [
+              DropdownMenuItem(
+                value: _SortBy.newest,
+                child: Text(loc.sortNewest),
+              ),
               DropdownMenuItem(
                 value: _SortBy.priceLow,
-                child: Text('السعر: من الأقل'),
+                child: Text(loc.sortPriceLow),
               ),
               DropdownMenuItem(
                 value: _SortBy.priceHigh,
-                child: Text('السعر: من الأعلى'),
+                child: Text(loc.sortPriceHigh),
               ),
               DropdownMenuItem(
                 value: _SortBy.stockHigh,
-                child: Text('المخزون الأعلى'),
+                child: Text(loc.sortStockHigh),
               ),
             ],
             onChanged: (v) {
@@ -175,9 +185,9 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
     );
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: AppNavigationScaffold(
-        title: 'منتجات $brandName',
+        title: screenTitle,
         currentIndex: 1,
         body: Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -190,10 +200,10 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
               }
 
               if (snap.hasError) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'حدث خطأ أثناء تحميل المنتجات',
-                    style: TextStyle(color: Colors.red),
+                    loc.admin_products_error_loading,
+                    style: const TextStyle(color: Colors.red),
                   ),
                 );
               }
@@ -202,9 +212,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
               final products = _filtered(all);
 
               if (products.isEmpty) {
-                return const Center(
-                  child: Text('لا توجد منتجات لهذه الماركة حالياً'),
-                );
+                return Center(child: Text(loc.noProducts));
               }
 
               return Column(
@@ -229,7 +237,7 @@ class _BrandProductsScreenState extends State<BrandProductsScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'عدد النتائج: ${products.length}',
+                              '${loc.brand_products_results_count_prefix} ${products.length}',
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),

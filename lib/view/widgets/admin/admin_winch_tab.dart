@@ -1,5 +1,7 @@
+import 'dart:ui' as ui;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminWinchAccountsTab extends StatelessWidget {
   const AdminWinchAccountsTab({super.key});
@@ -7,10 +9,13 @@ class AdminWinchAccountsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     final col = FirebaseFirestore.instance.collection('tow_companies');
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? ui.TextDirection.rtl : ui.TextDirection.ltr,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -19,7 +24,7 @@ class AdminWinchAccountsTab extends StatelessWidget {
             if (snap.hasError) {
               return Center(
                 child: Text(
-                  'خطأ في تحميل حسابات الأوناش:\n${snap.error}',
+                  '${loc.adminWinchAccountsErrorLoading}\n${snap.error}',
                   textAlign: TextAlign.center,
                 ),
               );
@@ -33,9 +38,7 @@ class AdminWinchAccountsTab extends StatelessWidget {
             final docs = snap.data?.docs ?? const [];
 
             if (docs.isEmpty) {
-              return const Center(
-                child: Text('لا توجد حسابات أوناش مسجلة حتى الآن'),
-              );
+              return Center(child: Text(loc.adminWinchAccountsEmpty));
             }
 
             return ListView.separated(
@@ -45,8 +48,10 @@ class AdminWinchAccountsTab extends StatelessWidget {
                 final doc = docs[i];
                 final data = doc.data();
 
-                final name = (data['name'] ?? 'بدون اسم') as String;
-                final area = (data['area'] ?? 'بدون منطقة') as String;
+                final name =
+                    (data['name'] ?? loc.adminWinchAccountsNoName) as String;
+                final area =
+                    (data['area'] ?? loc.adminWinchAccountsNoArea) as String;
                 final phone = (data['phone'] ?? '') as String;
                 final baseCost = (data['baseCost'] as num?)?.toDouble() ?? 0.0;
                 final pricePerKm =
@@ -70,7 +75,6 @@ class AdminWinchAccountsTab extends StatelessWidget {
                           children: [
                             const Icon(Icons.local_shipping_outlined),
                             const SizedBox(width: 8),
-
                             Expanded(
                               child: Text(
                                 name,
@@ -83,14 +87,15 @@ class AdminWinchAccountsTab extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-
                             SizedBox(
                               width: 80,
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    isOnline ? 'مُفعّل' : 'مُعطّل',
+                                    isOnline
+                                        ? loc.adminWinchAccountsOnlineLabel
+                                        : loc.adminWinchAccountsOfflineLabel,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -111,28 +116,33 @@ class AdminWinchAccountsTab extends StatelessWidget {
                                 ],
                               ),
                             ),
-
                             PopupMenuButton<String>(
                               onSelected: (value) async {
                                 if (value == 'delete') {
                                   final ok = await showDialog<bool>(
                                     context: context,
                                     builder: (_) => AlertDialog(
-                                      title: const Text('حذف حساب الونش'),
+                                      title: Text(
+                                        loc.adminWinchAccountsDeleteTitle,
+                                      ),
                                       content: Text(
-                                        'هل أنت متأكد من حذف حساب "$name" نهائيًا؟',
+                                        loc.adminWinchAccountsDeleteMessage(
+                                          name,
+                                        ),
                                         textAlign: TextAlign.right,
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context, false),
-                                          child: const Text('إلغاء'),
+                                          child: Text(loc.commonCancel),
                                         ),
                                         FilledButton(
                                           onPressed: () =>
                                               Navigator.pop(context, true),
-                                          child: const Text('تأكيد الحذف'),
+                                          child: Text(
+                                            loc.adminWinchAccountsDeleteConfirm,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -146,7 +156,9 @@ class AdminWinchAccountsTab extends StatelessWidget {
                                       ).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'تم حذف حساب $name',
+                                            loc.adminWinchAccountsDeleteSuccess(
+                                              name,
+                                            ),
                                             textAlign: TextAlign.right,
                                           ),
                                         ),
@@ -156,14 +168,14 @@ class AdminWinchAccountsTab extends StatelessWidget {
                                 }
                               },
                               itemBuilder: (_) => [
-                                const PopupMenuItem(
+                                PopupMenuItem(
                                   value: 'delete',
                                   child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('حذف الحساب'),
-                                      Icon(
+                                      Text(loc.adminWinchAccountsDeleteMenu),
+                                      const Icon(
                                         Icons.delete_outline,
                                         color: Colors.red,
                                       ),
@@ -174,26 +186,27 @@ class AdminWinchAccountsTab extends StatelessWidget {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 6),
-
                         Text(
-                          'المنطقة: $area',
+                          '${loc.adminWinchAccountsAreaPrefix} $area',
                           textAlign: TextAlign.right,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
-                          'سعر الخدمة الأساسية: ${baseCost.toStringAsFixed(0)} جنيه',
+                          '${loc.adminWinchAccountsBaseCostPrefix} '
+                          '${baseCost.toStringAsFixed(0)} ${loc.currencyEgp}',
                           textAlign: TextAlign.right,
                         ),
                         Text(
-                          'سعر الكيلو: ${pricePerKm.toStringAsFixed(0)} جنيه/كم',
+                          '${loc.adminWinchAccountsPricePerKmPrefix} '
+                          '${pricePerKm.toStringAsFixed(0)} '
+                          '${loc.currencyEgpPerKm}',
                           textAlign: TextAlign.right,
                         ),
                         if (phone.isNotEmpty)
                           Text(
-                            'رقم الهاتف: $phone',
+                            '${loc.adminWinchAccountsPhonePrefix} $phone',
                             textAlign: TextAlign.right,
                           ),
                       ],

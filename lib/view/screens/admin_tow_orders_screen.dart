@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:auto_spare/core/tow_status_localized.dart';
 
 import 'package:auto_spare/services/tow_requests.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminTowOrdersScreen extends StatelessWidget {
   const AdminTowOrdersScreen({super.key});
@@ -10,12 +12,14 @@ class AdminTowOrdersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final col = FirebaseFirestore.instance.collection('tow_requests');
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('إدارة طلبات الونش'),
+          title: Text(loc.admin_tow_orders_title),
           centerTitle: true,
         ),
         body: Padding(
@@ -31,7 +35,7 @@ class AdminTowOrdersScreen extends StatelessWidget {
               final docs = snap.data?.docs ?? const [];
 
               if (docs.isEmpty) {
-                return const Center(child: Text('لا توجد طلبات ونش حتى الآن'));
+                return Center(child: Text(loc.admin_tow_orders_no_requests));
               }
 
               return ListView.separated(
@@ -52,12 +56,14 @@ class AdminTowOrdersScreen extends StatelessWidget {
                       r.status == TowRequestStatus.cancelled &&
                       (userCancelReason != null && userCancelReason.isNotEmpty);
 
-                  String statusLine = towStatusAr(r.status);
+                  String statusLine = towStatusText(context, r.status);
                   if (r.status == TowRequestStatus.cancelled) {
                     if (isCancelledByUser) {
-                      statusLine += ' • أُلغي بواسطة المشتري';
+                      statusLine +=
+                          loc.admin_tow_orders_status_cancelled_by_user_suffix;
                     } else {
-                      statusLine += ' • أُلغي بواسطة الشركة';
+                      statusLine += loc
+                          .admin_tow_orders_status_cancelled_by_company_suffix;
                     }
                   }
 
@@ -96,19 +102,20 @@ class AdminTowOrdersScreen extends StatelessWidget {
                           const SizedBox(height: 6),
 
                           Text(
-                            'الشركة: ${r.companyNameSnapshot}',
+                            '${loc.admin_tow_orders_company_prefix} ${r.companyNameSnapshot}',
                             textAlign: TextAlign.right,
                           ),
                           Text(
-                            'إجمالي: ${r.totalCost.toStringAsFixed(0)} جنيه',
+                            '${loc.admin_tow_orders_total_cost_prefix} ${r.totalCost.toStringAsFixed(0)} ${loc.currency_egp}',
                             textAlign: TextAlign.right,
                           ),
                           Text(
-                            'المركبة: ${r.vehicle} • اللوحة: ${r.plate}',
+                            '${loc.admin_tow_orders_vehicle_label} ${r.vehicle} • '
+                            '${loc.admin_tow_orders_plate_label} ${r.plate}',
                             textAlign: TextAlign.right,
                           ),
                           Text(
-                            'تليفون العميل: ${r.contactPhone}',
+                            '${loc.admin_tow_orders_customer_phone_label} ${r.contactPhone}',
                             textAlign: TextAlign.right,
                           ),
 
@@ -126,10 +133,10 @@ class AdminTowOrdersScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  const Text(
-                                    'سبب الإلغاء (المشتري):',
+                                  Text(
+                                    loc.admin_tow_orders_cancel_reason_title,
                                     textAlign: TextAlign.right,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       color: Colors.red,
                                     ),
@@ -142,7 +149,7 @@ class AdminTowOrdersScreen extends StatelessWidget {
                                   if (userCancelledAt != null) ...[
                                     const SizedBox(height: 4),
                                     Text(
-                                      'تاريخ الإلغاء: ${_formatDate(userCancelledAt)}',
+                                      '${loc.admin_tow_orders_cancel_date_prefix} ${_formatDate(userCancelledAt)}',
                                       textAlign: TextAlign.right,
                                       style: const TextStyle(fontSize: 11),
                                     ),

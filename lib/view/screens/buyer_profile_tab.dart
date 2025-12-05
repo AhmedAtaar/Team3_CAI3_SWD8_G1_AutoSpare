@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:auto_spare/core/tow_status_localized.dart';
 
 import 'package:auto_spare/view/widgets/profile/orders_section.dart';
 import 'package:auto_spare/view/screens/home_screen.dart';
 import 'package:auto_spare/services/tow_requests.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class BuyerProfileTab extends StatelessWidget {
   final String userId;
@@ -12,6 +14,7 @@ class BuyerProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -29,11 +32,11 @@ class BuyerProfileTab extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: cs.outlineVariant),
                   ),
-                  child: const TabBar(
+                  child: TabBar(
                     indicatorSize: TabBarIndicatorSize.tab,
                     tabs: [
-                      Tab(text: 'مشترياتي'),
-                      Tab(text: 'طلبات الونش'),
+                      Tab(text: loc.buyer_profile_tab_my_orders),
+                      Tab(text: loc.buyer_profile_tab_tow_requests),
                     ],
                   ),
                 ),
@@ -44,7 +47,7 @@ class BuyerProfileTab extends StatelessWidget {
                       SingleChildScrollView(
                         padding: const EdgeInsets.only(top: 4, bottom: 8),
                         child: OrdersSection(
-                          key: ValueKey('buyer-orders'),
+                          key: const ValueKey('buyer-orders'),
                           mode: OrdersSectionMode.buyer,
                           userId: userId,
                         ),
@@ -71,7 +74,7 @@ class BuyerProfileTab extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.storefront),
-            label: const Text('اذهب للتسوق'),
+            label: Text(loc.buyer_profile_go_shopping_button),
           ),
         ),
       ],
@@ -98,30 +101,31 @@ class _BuyerTowRequestsCard extends StatelessWidget {
   }
 
   Future<void> _cancelRequest(BuildContext context, TowRequestDoc r) async {
+    final loc = AppLocalizations.of(context);
     final reasonCtrl = TextEditingController();
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('إلغاء طلب الونش'),
+        title: Text(loc.buyer_tow_cancel_dialog_title),
         content: TextField(
           controller: reasonCtrl,
           maxLines: 3,
           textAlign: TextAlign.right,
-          decoration: const InputDecoration(
-            labelText: 'سبب الإلغاء (اختياري)',
-            hintText: 'مثال: الشركة اتأخرت / اتصرفّت بنفسي...',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: loc.buyer_tow_cancel_reason_label,
+            hintText: loc.buyer_tow_cancel_reason_hint,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('رجوع'),
+            child: Text(loc.admin_common_cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('تأكيد الإلغاء'),
+            child: Text(loc.buyer_tow_cancel_confirm_button),
           ),
         ],
       ),
@@ -139,14 +143,14 @@ class _BuyerTowRequestsCard extends StatelessWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إلغاء طلب الونش بنجاح')),
+          SnackBar(content: Text(loc.buyer_tow_cancel_success_message)),
         );
       }
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر إلغاء الطلب: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${loc.buyer_tow_cancel_error_prefix} $e')),
+      );
     }
   }
 
@@ -170,6 +174,7 @@ class _BuyerTowRequestsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -194,7 +199,6 @@ class _BuyerTowRequestsCard extends StatelessWidget {
             final original = snap.data ?? const <TowRequestDoc>[];
             final list = List<TowRequestDoc>.from(original);
 
-
             if (list.isNotEmpty) {
               final unseen = list.where((r) => !r.userSeen).toList();
               if (unseen.isNotEmpty) {
@@ -207,8 +211,8 @@ class _BuyerTowRequestsCard extends StatelessWidget {
             }
 
             if (list.isEmpty) {
-              return const Text(
-                'لا توجد طلبات سحب حتى الآن',
+              return Text(
+                loc.buyer_tow_no_requests_message,
                 textAlign: TextAlign.right,
               );
             }
@@ -228,6 +232,7 @@ class _BuyerTowRequestsCard extends StatelessWidget {
   }
 
   Widget _buildTowRow(BuildContext context, TowRequestDoc r) {
+    final loc = AppLocalizations.of(context);
     final isNew = !r.userSeen;
     final canCancel = _canCancel(r.status);
 
@@ -237,7 +242,8 @@ class _BuyerTowRequestsCard extends StatelessWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: Text(
-            '${towStatusAr(r.status)}${isNew ? ' (جديد)' : ''}',
+            '${towStatusText(context, r.status)}'
+            '${isNew ? ' ${loc.buyer_tow_status_new_suffix}' : ''}',
             textAlign: TextAlign.right,
             style: TextStyle(
               fontWeight: FontWeight.w600,
@@ -245,9 +251,11 @@ class _BuyerTowRequestsCard extends StatelessWidget {
             ),
           ),
           subtitle: Text(
-            'الشركة: ${r.companyNameSnapshot}\n'
-            'إجمالي: ${r.totalCost.toStringAsFixed(0)} جنيه\n'
-            'المركبة: ${r.vehicle} • اللوحة: ${r.plate}',
+            '${loc.admin_tow_orders_company_prefix} ${r.companyNameSnapshot}\n'
+            '${loc.admin_tow_orders_total_cost_prefix} '
+            '${r.totalCost.toStringAsFixed(0)} ${loc.currency_egp}\n'
+            '${loc.admin_tow_orders_vehicle_label} ${r.vehicle} • '
+            '${loc.admin_tow_orders_plate_label} ${r.plate}',
             textAlign: TextAlign.right,
           ),
         ),
@@ -257,9 +265,9 @@ class _BuyerTowRequestsCard extends StatelessWidget {
             child: TextButton.icon(
               onPressed: () => _cancelRequest(context, r),
               icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-              label: const Text(
-                'إلغاء الطلب',
-                style: TextStyle(color: Colors.red),
+              label: Text(
+                loc.buyer_tow_cancel_button,
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           ),

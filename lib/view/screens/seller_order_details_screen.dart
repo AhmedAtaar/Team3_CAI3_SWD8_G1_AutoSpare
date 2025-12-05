@@ -1,18 +1,24 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:auto_spare/core/order_status_localized.dart';
 
 import 'package:auto_spare/model/order.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class SellerOrderDetailsScreen extends StatelessWidget {
   final OrderDoc order;
   final String sellerId;
 
-  const SellerOrderDetailsScreen({
+  SellerOrderDetailsScreen({
     super.key,
     required this.order,
     required this.sellerId,
   });
+
+  final _moneyFormat = NumberFormat('#,##0.00', 'en');
+
+  String _fmtMoney(double v) => _moneyFormat.format(v);
 
   Color _statusColor(ColorScheme cs, OrderStatus s) {
     switch (s) {
@@ -32,6 +38,7 @@ class SellerOrderDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
     final df = DateFormat('yyyy/MM/dd – HH:mm');
 
     final sellerItems = order.items
@@ -75,11 +82,18 @@ class SellerOrderDetailsScreen extends StatelessWidget {
         spacing: 12,
         runSpacing: 6,
         children: [
-          dot(true, 'أُنشئ'),
-          dot(order.stamps.preparedAt != null, 'تم التجهيز'),
-          dot(order.stamps.handedToCourierAt != null, 'مع الشحن'),
-          dot(order.stamps.deliveredAt != null, 'تم الاستلام'),
-          if (order.stamps.cancelledAt != null) dot(true, 'أُلغي'),
+          dot(true, loc.sellerOrderTimelineCreated),
+          dot(order.stamps.preparedAt != null, loc.sellerOrderTimelinePrepared),
+          dot(
+            order.stamps.handedToCourierAt != null,
+            loc.sellerOrderTimelineWithCourier,
+          ),
+          dot(
+            order.stamps.deliveredAt != null,
+            loc.sellerOrderTimelineDelivered,
+          ),
+          if (order.stamps.cancelledAt != null)
+            dot(true, loc.sellerOrderTimelineCancelled),
         ],
       );
     }
@@ -88,7 +102,7 @@ class SellerOrderDetailsScreen extends StatelessWidget {
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('تفاصيل الطلب (${order.code})'),
+          title: Text('${loc.sellerOrderDetailsTitle} (${order.code})'),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -116,7 +130,7 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'كود الطلب: ${order.code}',
+                              '${loc.sellerOrderDetailsOrderCodePrefix} ${order.code}',
                               textAlign: TextAlign.right,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
@@ -126,7 +140,7 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Chip(
                             avatar: const Icon(Icons.flag_outlined, size: 18),
-                            label: Text(orderStatusAr(order.status)),
+                            label: Text(orderStatusText(context, order.status)),
                             backgroundColor: _statusColor(
                               cs,
                               order.status,
@@ -139,12 +153,13 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'المشتري: ${order.buyerId}',
+                        '${loc.sellerOrderDetailsBuyerPrefix} ${order.buyerId}',
                         textAlign: TextAlign.right,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'تاريخ الإنشاء: ${df.format(order.stamps.createdAt)}',
+                        '${loc.sellerOrderDetailsCreatedAtPrefix} '
+                        '${df.format(order.stamps.createdAt)}',
                         textAlign: TextAlign.right,
                         style: const TextStyle(fontSize: 12),
                       ),
@@ -154,7 +169,8 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                           order.couponCode!.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'كود الخصم المستخدم: ${order.couponCode}',
+                          '${loc.sellerOrderDetailsCouponUsedPrefix} '
+                          '${order.couponCode}',
                           textAlign: TextAlign.right,
                           style: const TextStyle(fontSize: 12),
                         ),
@@ -164,10 +180,10 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 8),
                         const Divider(),
                         const SizedBox(height: 4),
-                        const Text(
-                          'ملاحظة المشتري:',
+                        Text(
+                          loc.sellerOrderDetailsBuyerNoteTitle,
                           textAlign: TextAlign.right,
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Text(order.note!, textAlign: TextAlign.right),
@@ -192,62 +208,65 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.payments_outlined),
-                          SizedBox(width: 8),
+                        children: [
+                          const Icon(Icons.payments_outlined),
+                          const SizedBox(width: 8),
                           Text(
-                            'ملخص مالي للطلب',
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                            loc.sellerOrderDetailsFinancialSummaryTitle,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       _row(
-                        'إجمالي المنتجات (كل البائعين)',
-                        order.itemsTotal.toStringAsFixed(2),
+                        loc.sellerOrderDetailsTotalItemsAllSellersLabel,
+                        '${_fmtMoney(order.itemsTotal)} ${loc.currencyEgp}',
                       ),
-                      _row('الشحن', order.shipping.toStringAsFixed(2)),
+                      _row(
+                        loc.sellerOrderDetailsShippingLabel,
+                        '${_fmtMoney(order.shipping)} ${loc.currencyEgp}',
+                      ),
                       if (order.discount > 0)
                         _row(
-                          'إجمالي الخصم',
-                          '- ${order.discount.toStringAsFixed(2)}',
+                          loc.sellerOrderDetailsTotalDiscountLabel,
+                          '- ${_fmtMoney(order.discount)} ${loc.currencyEgp}',
                         ),
                       const Divider(height: 18),
                       _row(
-                        'الإجمالي النهائي للطلب',
-                        order.grandTotal.toStringAsFixed(2),
+                        loc.sellerOrderDetailsGrandTotalLabel,
+                        '${_fmtMoney(order.grandTotal)} ${loc.currencyEgp}',
                         bold: true,
                       ),
                       const SizedBox(height: 12),
                       const Divider(),
                       const SizedBox(height: 4),
-                      const Text(
-                        'بيانات خاصة بك كبائع',
+                      Text(
+                        loc.sellerOrderDetailsSellerSectionTitle,
                         textAlign: TextAlign.right,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
                       ),
                       const SizedBox(height: 6),
                       _row(
-                        'عدد العناصر التابعة لك',
+                        loc.sellerOrderDetailsSellerItemsCountLabel,
                         sellerItemsCount.toString(),
                       ),
                       _row(
-                        'سعر منتجاتك قبل الخصم',
-                        sellerSubtotal.toStringAsFixed(2),
+                        loc.sellerOrderDetailsSellerSubtotalLabel,
+                        '${_fmtMoney(sellerSubtotal)} ${loc.currencyEgp}',
                       ),
                       _row(
-                        'نصيبك من الخصم',
+                        loc.sellerOrderDetailsSellerDiscountShareLabel,
                         sellerDiscountShare > 0
-                            ? '- ${sellerDiscountShare.toStringAsFixed(2)}'
-                            : '0.00',
+                            ? '- ${_fmtMoney(sellerDiscountShare)} ${loc.currencyEgp}'
+                            : '0.00 ${loc.currencyEgp}',
                       ),
                       const SizedBox(height: 4),
                       _row(
-                        'صافي قيمة منتجاتك في هذا الطلب',
-                        sellerNet.toStringAsFixed(2),
+                        loc.sellerOrderDetailsSellerNetLabel,
+                        '${_fmtMoney(sellerNet)} ${loc.currencyEgp}',
                         bold: true,
                       ),
                     ],
@@ -273,7 +292,9 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'الإحداثيات: (${order.lat!.toStringAsFixed(5)}, ${order.lng!.toStringAsFixed(5)})',
+                            '${loc.sellerOrderDetailsCoordsPrefix} '
+                            '(${order.lat!.toStringAsFixed(5)}, '
+                            '${order.lng!.toStringAsFixed(5)})',
                             textAlign: TextAlign.right,
                           ),
                         ),
@@ -297,21 +318,21 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.inventory_2_outlined),
-                          SizedBox(width: 8),
+                        children: [
+                          const Icon(Icons.inventory_2_outlined),
+                          const SizedBox(width: 8),
                           Text(
-                            'بنود الطلب الخاصة بك',
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                            loc.sellerOrderDetailsItemsSectionTitle,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       if (sellerItems.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            'لا توجد عناصر مرتبطة بك في هذا الطلب.',
+                            loc.sellerOrderDetailsNoItemsForSellerMessage,
                             textAlign: TextAlign.right,
                           ),
                         )
@@ -336,10 +357,13 @@ class SellerOrderDetailsScreen extends StatelessWidget {
                                 textAlign: TextAlign.right,
                               ),
                               subtitle: Text(
-                                'سعر الوحدة: ${it.price.toStringAsFixed(2)}',
+                                '${loc.sellerOrderDetailsUnitPricePrefix} '
+                                '${_fmtMoney(it.price)} ${loc.currencyEgp}',
                                 textAlign: TextAlign.right,
                               ),
-                              trailing: Text(lineTotal.toStringAsFixed(2)),
+                              trailing: Text(
+                                '${_fmtMoney(lineTotal)} ${loc.currencyEgp}',
+                              ),
                             );
                           },
                         ),

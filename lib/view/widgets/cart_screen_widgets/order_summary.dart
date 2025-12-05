@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class OrderSummary extends StatefulWidget {
   final double subtotal;
@@ -45,6 +46,7 @@ class _OrderSummaryState extends State<OrderSummary> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -65,7 +67,7 @@ class _OrderSummaryState extends State<OrderSummary> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'ملخص الطلب',
+                      loc.orderSummaryTitle,
                       textAlign: TextAlign.right,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
@@ -77,25 +79,31 @@ class _OrderSummaryState extends State<OrderSummary> {
               const SizedBox(height: 12),
 
               _row(
-                label: 'إجمالي المنتجات (${widget.itemCount} عنصر)',
-                value: '${widget.subtotal.toStringAsFixed(2)} ج',
+                label:
+                    '${loc.orderSummarySubtotalPrefix} '
+                    '(${widget.itemCount} ${loc.orderSummaryItemsSuffix})',
+                value:
+                    '${widget.subtotal.toStringAsFixed(2)} '
+                    '${loc.currencyEgp}',
                 isBold: false,
               ),
-
               const SizedBox(height: 4),
 
               _row(
-                label: 'الشحن',
-                value: '${widget.shipping.toStringAsFixed(2)} ج',
+                label: loc.orderSummaryShippingLabel,
+                value:
+                    '${widget.shipping.toStringAsFixed(2)} '
+                    '${loc.currencyEgp}',
                 isBold: false,
               ),
-
               const SizedBox(height: 4),
 
               if (widget.discount > 0)
                 _row(
-                  label: 'الخصم',
-                  value: '- ${widget.discount.toStringAsFixed(2)} ج',
+                  label: loc.orderSummaryDiscountLabel,
+                  value:
+                      '- ${widget.discount.toStringAsFixed(2)} '
+                      '${loc.currencyEgp}',
                   isBold: false,
                 ),
 
@@ -104,8 +112,10 @@ class _OrderSummaryState extends State<OrderSummary> {
               const SizedBox(height: 8),
 
               _row(
-                label: 'الإجمالي النهائي',
-                value: '${widget.grandTotal.toStringAsFixed(2)} ج',
+                label: loc.orderSummaryGrandTotalLabel,
+                value:
+                    '${widget.grandTotal.toStringAsFixed(2)} '
+                    '${loc.currencyEgp}',
                 isBold: true,
               ),
 
@@ -114,7 +124,7 @@ class _OrderSummaryState extends State<OrderSummary> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  'كود الخصم (اختياري)',
+                  loc.orderSummaryCouponSectionTitle,
                   textAlign: TextAlign.right,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -127,9 +137,9 @@ class _OrderSummaryState extends State<OrderSummary> {
                     child: TextField(
                       controller: _couponCtrl,
                       textAlign: TextAlign.right,
-                      decoration: const InputDecoration(
-                        labelText: 'ادخل الكود',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: loc.orderSummaryCouponFieldLabel,
+                        border: const OutlineInputBorder(),
                       ),
                       onSubmitted: (v) {
                         if (v.trim().isEmpty) return;
@@ -144,7 +154,7 @@ class _OrderSummaryState extends State<OrderSummary> {
                       if (code.isEmpty) return;
                       widget.onApplyCoupon(code);
                     },
-                    child: const Text('تطبيق'),
+                    child: Text(loc.orderSummaryCouponApplyButton),
                   ),
                 ],
               ),
@@ -154,9 +164,9 @@ class _OrderSummaryState extends State<OrderSummary> {
               TextField(
                 maxLines: 2,
                 textAlign: TextAlign.right,
-                decoration: const InputDecoration(
-                  labelText: 'ملاحظة للطلب (اختياري)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: loc.orderSummaryNoteFieldLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 onChanged: (v) => widget.onNoteChanged?.call(v.trim()),
               ),
@@ -168,7 +178,7 @@ class _OrderSummaryState extends State<OrderSummary> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: widget.isSubmitting ? null : widget.onCancel,
-                      child: const Text('إلغاء'),
+                      child: Text(loc.commonCancel),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -186,8 +196,8 @@ class _OrderSummaryState extends State<OrderSummary> {
                           : const Icon(Icons.check_circle_outline),
                       label: Text(
                         widget.isSubmitting
-                            ? 'جارٍ إنشاء الطلب...'
-                            : 'إتمام الطلب',
+                            ? loc.orderSummarySubmittingLabel
+                            : loc.orderSummarySubmitButton,
                       ),
                     ),
                   ),

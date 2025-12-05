@@ -3,21 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum OrderStatus { processing, prepared, handedToCourier, delivered, cancelled }
 
-String orderStatusAr(OrderStatus s) {
-  switch (s) {
-    case OrderStatus.processing:
-      return 'قيد المعالجة';
-    case OrderStatus.prepared:
-      return 'تم التجهيز';
-    case OrderStatus.handedToCourier:
-      return 'مع شركة الشحن';
-    case OrderStatus.delivered:
-      return 'تم الاستلام';
-    case OrderStatus.cancelled:
-      return 'أُلغي';
-  }
-}
-
 @immutable
 class OrderItem {
   final String productId;
@@ -136,15 +121,11 @@ class OrderDoc {
   final List<OrderItem> items;
 
   final double itemsTotal;
-
   final double shipping;
-
   final double discount;
-
   final double grandTotal;
 
   final String? couponCode;
-
   final String? note;
 
   final double? lat;

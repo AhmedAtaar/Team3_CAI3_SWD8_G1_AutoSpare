@@ -18,11 +18,12 @@ class CustomToggleSwitch extends StatelessWidget {
     const double borderRadius = 20.0;
     const double sliderWidth = (switchWidth / 2) - 2.0;
 
-    final TextStyle selectedStyle = TextStyle(
-      color: AppColors.primaryGreen,
+    final TextStyle selectedStyle = const TextStyle(
+      color: Colors.white,
       fontWeight: FontWeight.bold,
       fontSize: 14,
     );
+
     final TextStyle unselectedStyle = const TextStyle(
       color: AppColors.lightText,
       fontWeight: FontWeight.bold,
@@ -31,58 +32,64 @@ class CustomToggleSwitch extends StatelessWidget {
 
     return GestureDetector(
       onTap: () => onChanged(!isArabicSelected),
-      child: Container(
-        width: switchWidth,
-        height: switchHeight,
-
-        decoration: BoxDecoration(
-          color: Colors.black12,
-          borderRadius: BorderRadius.circular(borderRadius),
-          border: Border.all(color: Colors.white54, width: 1.0),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            AnimatedAlign(
-              alignment: isArabicSelected
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              child: Container(
-                width: sliderWidth,
-                height: switchHeight - 4,
-                decoration: BoxDecoration(
-                  color: AppColors.lightText,
-                  borderRadius: BorderRadius.circular(borderRadius),
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Container(
+          width: switchWidth,
+          height: switchHeight,
+          decoration: BoxDecoration(
+            color: Colors.black12,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(color: Colors.white54, width: 1.0),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedAlign(
+                alignment: isArabicSelected
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut,
+                child: Container(
+                  width: sliderWidth,
+                  height: switchHeight - 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen,
+                    borderRadius: BorderRadius.circular(borderRadius),
+                  ),
                 ),
               ),
-            ),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                SizedBox(
-                  width: sliderWidth,
-                  child: Center(
-                    child: Text(
-                      'EN',
-                      style: isArabicSelected ? unselectedStyle : selectedStyle,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  SizedBox(
+                    width: sliderWidth,
+                    child: Center(
+                      child: Text(
+                        'EN',
+                        style: isArabicSelected
+                            ? unselectedStyle
+                            : selectedStyle,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: sliderWidth,
-                  child: Center(
-                    child: Text(
-                      'AR',
-                      style: isArabicSelected ? selectedStyle : unselectedStyle,
+                  SizedBox(
+                    width: sliderWidth,
+                    child: Center(
+                      child: Text(
+                        'AR',
+                        style: isArabicSelected
+                            ? selectedStyle
+                            : unselectedStyle,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

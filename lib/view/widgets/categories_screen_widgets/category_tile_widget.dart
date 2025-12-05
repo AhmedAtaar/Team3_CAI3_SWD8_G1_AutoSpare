@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class CategoryTile extends StatelessWidget {
   final String imagePath;
@@ -17,12 +18,12 @@ class CategoryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     Widget logo() {
       if (imagePath.isEmpty) {
         return const Icon(Icons.image_outlined, size: 32);
       }
-
       return Image.asset(imagePath, fit: BoxFit.contain);
     }
 
@@ -51,7 +52,7 @@ class CategoryTile extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'عدد المنتجات: $itemCount',
+              '${loc.categoryTileItemCountPrefix} $itemCount',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12),
             ),

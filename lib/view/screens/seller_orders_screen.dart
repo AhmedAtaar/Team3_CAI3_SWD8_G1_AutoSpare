@@ -3,10 +3,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:auto_spare/core/order_status_localized.dart';
 import 'package:auto_spare/model/order.dart';
 import 'package:auto_spare/services/orders.dart';
 import 'package:auto_spare/services/user_session.dart';
 import 'package:auto_spare/core/earnings_utils.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class SellerOrdersScreen extends StatefulWidget {
   const SellerOrdersScreen({super.key});
@@ -17,6 +19,9 @@ class SellerOrdersScreen extends StatefulWidget {
 
 class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
   final _df = DateFormat('yyyy/MM/dd – HH:mm');
+  final _moneyFormat = NumberFormat('#,##0.00', 'en');
+
+  String _fmtMoney(double v) => _moneyFormat.format(v);
 
   OrderStatus? _statusFilter;
 
@@ -35,25 +40,35 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
   }
 
   Future<void> _updateStatus(String orderId, OrderStatus next) async {
+    final loc = AppLocalizations.of(context);
+
     try {
       await ordersRepo.updateStatus(orderId: orderId, next: next);
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('تم تحديث حالة الطلب إلى "${orderStatusAr(next)}"'),
+          content: Text(
+            '${loc.sellerOrdersUpdateStatusSuccessPrefix} '
+            '"${orderStatusText(context, next)}"',
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر تحديث الحالة: $e')));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${loc.sellerOrdersUpdateStatusErrorPrefix} $e'),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context);
 
     final sellerKey = UserSession.username ?? '';
 
@@ -61,10 +76,8 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
       return Directionality(
         textDirection: ui.TextDirection.rtl,
         child: Scaffold(
-          appBar: AppBar(title: const Text('طلبات العملاء')),
-          body: const Center(
-            child: Text('لا يمكن تحديد هوية البائع لهذا الحساب'),
-          ),
+          appBar: AppBar(title: Text(loc.sellerOrdersTitle)),
+          body: Center(child: Text(loc.sellerDashboardUnknownSellerMessage)),
         ),
       );
     }
@@ -72,7 +85,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     return Directionality(
       textDirection: ui.TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('طلبات العملاء')),
+        appBar: AppBar(title: Text(loc.sellerOrdersTitle)),
         body: StreamBuilder<List<OrderDoc>>(
           stream: ordersRepo.watchSellerOrders(sellerKey),
           builder: (_, snap) {
@@ -89,9 +102,9 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
             if (list.isEmpty) {
               return Column(
                 children: [
-                  _buildFilterBar(cs),
-                  const Expanded(
-                    child: Center(child: Text('لا توجد طلبات حالياً')),
+                  _buildFilterBar(cs, loc),
+                  Expanded(
+                    child: Center(child: Text(loc.sellerOrdersNoOrdersMessage)),
                   ),
                 ],
               );
@@ -99,7 +112,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
 
             return Column(
               children: [
-                _buildFilterBar(cs),
+                _buildFilterBar(cs, loc),
                 Expanded(
                   child: ListView.separated(
                     itemCount: list.length,
@@ -117,7 +130,6 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                       );
 
                       final sellerNet = computeSellerNetForOrder(o, sellerKey);
-
                       final allowed = _allowedNextStatusesForSeller(o.status);
 
                       return Card(
@@ -138,7 +150,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                                 ),
                               ),
                               Chip(
-                                label: Text(orderStatusAr(o.status)),
+                                label: Text(orderStatusText(context, o.status)),
                                 avatar: const Icon(
                                   Icons.flag_outlined,
                                   size: 18,
@@ -146,9 +158,10 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                               ),
                             ],
                           ),
-
                           subtitle: Text(
-                            'عناصر: $itemCount • صافي أرباحك من الطلب: ${sellerNet.toStringAsFixed(2)} جنيه',
+                            '${loc.sellerOrdersSubtitleItemsPrefix} $itemCount '
+                            '${loc.sellerOrdersSubtitleNetPrefix} '
+                            '${_fmtMoney(sellerNet)} ${loc.currencyEgp}',
                           ),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -160,20 +173,24 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                               const SizedBox(height: 4),
                               PopupMenuButton<OrderStatus>(
                                 tooltip: allowed.isEmpty
-                                    ? 'لا يمكن تغيير الحالة'
-                                    : 'تحديث حالة الطلب',
+                                    ? loc.sellerOrdersStatusChangeNotAllowedTooltip
+                                    : loc.sellerOrdersStatusChangeTooltip,
                                 onSelected: (s) => _updateStatus(o.id, s),
                                 itemBuilder: (_) => [
                                   if (allowed.isEmpty)
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       enabled: false,
-                                      child: Text('لا توجد حالات متاحة'),
+                                      child: Text(
+                                        loc.sellerOrdersNoAvailableStatusesMenuLabel,
+                                      ),
                                     )
                                   else
                                     for (final s in allowed)
                                       PopupMenuItem(
                                         value: s,
-                                        child: Text(orderStatusAr(s)),
+                                        child: Text(
+                                          orderStatusText(context, s),
+                                        ),
                                       ),
                                 ],
                                 child: const Icon(Icons.more_vert),
@@ -190,28 +207,33 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                                     spacing: 6,
                                     runSpacing: 6,
                                     children: [
-                                      _stamp('أُنشئ', o.stamps.createdAt),
+                                      _stamp(
+                                        loc.sellerOrderTimelineCreated,
+                                        o.stamps.createdAt,
+                                      ),
                                       if (o.stamps.preparedAt != null)
                                         _stamp(
-                                          'تم التجهيز',
+                                          loc.sellerOrderTimelinePrepared,
                                           o.stamps.preparedAt!,
                                         ),
                                       if (o.stamps.handedToCourierAt != null)
                                         _stamp(
-                                          'مع الشحن',
+                                          loc.sellerOrderTimelineWithCourier,
                                           o.stamps.handedToCourierAt!,
                                         ),
                                       if (o.stamps.deliveredAt != null)
                                         _stamp(
-                                          'تم الاستلام',
+                                          loc.sellerOrderTimelineDelivered,
                                           o.stamps.deliveredAt!,
                                         ),
                                       if (o.stamps.cancelledAt != null)
-                                        _stamp('أُلغِي', o.stamps.cancelledAt!),
+                                        _stamp(
+                                          loc.sellerOrderTimelineCancelled,
+                                          o.stamps.cancelledAt!,
+                                        ),
                                     ],
                                   ),
                                   const Divider(height: 18),
-
                                   ListView.separated(
                                     itemCount: itemsForSeller.length,
                                     shrinkWrap: true,
@@ -221,6 +243,8 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                                         const SizedBox(height: 6),
                                     itemBuilder: (_, j) {
                                       final it = itemsForSeller[j];
+                                      final lineTotal = it.price * it.qty;
+
                                       return Material(
                                         color: Theme.of(
                                           context,
@@ -235,12 +259,11 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
                                             '${it.titleSnap} × ${it.qty}',
                                           ),
                                           subtitle: Text(
-                                            'السعر النهائي: ${it.price.toStringAsFixed(2)}',
+                                            '${loc.sellerOrdersFinalPricePrefix} '
+                                            '${_fmtMoney(it.price)} ${loc.currencyEgp}',
                                           ),
                                           trailing: Text(
-                                            (it.price * it.qty).toStringAsFixed(
-                                              2,
-                                            ),
+                                            '${_fmtMoney(lineTotal)} ${loc.currencyEgp}',
                                           ),
                                         ),
                                       );
@@ -263,7 +286,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
     );
   }
 
-  Widget _buildFilterBar(ColorScheme cs) {
+  Widget _buildFilterBar(ColorScheme cs, AppLocalizations loc) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -277,9 +300,9 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
         runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const Text('تصفية بالحالة:'),
+          Text(loc.sellerOrdersFilterByStatusLabel),
           ChoiceChip(
-            label: const Text('الكل'),
+            label: Text(loc.sellerOrdersFilterAllLabel),
             selected: _statusFilter == null,
             onSelected: (_) {
               setState(() => _statusFilter = null);
@@ -287,7 +310,7 @@ class _SellerOrdersScreenState extends State<SellerOrdersScreen> {
           ),
           for (final s in OrderStatus.values)
             ChoiceChip(
-              label: Text(orderStatusAr(s)),
+              label: Text(orderStatusText(context, s)),
               selected: _statusFilter == s,
               onSelected: (_) {
                 setState(() => _statusFilter = s);

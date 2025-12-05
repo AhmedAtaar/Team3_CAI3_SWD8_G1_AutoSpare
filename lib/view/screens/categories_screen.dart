@@ -5,11 +5,16 @@ import 'package:auto_spare/view/screens/brand_products_screen.dart';
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:auto_spare/view/widgets/categories_screen_widgets/category_tile_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:auto_spare/view/widgets/navigation/global_bottom_nav.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
-class CategoriesScreen extends StatelessWidget {
+class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
 
+  @override
+  State<CategoriesScreen> createState() => _CategoriesScreenState();
+}
+
+class _CategoriesScreenState extends State<CategoriesScreen> {
   static const Map<CarBrand, String> _brandLogos = {
     CarBrand.bmw: 'assets/images/BMW.png',
     CarBrand.hyundai: 'assets/images/Hyundai.png',
@@ -18,6 +23,14 @@ class CategoriesScreen extends StatelessWidget {
     CarBrand.nissan: 'assets/images/Nissan.png',
     CarBrand.toyota: 'assets/images/Toyota.png',
   };
+
+  final TextEditingController _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   List<_BrandCat> _buildCategoriesFromProducts(List<CatalogProduct> items) {
     final Map<CarBrand, int> counts = {for (final b in CarBrand.values) b: 0};
@@ -43,11 +56,14 @@ class CategoriesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final isDark = theme.brightness == Brightness.dark;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: AppNavigationScaffold(
-        title: "التصنيفات",
+        title: loc.nav_categories,
         currentIndex: 1,
         body: StreamBuilder<List<CatalogProduct>>(
           stream: productsRepo.watchApprovedProducts(),
@@ -59,7 +75,7 @@ class CategoriesScreen extends StatelessWidget {
             if (snap.hasError) {
               return Center(
                 child: Text(
-                  'حدث خطأ أثناء تحميل التصنيفات',
+                  loc.categories_error_loading,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.red,
                   ),
@@ -68,13 +84,20 @@ class CategoriesScreen extends StatelessWidget {
             }
 
             final products = snap.data ?? const <CatalogProduct>[];
-            final cats = _buildCategoriesFromProducts(products);
+            var cats = _buildCategoriesFromProducts(products);
+
+            final q = _searchCtrl.text.trim().toLowerCase();
+            if (q.isNotEmpty) {
+              cats = cats
+                  .where((c) => c.title.toLowerCase().contains(q))
+                  .toList();
+            }
 
             if (cats.isEmpty) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text('لا توجد منتجات متاحة حالياً'),
+                  padding: const EdgeInsets.all(24.0),
+                  child: Text(loc.home_no_products_available),
                 ),
               );
             }
@@ -91,10 +114,24 @@ class CategoriesScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: TextField(
-                          textAlign: TextAlign.right,
+                          controller: _searchCtrl,
+                          onChanged: (_) => setState(() {}),
+                          textAlign: isArabic
+                              ? TextAlign.right
+                              : TextAlign.left,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 14,
+                          ),
+                          cursorColor: AppColors.primaryGreen,
                           decoration: InputDecoration(
-                            hintText: 'ابحث عن قطع، علامات تجارية، موديلات...',
-                            prefixIcon: const Icon(
+                            hintText: loc.categories_search_hint,
+                            hintStyle: TextStyle(
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
+                            ),
+                            prefixIcon: Icon(
                               Icons.search,
                               color: AppColors.primaryGreen,
                             ),
@@ -103,10 +140,31 @@ class CategoriesScreen extends StatelessWidget {
                               horizontal: 16,
                             ),
                             filled: true,
-                            fillColor: Colors.grey[100],
+                            fillColor: isDark
+                                ? const Color(0xFF0B1120)
+                                : Colors.grey[100],
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
+                              borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey.shade700
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey.shade700
+                                    : Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.primaryGreen,
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),
@@ -114,21 +172,23 @@ class CategoriesScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
+
                   Text(
-                    'التصنيفات',
+                    loc.categories_title,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.darkText,
+                      color: isDark ? Colors.white : AppColors.darkText,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'تصفح القطع حسب الماركة',
+                    loc.categories_subtitle,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.grey[600],
+                      color: isDark ? Colors.grey[300] : Colors.grey[600],
                     ),
                   ),
                   const SizedBox(height: 24),
+
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -152,7 +212,6 @@ class CategoriesScreen extends StatelessWidget {
                             MaterialPageRoute(
                               builder: (_) => BrandProductsScreen(
                                 brand: c.brand,
-
                                 logoAssetPath: c.imagePath,
                               ),
                             ),

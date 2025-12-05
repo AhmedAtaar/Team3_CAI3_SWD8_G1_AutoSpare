@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:auto_spare/model/app_user.dart';
 import 'package:auto_spare/services/users_repository.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class AdminUsersAccountsScreen extends StatefulWidget {
   const AdminUsersAccountsScreen({super.key});
@@ -14,7 +15,6 @@ class AdminUsersAccountsScreen extends StatefulWidget {
 class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
   bool _isBanned(AppUser u) {
     if (u.role == AppUserRole.admin) return false;
-
     return (u.approved == false && u.canSell == false);
   }
 
@@ -22,10 +22,10 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
     return (u.approved == false && !_isBanned(u));
   }
 
-  String _statusText(AppUser u) {
-    if (_isBanned(u)) return 'محظور نهائياً';
-    if (u.approved == true) return 'نشط';
-    return 'مجمّد / غير مفعل';
+  String _statusText(AppUser u, AppLocalizations loc) {
+    if (_isBanned(u)) return loc.admin_users_status_banned;
+    if (u.approved == true) return loc.admin_users_status_active;
+    return loc.admin_users_status_frozen;
   }
 
   Color _statusColor(AppUser u) {
@@ -57,27 +57,29 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
   }
 
   Future<void> _banUser(AppUser u) async {
-    if (u.role == AppUserRole.admin) {
-      return;
-    }
+    if (u.role == AppUserRole.admin) return;
+
+    final loc = AppLocalizations.of(context);
+    final displayName = u.name.isNotEmpty ? u.name : u.email;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('تأكيد الحظر النهائي'),
+        title: Text(loc.admin_users_permanent_ban_dialog_title),
         content: Text(
-          'هل أنت متأكد من حظر ${u.name.isNotEmpty ? u.name : u.email} نهائياً؟\n'
-          'لن يستطيع استخدام الحساب أو إنشاء حساب جديد بنفس البريد.',
+          '${loc.admin_users_permanent_ban_dialog_body_prefix} '
+          '$displayName '
+          '${loc.admin_users_permanent_ban_dialog_body_suffix}',
           textDirection: TextDirection.rtl,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء'),
+            child: Text(loc.admin_common_cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('تأكيد الحظر'),
+            child: Text(loc.admin_users_permanent_ban_confirm),
           ),
         ],
       ),
@@ -85,7 +87,7 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
 
     if (ok != true) return;
 
-    AppUser updated = u.copyWith(
+    final updated = u.copyWith(
       approved: false,
       canSell: false,
       canTow: u.role == AppUserRole.winch ? false : u.canTow,
@@ -96,14 +98,15 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
   }
 
   Widget _userCard(AppUser u) {
-    final status = _statusText(u);
+    final loc = AppLocalizations.of(context);
+    final status = _statusText(u, loc);
     final color = _statusColor(u);
     final banned = _isBanned(u);
     final frozen = _isFrozen(u);
 
     final String freezeLabel = banned
-        ? 'إلغاء الحظر / تفعيل'
-        : (frozen ? 'إلغاء التجميد' : 'تجميد');
+        ? loc.admin_users_unban_and_activate
+        : (frozen ? loc.admin_users_unfreeze : loc.admin_users_freeze);
 
     final IconData freezeIcon = banned
         ? Icons.lock_open
@@ -123,18 +126,24 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    u.name.isNotEmpty ? u.name : 'بدون اسم',
+                    u.name.isNotEmpty ? u.name : loc.admin_users_no_name,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
-                  Text('Email: ${u.email}', textDirection: TextDirection.ltr),
+                  Text(
+                    '${loc.admin_users_email_label}: ${u.email}',
+                    textDirection: TextDirection.ltr,
+                  ),
                   if (u.phone.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text('Phone: ${u.phone}', textDirection: TextDirection.ltr),
+                    Text(
+                      '${loc.admin_users_phone_label}: ${u.phone}',
+                      textDirection: TextDirection.ltr,
+                    ),
                   ],
                   if (u.storeName != null && u.storeName!.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text('المتجر: ${u.storeName}'),
+                    Text('${loc.admin_users_store_label} ${u.storeName}'),
                   ],
                   const SizedBox(height: 4),
                   Chip(
@@ -158,9 +167,9 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
                 TextButton.icon(
                   onPressed: () => _banUser(u),
                   icon: const Icon(Icons.block, color: Colors.red),
-                  label: const Text(
-                    'حظر نهائي',
-                    style: TextStyle(color: Colors.red),
+                  label: Text(
+                    loc.admin_users_permanent_ban_button,
+                    style: const TextStyle(color: Colors.red),
                   ),
                 ),
               ],
@@ -174,51 +183,49 @@ class _AdminUsersAccountsScreenState extends State<AdminUsersAccountsScreen> {
   @override
   Widget build(BuildContext context) {
     final all = usersRepo.allUsers;
-
     final buyers = all.where((u) => u.role == AppUserRole.buyer).toList();
-
     final sellers = all.where((u) => u.role == AppUserRole.seller).toList();
-
     final winches = all.where((u) => u.role == AppUserRole.winch).toList();
 
+    final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
       child: DefaultTabController(
         length: 3,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('حسابات المستخدمين'),
-            bottom: const TabBar(
+            title: Text(loc.admin_users_title),
+            bottom: TabBar(
               isScrollable: true,
               tabs: [
-                Tab(text: 'حسابات المشترين'),
-                Tab(text: 'حسابات البائعين'),
-                Tab(text: 'حسابات الأوناش'),
+                Tab(text: loc.admin_users_tab_buyers),
+                Tab(text: loc.admin_users_tab_sellers),
+                Tab(text: loc.admin_users_tab_winches),
               ],
             ),
           ),
           body: TabBarView(
             children: [
               buyers.isEmpty
-                  ? const Center(child: Text('لا توجد حسابات مشترين'))
+                  ? Center(child: Text(loc.admin_users_no_buyer_accounts))
                   : ListView.separated(
                       padding: const EdgeInsets.all(12),
                       itemCount: buyers.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (_, i) => _userCard(buyers[i]),
                     ),
-
               sellers.isEmpty
-                  ? const Center(child: Text('لا توجد حسابات بائعين'))
+                  ? Center(child: Text(loc.admin_users_no_seller_accounts))
                   : ListView.separated(
                       padding: const EdgeInsets.all(12),
                       itemCount: sellers.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (_, i) => _userCard(sellers[i]),
                     ),
-
               winches.isEmpty
-                  ? const Center(child: Text('لا توجد حسابات أوناش'))
+                  ? Center(child: Text(loc.admin_users_no_winch_accounts))
                   : ListView.separated(
                       padding: const EdgeInsets.all(12),
                       itemCount: winches.length,

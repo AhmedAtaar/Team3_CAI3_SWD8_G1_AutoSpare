@@ -10,6 +10,7 @@ import 'tow_companies_screen.dart';
 import 'map_picker_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'profile_screen.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class TowScreen extends StatefulWidget {
   const TowScreen({super.key});
@@ -28,11 +29,11 @@ class _TowScreenState extends State<TowScreen> {
   final _problemCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
 
-  final _baseCostCtrl = TextEditingController(text: '0 جنيه');
-  final _kmSumCtrl = TextEditingController(text: '0.0 كم');
-  final _pricePerKmCtrl = TextEditingController(text: '0 جنيه/كم');
-  final _kmCostCtrl = TextEditingController(text: '0 جنيه');
-  final _totalCostCtrl = TextEditingController(text: '0 جنيه');
+  final _baseCostCtrl = TextEditingController(text: '0');
+  final _kmSumCtrl = TextEditingController(text: '0.0');
+  final _pricePerKmCtrl = TextEditingController(text: '0');
+  final _kmCostCtrl = TextEditingController(text: '0');
+  final _totalCostCtrl = TextEditingController(text: '0');
 
   Position? _pos;
   TowCompany? _selectedCompany;
@@ -85,16 +86,16 @@ class _TowScreenState extends State<TowScreen> {
   }
 
   Future<void> _initLocation() async {
+    final loc = AppLocalizations.of(context);
+
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         await Geolocator.openLocationSettings();
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('من فضلك فعّل خدمة الموقع (GPS) من الإعدادات'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(loc.towScreenGpsEnableSnack)));
         return;
       }
       var perm = await Geolocator.checkPermission();
@@ -104,9 +105,9 @@ class _TowScreenState extends State<TowScreen> {
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم رفض صلاحية الموقع')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.towScreenLocationPermissionDeniedSnack)),
+        );
         return;
       }
 
@@ -125,9 +126,9 @@ class _TowScreenState extends State<TowScreen> {
       _recalcCosts();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('تعذّر جلب الموقع: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${loc.towScreenLocationFetchErrorSnack} $e')),
+      );
     }
   }
 
@@ -188,8 +189,8 @@ class _TowScreenState extends State<TowScreen> {
     setState(() {
       _selectedCompany = company;
       _companyDistKm = distKm;
-      _baseCostCtrl.text = '${company.baseCost.toStringAsFixed(0)} جنيه';
-      _pricePerKmCtrl.text = '${company.pricePerKm.toStringAsFixed(0)} جنيه/كم';
+      _baseCostCtrl.text = company.baseCost.toStringAsFixed(0);
+      _pricePerKmCtrl.text = company.pricePerKm.toStringAsFixed(0);
     });
     _recalcCosts();
   }
@@ -263,9 +264,9 @@ class _TowScreenState extends State<TowScreen> {
     final kmCost = kmTotal * pricePerKm;
     final total = baseCost + kmCost;
 
-    _kmSumCtrl.text = '${kmTotal.toStringAsFixed(1)} كم';
-    _kmCostCtrl.text = '${kmCost.toStringAsFixed(0)} جنيه';
-    _totalCostCtrl.text = '${total.toStringAsFixed(0)} جنيه';
+    _kmSumCtrl.text = kmTotal.toStringAsFixed(1);
+    _kmCostCtrl.text = kmCost.toStringAsFixed(0);
+    _totalCostCtrl.text = total.toStringAsFixed(0);
   }
 
   Future<bool> _userHasActiveTowRequest(String userId) async {
@@ -302,11 +303,11 @@ class _TowScreenState extends State<TowScreen> {
         _phoneCtrl.clear();
       }
 
-      _baseCostCtrl.text = '0 جنيه';
-      _kmSumCtrl.text = '0.0 كم';
-      _pricePerKmCtrl.text = '0 جنيه/كم';
-      _kmCostCtrl.text = '0 جنيه';
-      _totalCostCtrl.text = '0 جنيه';
+      _baseCostCtrl.text = '0';
+      _kmSumCtrl.text = '0.0';
+      _pricePerKmCtrl.text = '0';
+      _kmCostCtrl.text = '0';
+      _totalCostCtrl.text = '0';
     });
   }
 
@@ -318,19 +319,21 @@ class _TowScreenState extends State<TowScreen> {
   }
 
   void _submit() async {
+    final loc = AppLocalizations.of(context);
+
     if (_formKey.currentState?.validate() != true) return;
 
     if (_pos == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('لم يتم تحديد موقعك بعد')));
+      ).showSnackBar(SnackBar(content: Text(loc.towScreenLocationNotSetSnack)));
       return;
     }
 
     if (_selectedCompany == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('من فضلك اختر شركة سحب')));
+      ).showSnackBar(SnackBar(content: Text(loc.towScreenSelectCompanySnack)));
       return;
     }
 
@@ -338,9 +341,9 @@ class _TowScreenState extends State<TowScreen> {
     final userId = user?.id;
 
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يجب تسجيل الدخول قبل طلب الونش')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(loc.towScreenLoginRequiredSnack)));
       return;
     }
 
@@ -349,11 +352,10 @@ class _TowScreenState extends State<TowScreen> {
       if (!mounted) return;
       showDialog(
         context: context,
-        builder: (_) => const AlertDialog(
-          title: Text('يوجد طلب سحب مفتوح'),
+        builder: (_) => AlertDialog(
+          title: Text(loc.towScreenActiveTowExistsTitle),
           content: Text(
-            'يوجد لديك طلب سحب جارٍ حالياً.\n'
-            'لا يمكنك إنشاء طلب جديد قبل إنهاء أو إلغاء الطلب الحالي من صفحة حسابك (قسم طلبات الونش).',
+            loc.towScreenActiveTowExistsBody,
             textAlign: TextAlign.right,
           ),
         ),
@@ -385,37 +387,70 @@ class _TowScreenState extends State<TowScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('تأكيد الطلب'),
+        title: Text(loc.towScreenConfirmDialogTitle),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('الشركة: ${_selectedCompany?.name ?? '—'}'),
-              Text('موقعي: ${_addressCtrl.text}'),
               Text(
-                'مكان الوصول: ${_destCtrl.text.isEmpty ? '—' : _destCtrl.text}',
+                '${loc.towScreenConfirmCompanyLabel} '
+                '${_selectedCompany?.name ?? '—'}',
+              ),
+              Text(
+                '${loc.towScreenConfirmMyLocationLabel} '
+                '${_addressCtrl.text}',
+              ),
+              Text(
+                '${loc.towScreenConfirmDestinationLabel} '
+                '${_destCtrl.text.isEmpty ? '—' : _destCtrl.text}',
               ),
               const SizedBox(height: 8),
-              Text('التكلفة الأساسية: ${baseCost.toStringAsFixed(0)} جنيه'),
-              Text('إجمالي الكيلومترات: ${kmTotal.toStringAsFixed(1)} كم'),
-              Text('سعر الكيلو: ${pricePerKm.toStringAsFixed(0)} جنيه/كم'),
-              Text('تكلفة الكيلومترات: ${kmCost.toStringAsFixed(0)} جنيه'),
-              Text('إجمالي الخدمة: ${total.toStringAsFixed(0)} جنيه'),
-              const SizedBox(height: 12),
-              Text('المركبة: ${_vehicleCtrl.text}'),
-              Text('اللوحة: ${_plateCtrl.text}'),
               Text(
-                'الوصف: ${_problemCtrl.text.isEmpty ? '—' : _problemCtrl.text}',
+                '${loc.towScreenConfirmBaseCostLabel} '
+                '${baseCost.toStringAsFixed(0)} ${loc.currencyEgpShort}',
               ),
-              Text('رقم التليفون: ${_phoneCtrl.text}'),
+              Text(
+                '${loc.towScreenConfirmKmTotalLabel} '
+                '${kmTotal.toStringAsFixed(1)} ${loc.towUnitKm}',
+              ),
+              Text(
+                '${loc.towScreenConfirmKmPriceLabel} '
+                '${pricePerKm.toStringAsFixed(0)} '
+                '${loc.currencyEgpShort}/${loc.towUnitKm}',
+              ),
+              Text(
+                '${loc.towScreenConfirmKmCostLabel} '
+                '${kmCost.toStringAsFixed(0)} ${loc.currencyEgpShort}',
+              ),
+              Text(
+                '${loc.towScreenConfirmTotalLabel} '
+                '${total.toStringAsFixed(0)} ${loc.currencyEgpShort}',
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${loc.towScreenConfirmVehicleLabel} '
+                '${_vehicleCtrl.text}',
+              ),
+              Text(
+                '${loc.towScreenConfirmPlateLabel} '
+                '${_plateCtrl.text}',
+              ),
+              Text(
+                '${loc.towScreenConfirmProblemLabel} '
+                '${_problemCtrl.text.isEmpty ? '—' : _problemCtrl.text}',
+              ),
+              Text(
+                '${loc.towScreenConfirmPhoneLabel} '
+                '${_phoneCtrl.text}',
+              ),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(loc.towScreenDialogCancelButton),
           ),
           FilledButton(
             onPressed: _isSubmitting
@@ -453,19 +488,22 @@ class _TowScreenState extends State<TowScreen> {
                       await showDialog(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: const Text('تم إرسال طلب السحب'),
+                          title: Text(loc.towScreenRequestSentTitle),
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                'تم إرسال طلبك إلى شركة: ${_selectedCompany!.name}',
+                                '${loc.towScreenRequestSentBodyPrefix} '
+                                '${_selectedCompany!.name}',
                               ),
                               const SizedBox(height: 8),
                               if (companyPhone.isNotEmpty) ...[
-                                const Text(
-                                  'رقم التواصل مع الشركة:',
-                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                Text(
+                                  loc.towScreenCompanyPhoneLabel,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 SelectableText(
@@ -485,21 +523,21 @@ class _TowScreenState extends State<TowScreen> {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        const SnackBar(
+                                        SnackBar(
                                           content: Text(
-                                            'تعذّر فتح شاشة الاتصال',
+                                            loc.towScreenCallErrorSnack,
                                           ),
                                         ),
                                       );
                                     }
                                   },
                                   icon: const Icon(Icons.call),
-                                  label: const Text('اتصال بالشركة'),
+                                  label: Text(loc.towScreenCallCompanyButton),
                                 ),
                               ] else ...[
-                                const Text(
-                                  'لم يتم تسجيل رقم هاتف للشركة، رجاءً تواصل معهم من خلال التطبيق لاحقاً.',
-                                  style: TextStyle(fontSize: 12),
+                                Text(
+                                  loc.towScreenNoCompanyPhoneHint,
+                                  style: const TextStyle(fontSize: 12),
                                 ),
                               ],
                             ],
@@ -511,7 +549,7 @@ class _TowScreenState extends State<TowScreen> {
                                 _resetForm();
                                 _goToProfile();
                               },
-                              child: const Text('إغلاق'),
+                              child: Text(loc.towScreenCloseButton),
                             ),
                           ],
                         ),
@@ -519,7 +557,9 @@ class _TowScreenState extends State<TowScreen> {
                     } catch (e) {
                       if (!mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('تعذر إرسال الطلب: $e')),
+                        SnackBar(
+                          content: Text('${loc.towScreenSendErrorSnack} $e'),
+                        ),
                       );
                     } finally {
                       if (mounted) {
@@ -527,14 +567,16 @@ class _TowScreenState extends State<TowScreen> {
                       }
                     }
                   },
-            child: const Text('تأكيد'),
+            child: Text(loc.towScreenDialogConfirmButton),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStepsHeader(ThemeData theme) {
+  Widget _buildStepsHeader(BuildContext context, ThemeData theme) {
+    final loc = AppLocalizations.of(context);
+
     Widget step(int n, String label, {bool active = true}) {
       final cs = theme.colorScheme;
       final bg = active ? cs.primary : cs.surfaceVariant;
@@ -571,10 +613,10 @@ class _TowScreenState extends State<TowScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          step(1, 'تحديد موقعي'),
-          step(2, 'اختيار شركة'),
-          step(3, 'بيانات المركبة'),
-          step(4, 'تأكيد الطلب'),
+          step(1, loc.towScreenStepsStep1),
+          step(2, loc.towScreenStepsStep2),
+          step(3, loc.towScreenStepsStep3),
+          step(4, loc.towScreenStepsStep4),
         ],
       ),
     );
@@ -584,6 +626,7 @@ class _TowScreenState extends State<TowScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final loc = AppLocalizations.of(context);
 
     final canSubmit =
         !_isSubmitting && _pos != null && _selectedCompany != null;
@@ -596,7 +639,7 @@ class _TowScreenState extends State<TowScreen> {
             ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
               children: [
-                _buildStepsHeader(theme),
+                _buildStepsHeader(context, theme),
 
                 if (_pos == null)
                   Container(
@@ -608,12 +651,12 @@ class _TowScreenState extends State<TowScreen> {
                       border: Border.all(color: Colors.amber),
                     ),
                     child: Row(
-                      children: const [
-                        Icon(Icons.warning_amber_rounded),
-                        SizedBox(width: 8),
+                      children: [
+                        const Icon(Icons.warning_amber_rounded),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'لم يتم تحديد موقعك بعد، استخدم زر "موقعي الحالي" أو اختر من الخريطة.',
+                            loc.towScreenLocationPendingWarning,
                             textAlign: TextAlign.right,
                           ),
                         ),
@@ -630,12 +673,12 @@ class _TowScreenState extends State<TowScreen> {
                       border: Border.all(color: Colors.green.shade300),
                     ),
                     child: Row(
-                      children: const [
-                        Icon(Icons.check_circle_outline),
-                        SizedBox(width: 8),
+                      children: [
+                        const Icon(Icons.check_circle_outline),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'تم تحديد موقعك بنجاح.',
+                            loc.towScreenLocationReadyMessage,
                             textAlign: TextAlign.right,
                           ),
                         ),
@@ -648,7 +691,7 @@ class _TowScreenState extends State<TowScreen> {
                     Icon(Icons.location_on_outlined, color: cs.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'موقعي الحالي',
+                      loc.towScreenCurrentLocationSectionTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -659,9 +702,9 @@ class _TowScreenState extends State<TowScreen> {
                 TextFormField(
                   controller: _addressCtrl,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'الإحداثيات الحالية',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenCurrentCoordsLabel,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -677,7 +720,7 @@ class _TowScreenState extends State<TowScreen> {
                             _recalcCosts();
                           },
                           icon: const Icon(Icons.my_location),
-                          label: const Text('استخدم موقعي الحالي'),
+                          label: Text(loc.towScreenUseMyLocationButton),
                         ),
                       ),
                     ),
@@ -688,7 +731,7 @@ class _TowScreenState extends State<TowScreen> {
                         child: FilledButton.tonalIcon(
                           onPressed: _pickCurrentLocationOnMap,
                           icon: const Icon(Icons.map_outlined),
-                          label: const Text('اختيار من الخريطة'),
+                          label: Text(loc.towScreenPickFromMapButton),
                         ),
                       ),
                     ),
@@ -712,17 +755,25 @@ class _TowScreenState extends State<TowScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'الشركة المختارة: ${_selectedCompany!.name} (${_selectedCompany!.area})\n'
-                            'المسافة للشركة: ${(_companyDistKm ?? 0).toStringAsFixed(1)} كم • '
-                            'خدمة أساسية: ${_selectedCompany!.baseCost.toStringAsFixed(0)}ج • '
-                            'سعر الكيلو: ${_selectedCompany!.pricePerKm.toStringAsFixed(0)}ج',
+                            '${loc.towScreenSelectedCompanyPrefix} '
+                            '${_selectedCompany!.name} '
+                            '(${_selectedCompany!.area})\n'
+                            '${loc.towScreenSelectedCompanyDistancePrefix} '
+                            '${(_companyDistKm ?? 0).toStringAsFixed(1)} '
+                            '${loc.towUnitKm} • '
+                            '${loc.towScreenSelectedCompanyBaseCostPrefix} '
+                            '${_selectedCompany!.baseCost.toStringAsFixed(0)} '
+                            '${loc.currencyEgpShort} • '
+                            '${loc.towScreenSelectedCompanyKmPricePrefix} '
+                            '${_selectedCompany!.pricePerKm.toStringAsFixed(0)} '
+                            '${loc.currencyEgpShort}/${loc.towUnitKm}',
                             textAlign: TextAlign.right,
                           ),
                         ),
                         const SizedBox(width: 8),
                         FilledButton.tonal(
                           onPressed: _pos == null ? null : _openCompanies,
-                          child: const Text('تغيير'),
+                          child: Text(loc.towScreenSelectedCompanyChangeButton),
                         ),
                       ],
                     ),
@@ -744,15 +795,17 @@ class _TowScreenState extends State<TowScreen> {
                         Expanded(
                           child: Text(
                             _pos == null
-                                ? 'بعد تحديد موقعك، سنقترح أقرب شركة سحب تلقائياً.'
-                                : 'اختر شركة السحب المناسبة لك من قائمة الشركات.',
+                                ? loc.towScreenSelectedCompanyHintNoLocation
+                                : loc.towScreenSelectedCompanyHintChoose,
                             textAlign: TextAlign.right,
                           ),
                         ),
                         const SizedBox(width: 8),
                         FilledButton.tonal(
                           onPressed: _pos == null ? null : _openCompanies,
-                          child: const Text('عرض الشركات'),
+                          child: Text(
+                            loc.towScreenSelectedCompanyShowCompaniesButton,
+                          ),
                         ),
                       ],
                     ),
@@ -765,7 +818,7 @@ class _TowScreenState extends State<TowScreen> {
                     Icon(Icons.flag_outlined, color: cs.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'مكان الوصول',
+                      loc.towScreenDestinationSectionTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -778,12 +831,11 @@ class _TowScreenState extends State<TowScreen> {
                     Expanded(
                       child: TextFormField(
                         controller: _destCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'العنوان (اختياري)',
-                          hintText: 'اكتب العنوان أو اختاره من الخريطة',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: loc.towScreenDestinationAddressLabel,
+                          hintText: loc.towScreenDestinationAddressHint,
+                          border: const OutlineInputBorder(),
                         ),
-
                         onChanged: (_) => _recalcCosts(),
                       ),
                     ),
@@ -793,17 +845,17 @@ class _TowScreenState extends State<TowScreen> {
                       child: FilledButton.tonalIcon(
                         onPressed: _pickDestinationOnMap,
                         icon: const Icon(Icons.map_outlined),
-                        label: const Text('خريطة'),
+                        label: Text(loc.towScreenDestinationMapButton),
                       ),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 4),
-                const Text(
-                  'يمكن ترك مكان الوصول فارغًا والتنسيق مع السائق تليفونيًا.',
+                Text(
+                  loc.towScreenDestinationOptionalHint,
                   textAlign: TextAlign.right,
-                  style: TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: 11),
                 ),
 
                 const SizedBox(height: 20),
@@ -813,7 +865,7 @@ class _TowScreenState extends State<TowScreen> {
                     Icon(Icons.request_quote_outlined, color: cs.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'تكاليف الخدمة',
+                      loc.towScreenCostsSectionTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -824,45 +876,50 @@ class _TowScreenState extends State<TowScreen> {
                 TextField(
                   controller: _baseCostCtrl,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'التكلفة الأساسية',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenCostsBaseLabel,
+                    suffixText: loc.currencyEgpShort,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _kmSumCtrl,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'إجمالي الكيلومترات (للشركة + للوصول)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenCostsKmTotalLabel,
+                    suffixText: loc.towUnitKm,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _pricePerKmCtrl,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'سعر الكيلو',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenCostsKmPriceLabel,
+                    suffixText: '${loc.currencyEgpShort}/${loc.towUnitKm}',
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _kmCostCtrl,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'تكلفة الكيلومترات',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenCostsKmCostLabel,
+                    suffixText: loc.currencyEgpShort,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _totalCostCtrl,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'إجمالي الخدمة',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenCostsTotalLabel,
+                    suffixText: loc.currencyEgpShort,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
 
@@ -876,7 +933,7 @@ class _TowScreenState extends State<TowScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'معلومات المركبة',
+                      loc.towScreenVehicleSectionTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -886,36 +943,36 @@ class _TowScreenState extends State<TowScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _vehicleCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'النوع والطراز',
-                    hintText: 'مثال: هوندا سيفيك',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenVehicleTypeLabel,
+                    hintText: loc.towScreenVehicleTypeHint,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'هذا الحقل مطلوب'
+                      ? loc.towScreenRequiredFieldError
                       : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _plateCtrl,
                   textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم اللوحة',
-                    hintText: 'مثال: ABC-1234',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenPlateLabel,
+                    hintText: loc.towScreenPlateHint,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'هذا الحقل مطلوب'
+                      ? loc.towScreenRequiredFieldError
                       : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _problemCtrl,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'وصف المشكلة',
-                    hintText: 'اكتب باختصار المشكلة… (اختياري)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenProblemLabel,
+                    hintText: loc.towScreenProblemHint,
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -925,7 +982,7 @@ class _TowScreenState extends State<TowScreen> {
                     Icon(Icons.call_outlined, color: cs.primary),
                     const SizedBox(width: 8),
                     Text(
-                      'معلومات التواصل',
+                      loc.towScreenContactSectionTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -936,17 +993,17 @@ class _TowScreenState extends State<TowScreen> {
                 TextFormField(
                   controller: _phoneCtrl,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم التليفون',
-                    hintText: '+20 1xxxxxxxxx',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.towScreenPhoneLabel,
+                    hintText: loc.towScreenPhoneHint,
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) {
-                      return 'هذا الحقل مطلوب';
+                      return loc.towScreenRequiredFieldError;
                     }
                     if (v.replaceAll(RegExp(r'[\s\-\+]'), '').length < 9) {
-                      return 'رجاءً أدخل رقمًا صحيحًا';
+                      return loc.towScreenPhoneInvalidError;
                     }
                     return null;
                   },
@@ -960,20 +1017,22 @@ class _TowScreenState extends State<TowScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: cs.primary.withOpacity(.25)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.info_outline),
-                      SizedBox(width: 10),
+                      const Icon(Icons.info_outline),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'الوقت المتوقع للوصول',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                              loc.towScreenEtaTitle,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            SizedBox(height: 2),
-                            Text('من 15 إلى 25 دقيقة بعد تأكيد الطلب'),
+                            const SizedBox(height: 2),
+                            Text(loc.towScreenEtaValue),
                           ],
                         ),
                       ),
@@ -989,28 +1048,28 @@ class _TowScreenState extends State<TowScreen> {
                     child: _isSubmitting
                         ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              SizedBox(
+                            children: [
+                              const SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Text('جارٍ إرسال الطلب...'),
+                              const SizedBox(width: 8),
+                              Text(loc.towScreenSubmitButtonSending),
                             ],
                           )
-                        : const Text('إرسال الطلب'),
+                        : Text(loc.towScreenSubmitButtonLabel),
                   ),
                 ),
                 if (!canSubmit)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 6.0),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6.0),
                     child: Text(
-                      'تأكّد من تحديد موقعك واختيار شركة السحب قبل إرسال الطلب.',
+                      loc.towScreenSubmitHint,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 11),
+                      style: const TextStyle(fontSize: 11),
                     ),
                   ),
               ],
@@ -1023,7 +1082,7 @@ class _TowScreenState extends State<TowScreen> {
                 child: FilledButton.tonalIcon(
                   onPressed: _openCompanies,
                   icon: const Icon(Icons.local_shipping_outlined),
-                  label: const Text('أقرب الشركات'),
+                  label: Text(loc.towScreenFloatingNearestCompanies),
                 ),
               ),
           ],
@@ -1033,7 +1092,7 @@ class _TowScreenState extends State<TowScreen> {
 
     return AppNavigationScaffold(
       currentIndex: 2,
-      title: 'خدمة سحب عاجلة',
+      title: loc.towScreenTitle,
       body: Directionality(textDirection: TextDirection.rtl, child: content),
     );
   }

@@ -1,83 +1,83 @@
-import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class CustomFormField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-  final IconData icon;
-  final TextInputType keyboardType;
+  final TextEditingController? controller;
+  final String? labelText;
+  final String? hintText;
+  final IconData? icon;
   final bool obscureText;
-  final Widget? suffixIcon;
   final String? Function(String?)? validator;
-  final String labelText;
+  final Widget? suffixIcon;
 
   const CustomFormField({
     super.key,
-    required this.controller,
-    required this.hintText,
-    required this.icon,
-    this.keyboardType = TextInputType.text,
+    this.controller,
+    this.labelText,
+    this.hintText,
+    this.icon,
     this.obscureText = false,
-    this.suffixIcon,
     this.validator,
-    required this.labelText,
+    this.suffixIcon,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final fieldTextColor = isDark ? Colors.white : Colors.black87;
+    final labelColor = isDark ? Colors.grey[200] : Colors.grey[800];
+    final hintColor = isDark ? Colors.grey[400] : Colors.grey[500];
+    final fillColor = isDark
+        ? const Color(0xFF0B1120)
+        : const Color(0xFFF5F5F5);
+    final borderColor = isDark ? Colors.grey.shade600 : Colors.grey.shade400;
+    final focusedBorderCol = const Color(0xFF4CAF50);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          labelText,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppColors.darkText,
+        if (labelText != null && labelText!.isNotEmpty) ...[
+          Text(
+            labelText!,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: labelColor,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 6),
+        ],
         TextFormField(
           controller: controller,
-          keyboardType: keyboardType,
           obscureText: obscureText,
           validator: validator,
+          style: TextStyle(color: fieldTextColor, fontSize: 14),
+          cursorColor: focusedBorderCol,
           decoration: InputDecoration(
-            hintText: hintText,
-            prefixIcon: Icon(icon, color: Colors.grey),
-            suffixIcon: suffixIcon,
-
-            filled: true,
-            fillColor: AppColors.lightGreyBackground,
             isDense: true,
-
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+            filled: true,
+            fillColor: fillColor,
+            hintText: hintText,
+            hintStyle: TextStyle(color: hintColor, fontSize: 13),
+            prefixIcon: icon != null
+                ? Icon(
+                    icon,
+                    color: isDark ? Colors.grey[300] : Colors.grey[700],
+                  )
+                : null,
+            suffixIcon: suffixIcon,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: borderColor),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primaryGreen,
-                width: 2.0,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 1.0),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 2.0),
-            ),
-
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 15,
-              horizontal: 10,
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: focusedBorderCol, width: 1.6),
             ),
           ),
         ),

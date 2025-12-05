@@ -1,5 +1,6 @@
 import 'package:auto_spare/view/themes/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:auto_spare/l10n/app_localizations.dart';
 
 class CustomElevatedButton extends StatelessWidget {
   final String text;
@@ -86,13 +87,19 @@ class OrDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    final loc = AppLocalizations.of(context);
+    return Row(
       children: [
-        Expanded(
+        const Expanded(
           child: Divider(color: Colors.grey, thickness: 1, endIndent: 10),
         ),
-        Text('or', style: TextStyle(color: Colors.grey, fontSize: 16)),
-        Expanded(child: Divider(color: Colors.grey, thickness: 1, indent: 10)),
+        Text(
+          loc.authOrDividerLabel,
+          style: const TextStyle(color: Colors.grey, fontSize: 16),
+        ),
+        const Expanded(
+          child: Divider(color: Colors.grey, thickness: 1, indent: 10),
+        ),
       ],
     );
   }
