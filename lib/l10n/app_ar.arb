@@ -823,7 +823,9 @@
             "adminWinchTabCapacityFieldLabel": "عدد الأوناش",
             "adminWinchTabDialogSave": "حفظ",
 
-            "commonCancel": "إلغاء"
+            "commonCancel": "إلغاء",
+             "login_banned_message": "تم حظر الحساب نهائيًا.\nلا يمكن تسجيل الدخول بهذا البريد.\nيرجى التواصل مع الإدارة.",
+              "login_frozen_message": "الحساب موقوف مؤقتًا.\nيرجى الرجوع للإدارة لمعرفة السبب."
 
 
   }

@@ -4141,6 +4141,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get adminWinchTabDialogSave;
+
+  /// No description provided for @login_banned_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been permanently banned.\nYou can no longer sign in with this email.\nPlease contact the administration.'**
+  String get login_banned_message;
+
+  /// No description provided for @login_frozen_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is temporarily suspended.\nPlease contact the administration for more details.'**
+  String get login_frozen_message;
 }
 
 class _AppLocalizationsDelegate

@@ -2168,4 +2168,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminWinchTabDialogSave => 'Save';
+
+  @override
+  String get login_banned_message =>
+      'Your account has been permanently banned.\nYou can no longer sign in with this email.\nPlease contact the administration.';
+
+  @override
+  String get login_frozen_message =>
+      'Your account is temporarily suspended.\nPlease contact the administration for more details.';
 }

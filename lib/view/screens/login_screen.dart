@@ -86,6 +86,10 @@ class LoginScreenState extends State<LoginScreen>
     return usersRepo.signInWithEmailAndPassword(email, pass);
   }
 
+  bool _isBanned(AppUser u) => u.approved == false && u.canSell == false;
+
+  bool _isFrozen(AppUser u) => u.approved != true && !_isBanned(u);
+
   Future<void> _handleSignIn() async {
     final loc = AppLocalizations.of(context);
 
@@ -109,7 +113,25 @@ class LoginScreenState extends State<LoginScreen>
       return;
     }
 
-    if (u.role == AppUserRole.winch && !u.approved) {
+    if (_isBanned(u)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.login_banned_message, textAlign: TextAlign.right),
+        ),
+      );
+      return;
+    }
+
+    if (_isFrozen(u)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(loc.login_frozen_message, textAlign: TextAlign.right),
+        ),
+      );
+      return;
+    }
+
+    if (u.role == AppUserRole.winch && !u.approved && !u.canTow) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.login_winch_not_approved_message)),
       );
@@ -196,7 +218,6 @@ class LoginScreenState extends State<LoginScreen>
                             horizontal: 20,
                             vertical: 4,
                           ),
-
                           child: Theme(
                             data: theme.copyWith(
                               cardColor: isDarkTheme

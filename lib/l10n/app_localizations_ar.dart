@@ -2131,4 +2131,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get adminWinchTabDialogSave => 'حفظ';
+
+  @override
+  String get login_banned_message =>
+      'تم حظر الحساب نهائيًا.\nلا يمكن تسجيل الدخول بهذا البريد.\nيرجى التواصل مع الإدارة.';
+
+  @override
+  String get login_frozen_message =>
+      'الحساب موقوف مؤقتًا.\nيرجى الرجوع للإدارة لمعرفة السبب.';
 }
