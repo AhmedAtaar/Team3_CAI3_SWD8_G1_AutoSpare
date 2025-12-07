@@ -11,6 +11,8 @@ import 'map_picker_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'profile_screen.dart';
 import 'package:auto_spare/l10n/app_localizations.dart';
+import 'package:auto_spare/model/app_user.dart';
+import 'package:auto_spare/services/user_session.dart';
 
 class TowScreen extends StatefulWidget {
   const TowScreen({super.key});
@@ -438,7 +440,7 @@ class _TowScreenState extends State<TowScreen> {
               ),
               Text(
                 '${loc.towScreenConfirmProblemLabel} '
-                '${_problemCtrl.text.isEmpty ? '—' : _problemCtrl.text}',
+                '${_problemCtrl.text.isNotEmpty ? _problemCtrl.text : '—'}',
               ),
               Text(
                 '${loc.towScreenConfirmPhoneLabel} '
@@ -627,6 +629,68 @@ class _TowScreenState extends State<TowScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final loc = AppLocalizations.of(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final user = UserStore().currentUser;
+    final baseRole = user?.role;
+
+    final bool isAdminAccount = baseRole == AppUserRole.admin;
+    final bool isSellerAccount = baseRole == AppUserRole.seller;
+    final bool isWinchAccount = baseRole == AppUserRole.winch;
+
+    final bool isInSellerMode = UserSession.isSellerNow;
+
+    final bool shouldBlockForAdmin = isAdminAccount;
+
+    final bool shouldBlockForSellerMode = isSellerAccount && isInSellerMode;
+
+    final bool shouldBlock = shouldBlockForAdmin || shouldBlockForSellerMode;
+
+    if (shouldBlock) {
+      final bool isAdmin = isAdminAccount;
+
+      final blockedBody = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.block, size: 48, color: theme.colorScheme.error),
+              const SizedBox(height: 16),
+              Text(
+                loc.towScreenRoleNotAllowedTitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isAdmin
+                    ? loc.towScreenAdminNotAllowedBody
+                    : loc.towScreenSellerNotAllowedBody,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: _goToProfile,
+                child: Text(loc.towScreenRoleNotAllowedGoProfileButton),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      return AppNavigationScaffold(
+        currentIndex: 2,
+        title: loc.towScreenTitle,
+        body: Directionality(
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+          child: SafeArea(child: blockedBody),
+        ),
+      );
+    }
 
     final canSubmit =
         !_isSubmitting && _pos != null && _selectedCompany != null;
@@ -1093,7 +1157,10 @@ class _TowScreenState extends State<TowScreen> {
     return AppNavigationScaffold(
       currentIndex: 2,
       title: loc.towScreenTitle,
-      body: Directionality(textDirection: TextDirection.rtl, child: content),
+      body: Directionality(
+        textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+        child: content,
+      ),
     );
   }
 }

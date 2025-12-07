@@ -285,7 +285,7 @@
         "profile_logout_tooltip": "تسجيل الخروج",
         "profile_login_tooltip": "تسجيل الدخول",
         "profile_greeting_prefix": "مرحباً",
-        "profile_role_label_admin": "أدمن (مراجعة فقط)",
+        "profile_role_label_admin": "أدمن (إدارة النظام)",
         "profile_role_label_seller": "بائع",
         "profile_role_label_buyer": "مشتري",
         "profile_role_label_winch": "مقدم خدمة سحب السيارات",
@@ -825,7 +825,11 @@
 
             "commonCancel": "إلغاء",
              "login_banned_message": "تم حظر الحساب نهائيًا.\nلا يمكن تسجيل الدخول بهذا البريد.\nيرجى التواصل مع الإدارة.",
-              "login_frozen_message": "الحساب موقوف مؤقتًا.\nيرجى الرجوع للإدارة لمعرفة السبب."
+              "login_frozen_message": "الحساب موقوف مؤقتًا.\nيرجى الرجوع للإدارة لمعرفة السبب.",
+               "towScreenRoleNotAllowedTitle": "خدمة الونش غير متاحة لهذا الحساب",
+                "towScreenSellerNotAllowedBody": "أنت الآن مسجَّل كتاجر، ولا يمكنك طلب ونش من هذا الحساب.\nيرجى الانتقال لوضع المشتري لاستخدام الخدمة.",
+                "towScreenAdminNotAllowedBody": "حسابات الأدمن لا يمكنها طلب ونش.\nيرجى إنشاء حساب مشتري أو تسجيل الدخول بحساب مشتري لاستخدام الخدمة.",
+                "towScreenRoleNotAllowedGoProfileButton": "الذهاب إلى صفحتي الشخصية"
 
 
   }

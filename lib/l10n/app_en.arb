@@ -281,7 +281,7 @@
         "profile_logout_tooltip": "Sign out",
         "profile_login_tooltip": "Sign in",
         "profile_greeting_prefix": "Welcome",
-        "profile_role_label_admin": "Admin (review only)",
+        "profile_role_label_admin": "Admin (System Management)",
         "profile_role_label_seller": "Seller",
         "profile_role_label_buyer": "Buyer",
         "profile_role_label_winch": "Tow service provider",
@@ -819,6 +819,10 @@
 
           "commonCancel": "Cancel",
           "login_banned_message": "Your account has been permanently banned.\nYou can no longer sign in with this email.\nPlease contact the administration.",
-            "login_frozen_message": "Your account is temporarily suspended.\nPlease contact the administration for more details."
+            "login_frozen_message": "Your account is temporarily suspended.\nPlease contact the administration for more details.",
+              "towScreenRoleNotAllowedTitle": "Tow service is not available for this account",
+              "towScreenSellerNotAllowedBody": "You are currently signed in as a seller, and seller accounts cannot request a tow truck.\nPlease switch to buyer mode to use this service.",
+              "towScreenAdminNotAllowedBody": "Admin accounts cannot request tow trucks.\nPlease create or use a buyer account to use this service.",
+              "towScreenRoleNotAllowedGoProfileButton": "Go to my profile"
 
 }

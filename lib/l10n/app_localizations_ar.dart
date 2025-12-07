@@ -817,7 +817,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profile_greeting_prefix => 'مرحباً';
 
   @override
-  String get profile_role_label_admin => 'أدمن (مراجعة فقط)';
+  String get profile_role_label_admin => 'أدمن (إدارة النظام)';
 
   @override
   String get profile_role_label_seller => 'بائع';
@@ -2139,4 +2139,19 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get login_frozen_message =>
       'الحساب موقوف مؤقتًا.\nيرجى الرجوع للإدارة لمعرفة السبب.';
+
+  @override
+  String get towScreenRoleNotAllowedTitle => 'خدمة الونش غير متاحة لهذا الحساب';
+
+  @override
+  String get towScreenSellerNotAllowedBody =>
+      'أنت الآن مسجَّل كتاجر، ولا يمكنك طلب ونش من هذا الحساب.\nيرجى الانتقال لوضع المشتري لاستخدام الخدمة.';
+
+  @override
+  String get towScreenAdminNotAllowedBody =>
+      'حسابات الأدمن لا يمكنها طلب ونش.\nيرجى إنشاء حساب مشتري أو تسجيل الدخول بحساب مشتري لاستخدام الخدمة.';
+
+  @override
+  String get towScreenRoleNotAllowedGoProfileButton =>
+      'الذهاب إلى صفحتي الشخصية';
 }

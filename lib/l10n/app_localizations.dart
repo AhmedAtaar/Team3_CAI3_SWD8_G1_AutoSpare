@@ -1643,7 +1643,7 @@ abstract class AppLocalizations {
   /// No description provided for @profile_role_label_admin.
   ///
   /// In en, this message translates to:
-  /// **'Admin (review only)'**
+  /// **'Admin (System Management)'**
   String get profile_role_label_admin;
 
   /// No description provided for @profile_role_label_seller.
@@ -4153,6 +4153,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your account is temporarily suspended.\nPlease contact the administration for more details.'**
   String get login_frozen_message;
+
+  /// No description provided for @towScreenRoleNotAllowedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tow service is not available for this account'**
+  String get towScreenRoleNotAllowedTitle;
+
+  /// No description provided for @towScreenSellerNotAllowedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You are currently signed in as a seller, and seller accounts cannot request a tow truck.\nPlease switch to buyer mode to use this service.'**
+  String get towScreenSellerNotAllowedBody;
+
+  /// No description provided for @towScreenAdminNotAllowedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin accounts cannot request tow trucks.\nPlease create or use a buyer account to use this service.'**
+  String get towScreenAdminNotAllowedBody;
+
+  /// No description provided for @towScreenRoleNotAllowedGoProfileButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to my profile'**
+  String get towScreenRoleNotAllowedGoProfileButton;
 }
 
 class _AppLocalizationsDelegate

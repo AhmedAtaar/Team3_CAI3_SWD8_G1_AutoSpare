@@ -830,7 +830,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profile_greeting_prefix => 'Welcome';
 
   @override
-  String get profile_role_label_admin => 'Admin (review only)';
+  String get profile_role_label_admin => 'Admin (System Management)';
 
   @override
   String get profile_role_label_seller => 'Seller';
@@ -2176,4 +2176,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get login_frozen_message =>
       'Your account is temporarily suspended.\nPlease contact the administration for more details.';
+
+  @override
+  String get towScreenRoleNotAllowedTitle =>
+      'Tow service is not available for this account';
+
+  @override
+  String get towScreenSellerNotAllowedBody =>
+      'You are currently signed in as a seller, and seller accounts cannot request a tow truck.\nPlease switch to buyer mode to use this service.';
+
+  @override
+  String get towScreenAdminNotAllowedBody =>
+      'Admin accounts cannot request tow trucks.\nPlease create or use a buyer account to use this service.';
+
+  @override
+  String get towScreenRoleNotAllowedGoProfileButton => 'Go to my profile';
 }
