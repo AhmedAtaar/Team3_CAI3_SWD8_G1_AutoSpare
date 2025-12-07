@@ -1,4 +1,4 @@
-/* eslint-disable */
+
 "use strict";
 
 const functions = require("firebase-functions");
@@ -7,9 +7,7 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
 
-/**
- * Helper: تحويل حالة الطلب إلى نص عربي بسيط.
- */
+
 function towStatusAr(status) {
   switch (status) {
     case "pending":
@@ -29,10 +27,7 @@ function towStatusAr(status) {
   }
 }
 
-/**
- * Helper: استخراج كل الـ tokens من حقل fcmTokens
- * سواء كان Array أو Map (object).
- */
+
 function extractTokens(fcmTokensField) {
   if (!fcmTokensField) {
     return [];
@@ -50,10 +45,7 @@ function extractTokens(fcmTokensField) {
   return [];
 }
 
-/**
- * 🔔 1) لما يتعمل طلب ونش جديد في tow_requests
- * نبعت إشعار لشركة الونش (companyId).
- */
+
 exports.onTowRequestCreated = functions.firestore
   .document("tow_requests/{requestId}")
   .onCreate(async (snap, context) => {
@@ -121,10 +113,7 @@ exports.onTowRequestCreated = functions.firestore
     }
   });
 
-/**
- * 🔔 2) لما حالة الطلب تتغير (status) في tow_requests
- * نبعت إشعار للمشتري (userId).
- */
+
 exports.onTowRequestStatusChanged = functions.firestore
   .document("tow_requests/{requestId}")
   .onUpdate(async (change, context) => {
